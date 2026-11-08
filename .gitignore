@@ -1,5 +1,26 @@
-CLAUDE.md
-CONTEXT.md
+# dependencies and build output
+node_modules/
+.next/
+out/
+.vercel/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# environment files (the Site uses none; ADR 0002)
+.env*
+
+# Playwright output
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# local-only planning and agent files
 .scratch/
+CLAUDE.md
 skills-lock.json
+
+# Open decision 2: remove these two lines only if the user picks Option A
+CONTEXT.md
 docs/

@@ -1,0 +1,21 @@
+/*
+ * SiteFrame: the shared wrapper around every screen.
+ * Sizes are in rem so the browser's text-size setting scales the layout
+ * (Requirement 5.9). Nothing here hides horizontal overflow (Requirement 5.7).
+ */
+
+.frame {
+  min-block-size: 100%;
+}
+
+/* Main content column. border-box keeps the padding inside the 48rem
+   (768 CSS px at the default text size) limit, and auto inline margins keep
+   it centred on the laptop (Requirement 5.2). */
+.main {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: 48rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  padding-block: 0 2rem;
+}

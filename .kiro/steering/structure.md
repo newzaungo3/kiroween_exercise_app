@@ -2,24 +2,34 @@
 
 ## Current state
 
-Planning only; the app is not scaffolded yet (ticket `01-spooky-site-skeleton`).
+Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js site with a Home screen, five placeholder Section screens, a not-found screen, and Vitest and Playwright harnesses. Tracked files in the Repository:
 
 ```
 /
-├── .kiro/steering/               # These steering files (committed, never gitignored)
-├── .scratch/spooky-coach-mvp/    # Local issue tracker (markdown, not shipped)
-│   ├── spec.md                   # Feature spec: user stories, decisions, scope
-│   └── issues/01–16-*.md         # One ticket per file
-├── docs/
-│   ├── adr/0001–0004-*.md        # Architecture Decision Records
-│   └── agents/                   # domain.md, issue-tracker.md, triage-labels.md
-├── CONTEXT.md                    # Domain glossary: primary vocabulary reference
-└── CLAUDE.md                     # Agent skill index (used by Claude Code)
+├── .kiro/                  # Kiro settings, skills, specs, steering (committed, never gitignored)
+├── src/
+│   ├── app/                # Next.js App Router route files, globals.css, icon.svg
+│   ├── types/              # Tracked Next.js type references (next.d.ts)
+│   └── ui/                 # Screens, Decorations, fonts, theme tokens, central strings module
+├── tests/
+│   ├── e2e/                # Playwright specs (phone and laptop projects)
+│   └── unit/               # Vitest tests, support/ helpers, type-check fixtures
+├── .gitignore
+├── LICENSE                 # MIT
+├── next.config.ts
+├── package-lock.json       # The only lockfile
+├── package.json
+├── playwright.config.ts
+├── readme.md
+├── tsconfig.json
+└── vitest.config.mts
 ```
+
+`CONTEXT.md`, `docs/` (ADRs and `docs/agents/`), `.scratch/` (local issue tracker), `CLAUDE.md` and `skills-lock.json` exist locally but are gitignored; `CONTEXT.md` and `docs/` stay that way pending Open decision 2 of the `spooky-site-skeleton` spec.
 
 ## Proposed app layout
 
-Not fixed by any source doc. Derived from the spec's modules. Once scaffolded, update this section to match reality.
+Target for later tickets, derived from the spec's modules. `src/app/`, `src/ui/`, `tests/unit/`, `tests/e2e/` and `LICENSE` exist now; `catalog/`, `workout-engine/`, `progress-store/`, `viewer/` and `public/assets/` arrive with the tickets that need them. Update "Current state" whenever one is added.
 
 ```
 src/

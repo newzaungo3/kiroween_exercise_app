@@ -1,0 +1,71 @@
+/*
+ * Halloween_Theme Decorations: bats and cobwebs.
+ * Colours come only from theme tokens (Requirement 4.3).
+ */
+
+/* In-flow band above <main>. Decorations are positioned inside it, so they
+   never cover the heading or a Navigation_Entry and never take taps
+   (Requirement 4.12). */
+.layer {
+  position: relative;
+  block-size: 4.5rem;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.web {
+  position: absolute;
+  inset-block-start: 0;
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  color: var(--color-web);
+}
+
+.webLeft {
+  inset-inline-start: 0;
+}
+
+.webRight {
+  inset-inline-end: 0;
+  transform: scaleX(-1);
+}
+
+.bat {
+  position: absolute;
+  inline-size: 3rem;
+  block-size: 1.5rem;
+  color: var(--color-bat);
+  /* Slow transform-only drift, no opacity change, so nothing flashes
+     (Requirement 4.13). */
+  animation: bat-drift 6s ease-in-out infinite alternate;
+}
+
+.batOne {
+  inset-block-start: 1rem;
+  inset-inline-start: 28%;
+}
+
+.batTwo {
+  inset-block-start: 2.25rem;
+  inset-inline-start: 60%;
+  inline-size: 2.25rem;
+  block-size: 1.125rem;
+  animation-duration: 7.5s;
+  animation-delay: -2s;
+}
+
+@keyframes bat-drift {
+  from {
+    transform: translate(0, 0) rotate(-4deg);
+  }
+  to {
+    transform: translate(0.75rem, -0.5rem) rotate(4deg);
+  }
+}
+
+/* Reduced motion: every Decoration stays still (Requirement 4.10). */
+@media (prefers-reduced-motion: reduce) {
+  .bat {
+    animation: none;
+  }
+}

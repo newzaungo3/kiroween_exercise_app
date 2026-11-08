@@ -70,9 +70,10 @@ async function expectPlaceholderScreen(page: Page, section: Section): Promise<vo
   // The Placeholder_Screen is not the Home_Screen.
   await expect(homeNavigation(page)).toHaveCount(0);
 
-  const title = await page.title();
-  expect(title).toBe(section.title);
-  expect(title).toContain(section.name);
+  // After a client-side navigation the App Router sets the document title a
+  // moment after the content renders, so wait for it instead of reading once.
+  await expect(page).toHaveTitle(section.title);
+  expect(await page.title()).toContain(section.name);
 }
 
 test.describe('Navigation placeholders', () => {

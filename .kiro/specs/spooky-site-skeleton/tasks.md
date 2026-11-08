@@ -199,29 +199,29 @@ Ground rules for every task:
   - Ensure all tests pass, ask the user if questions arise.
   - _Requirements: 7.1, 7.6, 8.1, 8.2, 8.4, 8.5, 8.6, 8.7, 8.8_
 
-- [ ] 9. Prepare the Repository for the hackathon
+- [x] 9. Prepare the Repository for the hackathon
   - [x] 9.1 Update `.kiro/steering/structure.md`
     - Rewrite "Current state" to list every tracked top-level file and directory and every tracked directory directly under `src/` and `tests/`. Remove the "not scaffolded yet" wording. List `CONTEXT.md` and `docs/` only if they are tracked (Open decision 2). Keep "Proposed app layout", marked as the target for later tickets
     - _Requirements: 9.7_
 
-  - [-] 9.2 Commit the scaffold locally
+  - [x] 9.2 Commit the scaffold locally
     - Ask the user before committing. Stage files by name, not with `git add -A`: the config files, `package-lock.json`, `.gitignore`, `src/`, `tests/` and every file under `.kiro/`, including this spec and the steering update
     - After the commit, `git status --ignored --short .kiro` must print nothing. `git ls-files` must list nothing under `.scratch/` and neither `CLAUDE.md` nor `skills-lock.json`. Do not push: pushing and the branch rename are user tasks
     - _Requirements: 9.1, 9.2, 9.3, 9.6, 9.9_
 
-- [ ] 10. Open-decision work (do only after the user's answer)
-  - [~] 10.1 Commit the domain docs (only if the user picks Option A of Open decision 2)
+- [x] 10. Open-decision work (do only after the user's answer)
+  - [x] 10.1 Commit the domain docs (only if the user picks Option A of Open decision 2)
     - Do not start this task until the user has chosen Option A. If the user picks Option B, mark this task as not applicable and leave `.gitignore` unchanged
     - Remove the `CONTEXT.md` and `docs/` lines and their comment from `.gitignore`. Change the "domain docs are committed" test in `tests/unit/repository-rules.test.ts` from `it.skip` to `it`. Add `CONTEXT.md` and `docs/` to the "Current state" tree in `.kiro/steering/structure.md`
     - Run `npx vitest --run`. Then, after asking the user, commit `CONTEXT.md`, `docs/adr/0001`–`0004`, `docs/agents/*` and the edited files by name. A commit to a public repository cannot be fully undone, so ask before committing
     - _Requirements: 9.5, 9.7_
 
-  - [~] 10.2 Name `master` in the tech steering (only if the user picks Option B of Open decision 1)
+  - [x] 10.2 Name `master` in the tech steering (only if the user picks Option B of Open decision 1)
     - Do not start this task until the user has chosen Option B (keep `master`). If the user picks Option A (rename to `main`), mark this task as not applicable, because the rename and the Vercel setting are user tasks
     - Edit `.kiro/steering/tech.md` so that the Hosting row and any other mention of the deploy branch name `master` instead of `main`. Commit the file after asking the user
     - _Requirements: 9.10_
 
-- [~] 11. Final checkpoint: fresh-clone verification and handover
+- [x] 11. Final checkpoint: fresh-clone verification and handover
   - Clone the local Repository into a temp directory with `git clone`. In the clone, with no `node_modules/`, `.next/`, `next-env.d.ts` or `.env*`, run `npm ci`, `npx tsc --noEmit` and `npm run build`. All must exit 0, and `git status --short` in the clone must be empty afterwards. Delete the temp clone
   - Run `npx tsc --noEmit`, `npx vitest --run` and `npx playwright test` once more in the workspace
   - Report the "User tasks" list below to the user, with the requirement each one closes

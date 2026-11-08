@@ -8,6 +8,10 @@ export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.spec.ts',
   fullyParallel: true,
+  // One production server serves every browser. With Playwright's default
+  // (half the logical CPUs), multi-page tests on a 20-thread machine timed out
+  // while the server queued requests. Four workers keep the run reliable.
+  workers: 4,
   forbidOnly: true,
   retries: 0,
   reporter: [['list']],

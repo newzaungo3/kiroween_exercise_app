@@ -7,6 +7,9 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 ```
 /
 ├── .kiro/                  # Kiro settings, skills, specs, steering (committed, never gitignored)
+├── docs/
+│   ├── adr/                # Architecture decision records 0001–0004
+│   └── agents/             # Agent guides: domain docs, issue tracker, triage labels
 ├── src/
 │   ├── app/                # Next.js App Router route files, globals.css, icon.svg
 │   ├── types/              # Tracked Next.js type references (next.d.ts)
@@ -15,6 +18,7 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 │   ├── e2e/                # Playwright specs (phone and laptop projects)
 │   └── unit/               # Vitest tests, support/ helpers, type-check fixtures
 ├── .gitignore
+├── CONTEXT.md              # Domain glossary
 ├── LICENSE                 # MIT
 ├── next.config.ts
 ├── package-lock.json       # The only lockfile
@@ -25,7 +29,7 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 └── vitest.config.mts
 ```
 
-`CONTEXT.md`, `docs/` (ADRs and `docs/agents/`), `.scratch/` (local issue tracker), `CLAUDE.md` and `skills-lock.json` exist locally but are gitignored; `CONTEXT.md` and `docs/` stay that way pending Open decision 2 of the `spooky-site-skeleton` spec.
+`.scratch/` (local issue tracker), `CLAUDE.md` and `skills-lock.json` exist locally but are gitignored.
 
 ## Proposed app layout
 

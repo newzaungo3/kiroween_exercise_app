@@ -20,7 +20,3 @@ playwright/.cache/
 .scratch/
 CLAUDE.md
 skills-lock.json
-
-# Open decision 2: remove these two lines only if the user picks Option A
-CONTEXT.md
-docs/

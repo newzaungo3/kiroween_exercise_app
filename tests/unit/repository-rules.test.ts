@@ -431,9 +431,9 @@ describe('repository rules', () => {
     expect(findings).toEqual([]);
   });
 
-  // Task 10.1 enables this test (change it.skip to it) once the user picks
-  // Option A of Open decision 2 and CONTEXT.md and docs/ are committed.
-  it.skip('domain docs are committed', slow, () => {
+  // The glossary (CONTEXT.md), ADRs 0001-0004 and docs/agents/ are tracked and
+  // never gitignored, so the public Repository holds the docs the steering cites.
+  it('domain docs are committed', slow, () => {
     const tracked = trackedFiles();
     const adrs = tracked.filter((file) => /^docs\/adr\/000[1-4]-.+\.md$/.test(file));
     const agentDocs = walk('docs/agents');

@@ -1,0 +1,109 @@
+/*
+ * The Viewer island: Viewer_Area, live region, Retry button and the two
+ * control rows.
+ *
+ * - Colours come only from Halloween_Theme token variables.
+ * - While the 3D scene is shown the Viewer_Area has a fixed height of at most
+ *   50 % of the viewport (Requirement 6.9 allows 60 %), so the canvas has a
+ *   stable size and the Play/Pause row stays on the first phone screen
+ *   (Requirement 12.6). In every other phase the height is a minimum only, so
+ *   long messages at 200 % text grow the area instead of clipping
+ *   (Requirement 12.5). `vh` is declared first for browsers without `svh`.
+ * - `touch-action: none` sits on the stage only while the 3D scene is shown,
+ *   so drags and pinches inside it never scroll or zoom the page, and drags
+ *   outside it scroll normally (Requirements 6.7, 6.8).
+ * - DOM order equals visual order; nothing is reordered with CSS
+ *   (Requirement 12.4).
+ */
+
+.viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+}
+
+.area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-block-size: min(50vh, 30rem);
+  min-block-size: min(50svh, 30rem);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--color-scene-sky);
+}
+
+.area[data-viewer-phase='ready'] {
+  block-size: min(50vh, 30rem);
+  block-size: min(50svh, 30rem);
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+.area[data-viewer-phase='fallback'] {
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+/*
+ * The stage holds the canvas. While loading it is laid out at full size but
+ * invisible under the Loading art, so React Three Fiber measures a real size
+ * and the 3D chunk can start before the Coach appears.
+ */
+.stage {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+.area[data-viewer-phase='ready'] .stage {
+  visibility: visible;
+  touch-action: none;
+  cursor: grab;
+}
+
+.area[data-viewer-phase='ready'] .stage:active {
+  cursor: grabbing;
+}
+
+.loadingArt {
+  inline-size: 100%;
+}
+
+/* The live region and the noscript Still_Fallback message. Empty while the
+   3D scene is shown, so it takes no space then. */
+.message {
+  max-inline-size: 100%;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.retry {
+  align-self: center;
+}
+
+.controls {
+  display: block;
+}
+
+/* Without JavaScript only the noscript Still_Fallback shows in the
+   Viewer_Area (Requirement 9.12). */
+@media (scripting: none) {
+  /* Two classes, so this wins over the Loading art's own `display`. */
+  .area .loadingArt,
+  .viewer .controls {
+    display: none;
+  }
+
+  .area {
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+}

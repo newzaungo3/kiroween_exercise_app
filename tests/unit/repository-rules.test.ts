@@ -98,7 +98,7 @@ type PackageJson = {
 };
 
 type PackageLock = {
-  packages?: Record<string, PackageJson & { version?: string }>;
+  packages?: Record<string, PackageJson & { version?: string; license?: string }>;
 };
 
 function readJson<T>(relative: string): T {
@@ -180,6 +180,111 @@ function isBinary(buffer: Buffer): boolean {
   return buffer.includes(0);
 }
 
+// ADR 0004: 3D assets come from the Asset_Pipeline and live only under assets/
+// (sources) and public/assets/ (files the Site serves).
+const assetExtensions = ['.glb', '.gltf', '.blend', '.fbx', '.obj'];
+const assetFolders = ['assets/', 'public/assets/'];
+
+/** The 3D asset files in `files` that sit outside the asset folders. */
+function misplaced3dAssets(files: readonly string[]): string[] {
+  return files
+    .filter((file) => assetExtensions.includes(path.posix.extname(file).toLowerCase()))
+    .filter((file) => !assetFolders.some((folder) => file.startsWith(folder)));
+}
+
+// Requirement 13.8: licences that allow redistribution in an MIT Repository.
+const allowedLicences = new Set(['MIT', 'ISC', 'BSD-2-Clause', 'BSD-3-Clause', 'Apache-2.0']);
+
+/**
+ * Whether an SPDX licence expression allows redistribution here. `A OR B`
+ * passes when one option is allowed (the Builder may pick it); `A AND B`
+ * passes only when every part is allowed. An expression that mixes AND and
+ * OR, or nests parentheses, is rejected so a person reads it.
+ */
+function licenceAllowed(expression: string | undefined): boolean {
+  if (expression === undefined) return false;
+  const trimmed = expression.trim();
+  const inner = /^\(([^()]*)\)$/.exec(trimmed)?.[1] ?? trimmed;
+  if (/[()]/.test(inner)) return false;
+
+  const hasOr = / OR /.test(inner);
+  const hasAnd = / AND /.test(inner);
+  if (hasOr && hasAnd) return false;
+  if (hasOr) return inner.split(' OR ').some((part) => allowedLicences.has(part.trim()));
+  if (hasAnd) return inner.split(' AND ').every((part) => allowedLicences.has(part.trim()));
+  return allowedLicences.has(inner);
+}
+
+/** The `license` field of an installed package.json, including the legacy `{ type }` shape. */
+function installedLicence(manifest: unknown): string | undefined {
+  if (typeof manifest !== 'object' || manifest === null || !('license' in manifest)) return undefined;
+  const { license } = manifest;
+  if (typeof license === 'string') return license;
+  if (typeof license === 'object' && license !== null && 'type' in license && typeof license.type === 'string') {
+    return license.type;
+  }
+  return undefined;
+}
+
+type SteeringTree = { readonly paths: readonly string[]; readonly malformed: readonly string[] };
+
+const treeLine = /^((?:│ {3}| {4})*)(?:├──|└──) (\S+)(?:\s+#.*)?$/u;
+
+/**
+ * Repository paths listed in the first code block under "## Current state".
+ * Each `├──`/`└──` line is one entry; its depth is the number of four-character
+ * `│   ` or blank columns before it, and its parent is the nearest folder
+ * (a name ending in `/`) one level up. The `/` line is the Repository root.
+ * Lines that fit no tree shape are returned as malformed.
+ */
+function steeringTreePaths(markdown: string): SteeringTree {
+  const lines = markdown.split(/\r?\n/);
+  const heading = lines.findIndex((line) => line.trim() === '## Current state');
+  if (heading === -1) return { paths: [], malformed: ['no "## Current state" heading'] };
+
+  const open = lines.findIndex((line, index) => index > heading && line.trim().startsWith('```'));
+  const nextHeading = lines.findIndex((line, index) => index > heading && line.startsWith('## '));
+  if (open === -1 || (nextHeading !== -1 && open > nextHeading)) {
+    return { paths: [], malformed: ['no tree code block under "## Current state"'] };
+  }
+  const close = lines.findIndex((line, index) => index > open && line.trim().startsWith('```'));
+  if (close === -1) return { paths: [], malformed: ['unclosed tree code block'] };
+
+  const paths: string[] = [];
+  const malformed: string[] = [];
+  const parents: string[] = []; // parents[d] is the full path of the open folder at depth d
+  for (const line of lines.slice(open + 1, close)) {
+    if (line.trim() === '' || line.trim() === '/') continue;
+    const match = treeLine.exec(line);
+    const indent = match?.[1];
+    const name = match?.[2];
+    if (indent === undefined || name === undefined) {
+      malformed.push(line);
+      continue;
+    }
+
+    const depth = [...indent].length / 4;
+    if (depth > parents.length) {
+      malformed.push(line); // deeper than any open folder
+      continue;
+    }
+    parents.length = depth;
+    const full = `${parents.at(-1) ?? ''}${name}`;
+    paths.push(full);
+    if (name.endsWith('/')) parents.push(full);
+  }
+  return { paths, malformed };
+}
+
+/** Listed paths that are absent, or whose kind (folder `/` or file) does not match the working tree. */
+function absentPaths(paths: readonly string[]): string[] {
+  return paths.filter((listed) => {
+    const absolute = path.join(root, listed);
+    if (!existsSync(absolute)) return true;
+    return listed.endsWith('/') !== statSync(absolute).isDirectory();
+  });
+}
+
 describe('repository rule scanners', () => {
   it('the import scanner finds static, side-effect and dynamic imports', () => {
     const source = [
@@ -212,6 +317,95 @@ describe('repository rule scanners', () => {
     expect(findSecrets(fakeKeyHeader)).toEqual(['private key']);
     expect(findSecrets(fakePassword)).toEqual(['hardcoded password']);
     expect(findSecrets('The Coach cannot see you. Rattle your bones!')).toEqual([]);
+  });
+
+  it('the 3D asset scanner flags asset files outside the asset folders', () => {
+    const files = [
+      'assets/coach/coach_grave_rise.glb',
+      'assets/coach/coach_grave_rise.blend',
+      'public/assets/coach/coach_grave_rise.glb',
+      'public/assets/coach/stills/grave_rise_front.png',
+      'src/viewer/scene/coach.glb',
+      'tests/unit/fixture.GLTF',
+      'public/coach.fbx',
+      'docs/model.obj',
+      'src/viewer/scene/coach-asset.ts',
+    ];
+    expect(misplaced3dAssets(files)).toEqual([
+      'src/viewer/scene/coach.glb',
+      'tests/unit/fixture.GLTF',
+      'public/coach.fbx',
+      'docs/model.obj',
+    ]);
+  });
+
+  it('the licence check accepts allowed SPDX expressions only', () => {
+    expect(['MIT', 'ISC', 'BSD-2-Clause', 'BSD-3-Clause', 'Apache-2.0'].every(licenceAllowed)).toBe(true);
+    expect(licenceAllowed('(MIT OR CC0-1.0)')).toBe(true);
+    expect(licenceAllowed('MIT AND ISC')).toBe(true);
+
+    expect(licenceAllowed(undefined)).toBe(false);
+    expect(licenceAllowed('MPL-2.0')).toBe(false);
+    expect(licenceAllowed('0BSD')).toBe(false);
+    expect(licenceAllowed('CC-BY-4.0')).toBe(false);
+    expect(licenceAllowed('Apache-2.0 AND LGPL-3.0-or-later')).toBe(false);
+    expect(licenceAllowed('(MIT OR GPL-2.0) AND MPL-2.0')).toBe(false);
+
+    expect(installedLicence({ license: 'MIT' })).toBe('MIT');
+    expect(installedLicence({ license: { type: 'ISC' } })).toBe('ISC');
+    expect(installedLicence({ name: 'no-licence' })).toBeUndefined();
+  });
+
+  it('the steering tree parser resolves nested entries and flags absent paths', () => {
+    const fixture = [
+      '# Project Structure',
+      '',
+      '## Current state',
+      '',
+      'Tracked files:',
+      '',
+      '```',
+      '/',
+      '├── docs/',
+      '│   ├── adr/                # Architecture decision records',
+      '│   └── agents/',
+      '├── src/',
+      '│   ├── app/                # Route files',
+      '│   │   └── exercises/[slug]/  # Exercise detail route',
+      '│   └── no-such-folder/     # absent on purpose',
+      '├── no-such-file.md',
+      '└── package.json',
+      '```',
+      '',
+      '## Proposed app layout',
+      '',
+      '```',
+      'src/',
+      '└── later/',
+      '```',
+    ].join('\n');
+
+    const tree = steeringTreePaths(fixture);
+    expect(tree.malformed).toEqual([]);
+    expect(tree.paths).toEqual([
+      'docs/',
+      'docs/adr/',
+      'docs/agents/',
+      'src/',
+      'src/app/',
+      'src/app/exercises/[slug]/',
+      'src/no-such-folder/',
+      'no-such-file.md',
+      'package.json',
+    ]);
+    expect(absentPaths(tree.paths)).toEqual(['src/no-such-folder/', 'no-such-file.md']);
+
+    // A file listed as a folder is flagged too.
+    expect(absentPaths(['package.json/', 'src'])).toEqual(['package.json/', 'src']);
+
+    const broken = ['## Current state', '```', '├── src/', '│   │   └── too-deep/', 'stray text', '```'].join('\n');
+    expect(steeringTreePaths(broken).malformed).toEqual(['│   │   └── too-deep/', 'stray text']);
+    expect(steeringTreePaths('# No state here').malformed).toEqual(['no "## Current state" heading']);
   });
 });
 
@@ -257,7 +451,7 @@ describe('repository rules', () => {
     expect(scriptFiles).toEqual([]);
   });
 
-  it('components and the Strings_Module live under src/ui', () => {
+  it('source files live under src/app, src/ui, src/catalog and src/viewer', () => {
     const srcFiles = walk('src');
 
     // src/app holds only route files, globals.css and icon.svg.
@@ -268,10 +462,12 @@ describe('repository rules', () => {
       .filter((file) => file !== 'src/app/globals.css' && file !== 'src/app/icon.svg');
     expect(strayAppFiles).toEqual([]);
 
-    // Everything else under src/ sits in src/ui, apart from the tracked Next.js type references.
+    // Everything else under src/ sits in src/ui (components), src/catalog (the Catalog)
+    // or src/viewer (the Viewer), apart from the tracked Next.js type references.
+    const allowedPrefixes = ['src/app/', 'src/ui/', 'src/catalog/', 'src/viewer/'];
     const knownExceptions = ['src/types/next.d.ts'];
     const strayFiles = srcFiles
-      .filter((file) => !file.startsWith('src/app/') && !file.startsWith('src/ui/'))
+      .filter((file) => !allowedPrefixes.some((prefix) => file.startsWith(prefix)))
       .filter((file) => !knownExceptions.includes(file));
     expect(strayFiles).toEqual([]);
 
@@ -443,5 +639,59 @@ describe('repository rules', () => {
     expect(agentDocs.length).toBeGreaterThan(0);
     expect(agentDocs.filter((file) => !tracked.includes(file))).toEqual([]);
     expect(gitIgnored(['CONTEXT.md', ...adrs, ...agentDocs])).toEqual([]);
+  });
+
+  // ADR 0004: app code consumes 3D assets but never adds them. Untracked but
+  // not ignored files count too, so a stray export is caught before a commit.
+  it('app code adds no 3D asset files', slow, () => {
+    const candidates = [...new Set([...trackedFiles(), ...untrackedUnignoredFiles()])];
+    expect(candidates).toContain('package.json');
+    expect(misplaced3dAssets(candidates)).toEqual([]);
+  });
+
+  // Requirement 13.8 covers the dependencies declared in package.json, so only
+  // direct dependencies and devDependencies are checked. Transitive packages
+  // are chosen by those dependencies and are not held to this list.
+  it('every dependency is pinned exactly under an allowed licence', () => {
+    const pkg = readJson<PackageJson>('package.json');
+    const lockPackages = readJson<PackageLock>('package-lock.json').packages ?? {};
+    const declared = Object.entries({ ...pkg.dependencies, ...pkg.devDependencies });
+    expect(declared.length).toBeGreaterThan(0);
+
+    const problems = declared.flatMap(([name, version]) => {
+      const found: string[] = [];
+      if (!/^\d+\.\d+\.\d+$/.test(version)) found.push(`${name}: version "${version}" is not exact`);
+
+      const locked = lockPackages[`node_modules/${name}`];
+      if (locked?.version !== version) {
+        found.push(`${name}: lockfile has ${locked?.version ?? 'no entry'}, package.json has ${version}`);
+      }
+      if (!licenceAllowed(locked?.license)) {
+        found.push(`${name}: lockfile licence ${locked?.license ?? 'missing'} is not allowed`);
+      }
+
+      const manifestPath = path.join(root, 'node_modules', name, 'package.json');
+      const installed = existsSync(manifestPath)
+        ? installedLicence(JSON.parse(readFileSync(manifestPath, 'utf8')) as unknown)
+        : undefined;
+      if (!licenceAllowed(installed)) {
+        found.push(`${name}: installed licence ${installed ?? 'missing'} is not allowed`);
+      }
+      return found;
+    });
+    expect(problems).toEqual([]);
+  });
+
+  it('the structure steering lists only paths that exist', () => {
+    const tree = steeringTreePaths(read('.kiro/steering/structure.md'));
+    expect(tree.malformed).toEqual([]);
+    expect(tree.paths.length).toBeGreaterThan(0);
+    expect(absentPaths(tree.paths)).toEqual([]);
+
+    // Module folders are listed once they exist, and only then.
+    for (const folder of ['src/catalog/', 'src/viewer/', 'public/assets/']) {
+      const exists = existsSync(path.join(root, folder));
+      expect({ folder, listed: tree.paths.includes(folder) }).toEqual({ folder, listed: exists });
+    }
   });
 });

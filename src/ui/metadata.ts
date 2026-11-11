@@ -7,6 +7,9 @@
  */
 import type { Metadata, Viewport } from 'next';
 
+import type { ExerciseEntry } from '@/catalog';
+
+import { exerciseTitle } from './exercises/labels';
 import { type SectionId, sectionTitle } from './sections';
 import { t } from './strings';
 import { colors } from './theme/tokens';
@@ -29,6 +32,11 @@ export function homeMetadata(): Metadata {
 /** Metadata for a Section's screen. */
 export function sectionMetadata(id: SectionId): Metadata {
   return { title: sectionTitle(id) };
+}
+
+/** Metadata for an Exercise's Exercise_Detail_Screen. */
+export function exerciseMetadata(exercise: ExerciseEntry): Metadata {
+  return { title: exerciseTitle(exercise) };
 }
 
 /** Metadata for the not-found screen. */

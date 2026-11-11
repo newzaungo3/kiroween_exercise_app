@@ -1,0 +1,111 @@
+/*
+ * Exercise_List_Screen styles.
+ * Colours come only from Halloween_Theme token variables; sizes are in rem so
+ * the browser's text-size setting scales the layout. Text wraps instead of
+ * clipping (Requirement 12.5).
+ */
+
+/* Section heading, same look as the Placeholder_Screen heading. */
+.title {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+/* Single column with 12 px between entries, like the Home_Navigation. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+
+/* Exercise_List_Entry: the Navigation_Entry look, full width and at least
+   48 px tall. The four parts wrap onto further lines when space runs out. */
+.entry {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.75rem;
+  row-gap: 0.25rem;
+  inline-size: 100%;
+  min-block-size: 3rem;
+  padding-block: 0.625rem;
+  padding-inline: 1rem;
+  border: 0.125rem solid var(--color-orange);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.3;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.entry:hover .name {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+/* Visible keyboard focus with at least 3:1 contrast. */
+.entry:focus-visible {
+  outline: 0.1875rem solid var(--color-focus);
+  outline-offset: 0.1875rem;
+}
+
+/* Spooky_Name: on its own line, in the Navigation_Entry orange. */
+.name {
+  flex-basis: 100%;
+  color: var(--color-orange);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.realName {
+  color: var(--color-text);
+}
+
+/* Bold text, not a colour, sets the Difficulty apart (text on surface is a
+   tested 4.5:1 pair; purple on surface is not). */
+.difficulty {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.muscles {
+  color: var(--color-text-muted);
+}
+
+/* Target size at least 3rem × 3rem, same as the Placeholder_Screen link. */
+.backHome {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 3rem;
+  min-inline-size: 3rem;
+  padding-block: 0.5rem;
+  padding-inline: 1rem;
+  border: 0.125rem solid var(--color-orange);
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  color: var(--color-orange);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  overflow-wrap: anywhere;
+}
+
+.backHome:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}

@@ -1,9 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { sectionIds, sectionPath } from '@/ui/sections';
-
-/** Every screen of the Site: the Home_Screen, the five Placeholder_Screens and the not-found screen. */
-const screens: readonly string[] = ['/', ...sectionIds.map(sectionPath), '/no-such-page'];
+import { screens } from './support/screens';
 
 /** Selects every Decoration (bats and cobwebs). */
 const decorationSelector = '[data-decoration]';
@@ -34,7 +31,12 @@ function intersects(a: Box, b: Box): boolean {
 /**
  * Takes one consistent snapshot of every Decoration box and every box it must
  * not cover: page headings and links (on the Home_Screen the links are the
- * Navigation_Entries; elsewhere they are the links back home).
+ * Navigation_Entries; on the Exercise_List_Screen the Exercise_List_Entries
+ * and the link back home; on the Exercise_Detail_Screen the link back to the
+ * Exercise_List_Screen; elsewhere the links back home). The Decorations sit
+ * in an in-flow band above `<main>` and every box is read in the same
+ * viewport coordinates, so the check also holds on screens taller than the
+ * viewport, such as the Exercise_Detail_Screen.
  */
 async function snapshotBoxes(
   page: Page,

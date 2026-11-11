@@ -3,13 +3,20 @@ import { expect, type Page, type Request, type Response, test } from '@playwrigh
 import { sectionIds, sectionName, sectionPath } from '@/ui/sections';
 import { locales } from '@/ui/strings';
 
-const en = locales.en;
+import { exerciseDetailScreens, screens } from './support/screens';
 
-/** The Home_Screen, every Placeholder_Screen and the not-found screen. */
-const screens = ['/', ...sectionIds.map((id) => sectionPath(id)), '/no-such-page'] as const;
+const en = locales.en;
 
 /** How long to keep recording after the page's load event (Requirement 10.4). */
 const afterLoadMs = 5_000;
+
+/**
+ * The name of a Three.js shader chunk. It survives minification, so a script
+ * body that contains it carries the 3D rendering library.
+ */
+const threeShaderChunkName = 'skinning_pars_vertex';
+
+const detailScreens: ReadonlySet<string> = new Set(exerciseDetailScreens);
 
 const allowedMethods = new Set(['GET', 'HEAD']);
 
@@ -81,6 +88,45 @@ async function expectNoBackendTraffic(page: Page, traffic: Traffic, siteOrigin: 
   expect(await page.context().cookies(), 'cookies in the browser').toEqual([]);
 }
 
+/**
+ * A JavaScript response: a `<script>` load or a prefetch of a `.js` chunk,
+ * which the browser may report with another resource type.
+ */
+function isScriptResponse(response: Response): boolean {
+  const request = response.request();
+  return request.resourceType() === 'script' || new URL(request.url()).pathname.endsWith('.js');
+}
+
+/** Records every JavaScript response and finds the ones that carry Three.js. */
+function recordScripts(page: Page): {
+  readonly count: () => number;
+  readonly withThree: () => Promise<readonly string[]>;
+} {
+  const responses: Response[] = [];
+  const carriesThree = new Map<Response, Promise<boolean>>();
+  page.on('response', (response) => {
+    if (isNetworkRequest(response.request()) && isScriptResponse(response)) {
+      responses.push(response);
+    }
+  });
+  const check = (response: Response): Promise<boolean> => {
+    let result = carriesThree.get(response);
+    if (result === undefined) {
+      result = response.text().then((body) => body.includes(threeShaderChunkName));
+      carriesThree.set(response, result);
+    }
+    return result;
+  };
+  return {
+    count: () => responses.length,
+    withThree: async () => {
+      const snapshot = [...responses];
+      const flags = await Promise.all(snapshot.map(check));
+      return snapshot.filter((_, index) => flags[index]).map((response) => response.url());
+    },
+  };
+}
+
 function siteOriginOf(baseURL: string | undefined): string {
   if (baseURL === undefined) {
     throw new Error('The Playwright config must set baseURL.');
@@ -101,6 +147,42 @@ test.describe('No backend', () => {
       await page.waitForTimeout(afterLoadMs);
 
       await expectNoBackendTraffic(page, traffic, siteOrigin);
+    });
+  }
+
+  // "3D code loads only on the Exercise_Detail_Screen" (Requirement 13.6),
+  // checked one screen per test so each starts with an empty browser cache.
+  for (const screen of screens) {
+    const isDetailScreen = detailScreens.has(screen);
+    const title = isDetailScreen
+      ? `3D code loads only on the Exercise_Detail_Screen: ${screen} loads it`
+      : `3D code loads only on the Exercise_Detail_Screen: ${screen} does not load it`;
+
+    test(title, async ({ page }) => {
+      const scripts = recordScripts(page);
+
+      await page.goto(screen, { waitUntil: 'load' });
+
+      if (isDetailScreen) {
+        // The 3D chunk is requested only after the WebGL2 probe passes and
+        // Scene3D mounts, so wait for the Viewer_Area to leave `checking`
+        // and then for the chunk itself. Neither needs the delivered
+        // Coach_Asset: Scene3D mounts as soon as loading starts.
+        await expect(page.locator('[data-viewer-phase]')).not.toHaveAttribute(
+          'data-viewer-phase',
+          'checking',
+        );
+        await expect
+          .poll(() => scripts.withThree(), { message: `${screen} loads the 3D chunk`, timeout: 20_000 })
+          .not.toEqual([]);
+        return;
+      }
+
+      // Keep recording a while, so link prefetches are caught too.
+      await page.waitForTimeout(afterLoadMs);
+      // Without at least one script the check below would pass vacuously.
+      expect(scripts.count(), `scripts loaded by ${screen}`).toBeGreaterThan(0);
+      expect(await scripts.withThree(), `scripts on ${screen} that carry the 3D rendering library`).toEqual([]);
     });
   }
 

@@ -15,6 +15,15 @@ export const colors = {
   focus: '#ffb366', // focus indicator
   bat: '#a66dff', // bat Decoration
   web: '#9a8bb3', // cobweb Decoration
+  onAccent: '#0b0710', // label on the selected Playback_Speed (orange fill); equals bg
+  sceneSky: '#120b1f', // Graveyard_Scene background and fog colour
+  sceneGround: '#231a2e', // ground disc
+  sceneGravestone: '#6d6478', // gravestones
+  sceneMoon: '#f4ecd0', // moon disc
+  sceneMoonGlow: '#3a2f55', // glow disc behind the moon
+  sceneAmbientSky: '#8f86b8', // hemisphere light, sky colour
+  sceneAmbientGround: '#1a1224', // hemisphere light, ground colour
+  sceneMoonlight: '#d9d4ff', // directional light
 } as const;
 
 export type ColorToken = keyof typeof colors;

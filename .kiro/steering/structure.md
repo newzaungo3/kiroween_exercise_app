@@ -2,7 +2,7 @@
 
 ## Current state
 
-Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js site with a Home screen, five placeholder Section screens, a not-found screen, and Vitest and Playwright harnesses. Tracked files in the Repository:
+Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js site with a Home screen, placeholder Section screens, a not-found screen, and Vitest and Playwright harnesses. Ticket `03-exercise-page-3d-coach` added the Catalog, the Viewer, the Exercise list screen and the Exercise detail screen, where the 3D Coach demonstrates each Exercise. Tracked files in the Repository:
 
 ```
 /
@@ -12,10 +12,13 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 │   └── agents/             # Agent guides: domain docs, issue tracker, triage labels
 ├── src/
 │   ├── app/                # Next.js App Router route files, globals.css, icon.svg
+│   │   └── exercises/[slug]/  # Exercise detail route, one prerendered page per Catalog slug
+│   ├── catalog/            # Static Exercise content and validateCatalog
 │   ├── types/              # Tracked Next.js type references (next.d.ts)
-│   └── ui/                 # Screens, Decorations, fonts, theme tokens, central strings module
+│   ├── ui/                 # Screens, Decorations, fonts, theme tokens, central strings module
+│   └── viewer/             # Viewer island, pure camera/playback logic, R3F scene, still fallback
 ├── tests/
-│   ├── e2e/                # Playwright specs (phone and laptop projects)
+│   ├── e2e/                # Playwright specs (phone and laptop projects), support/ helpers
 │   └── unit/               # Vitest tests, support/ helpers, type-check fixtures
 ├── .gitignore
 ├── CONTEXT.md              # Domain glossary
@@ -33,7 +36,7 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 
 ## Proposed app layout
 
-Target for later tickets, derived from the spec's modules. `src/app/`, `src/ui/`, `tests/unit/`, `tests/e2e/` and `LICENSE` exist now; `catalog/`, `workout-engine/`, `progress-store/`, `viewer/` and `public/assets/` arrive with the tickets that need them. Update "Current state" whenever one is added.
+Target for later tickets, derived from the spec's modules. `src/app/`, `src/catalog/`, `src/ui/`, `src/viewer/`, `tests/unit/`, `tests/e2e/` and `LICENSE` exist now; `workout-engine/`, `progress-store/` and `public/assets/` arrive with the tickets that need them. Update "Current state" whenever one is added.
 
 ```
 src/

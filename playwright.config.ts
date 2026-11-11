@@ -4,6 +4,9 @@ import { defineConfig } from '@playwright/test';
 const port = 3100;
 const baseURL = `http://localhost:${port}`;
 
+// Software WebGL so the Viewer renders in headless Chromium without a GPU.
+const softwareWebGl = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
+
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.spec.ts',
@@ -25,6 +28,7 @@ export default defineConfig({
         isMobile: true,
         hasTouch: true,
         deviceScaleFactor: 2,
+        launchOptions: { args: softwareWebGl },
       },
     },
     {
@@ -32,6 +36,7 @@ export default defineConfig({
       use: {
         browserName: 'chromium',
         viewport: { width: 1440, height: 900 },
+        launchOptions: { args: softwareWebGl },
       },
     },
   ],

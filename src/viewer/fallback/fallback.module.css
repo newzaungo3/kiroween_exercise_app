@@ -1,0 +1,117 @@
+/*
+ * Loading art and Still_Fallback of the Viewer.
+ * Colours come only from Halloween_Theme token variables.
+ */
+
+/* ---------------------------------------------------------------------------
+ * Loading art (Loading_State, Requirement 9.1)
+ * ------------------------------------------------------------------------- */
+
+.loadingArt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.loadingSvg {
+  inline-size: min(60%, 9rem);
+  block-size: auto;
+}
+
+.ground {
+  color: var(--color-scene-ground);
+}
+
+.gravestone {
+  color: var(--color-scene-gravestone);
+}
+
+.moon {
+  color: var(--color-scene-moon);
+}
+
+.skull {
+  color: var(--color-text);
+  /* Transform-only rise and sink out of the grave: nothing flashes. */
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: skull-rise 2.4s ease-in-out infinite alternate;
+}
+
+.eye {
+  color: var(--color-bg);
+}
+
+@keyframes skull-rise {
+  from {
+    transform: translateY(0.5rem);
+  }
+  to {
+    transform: translateY(-0.25rem);
+  }
+}
+
+/* Reduced motion: the Loading_State shows no animation (Requirement 11.5). */
+@media (prefers-reduced-motion: reduce) {
+  .skull {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Still_Fallback (Requirements 9.9, 9.11)
+ * ------------------------------------------------------------------------- */
+
+.stills {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 6rem), 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+/* Still_Images are 3:4 portrait renders. */
+.image {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  background: var(--color-scene-sky);
+  border-radius: 0.25rem;
+}
+
+/* Shown in place of a Still_Image that failed to load. The box keeps the
+   image's shape but grows with large text, so the text is never clipped. */
+.imageError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  aspect-ratio: 3 / 4;
+  margin: 0;
+  padding: 0.5rem;
+  border: 0.125rem solid var(--color-text-muted);
+  border-radius: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.caption {
+  color: var(--color-text);
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}

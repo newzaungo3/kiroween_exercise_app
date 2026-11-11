@@ -1,0 +1,91 @@
+/*
+ * Playback_Controls and Camera_Controls.
+ *
+ * - Colours come only from Halloween_Theme token variables.
+ * - Every button is at least 2.75rem × 2.75rem (44 CSS px at the default
+ *   text size) and rows keep 0.5rem (8 CSS px) between buttons
+ *   (Requirement 12.3).
+ * - Labels wrap and buttons grow, so 200 % text never clips or overlaps
+ *   (Requirement 12.5).
+ * - The focus indicator comes from `button:focus-visible` in globals.css
+ *   (Requirement 12.4).
+ */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-inline-size: 2.75rem;
+  min-block-size: 2.75rem;
+  margin: 0;
+  padding: 0.375rem 0.75rem;
+  border: 0.125rem solid var(--color-orange);
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.button:disabled {
+  border-color: var(--color-text-muted);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* Play/Pause keeps one width whether it says Play or Pause, so the row does not jump. */
+.playPause {
+  min-inline-size: 6.5rem;
+}
+
+/* Icon-only camera pad buttons: square, the icon centred. */
+.iconButton {
+  padding: 0.375rem;
+}
+
+/* Selected Playback_Speed: filled background, bold text and a check mark
+   (Requirement 8.7: not colour alone). */
+.button[aria-pressed='true'] {
+  background: var(--color-orange);
+  color: var(--color-on-accent);
+  font-weight: 700;
+}
+
+.button[aria-pressed='true']:disabled {
+  border-color: var(--color-text-muted);
+  background: var(--color-text-muted);
+  color: var(--color-on-accent);
+}
+
+.icon {
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+.checkIcon {
+  flex: none;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}

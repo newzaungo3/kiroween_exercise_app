@@ -247,12 +247,37 @@ function cssDeclarations(css: string): CssDeclaration[] {
 const hexColour = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})(?![0-9a-z_-])/i;
 const colourFunction = /(?<![\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix|light-dark)\(/i;
 
-/** CSS and style-object properties that take a colour (kebab or camel case). */
+/**
+ * CSS, style-object and Three.js material properties that take a colour
+ * (kebab or camel case). `emissive` and `specular` are Three.js material
+ * colours.
+ */
 const colourProperty =
-  /color|background|border|outline|fill|stroke|shadow|caret|accent|column-rule|columnRule|decoration|emphasis|flood|lighting|scrollbar/i;
+  /color|background|border|outline|fill|stroke|shadow|caret|accent|column-rule|columnRule|decoration|emphasis|flood|lighting|scrollbar|emissive|specular/i;
 
-/** JSX attributes that take a colour. */
-const colourAttributes = new Set(['fill', 'stroke', 'color', 'stopColor', 'floodColor', 'lightingColor', 'background', 'bgcolor']);
+/** JSX attributes that take a colour, including React Three Fiber material and light props. */
+const colourAttributes = new Set([
+  'fill',
+  'stroke',
+  'color',
+  'stopColor',
+  'floodColor',
+  'lightingColor',
+  'background',
+  'bgcolor',
+  'emissive',
+  'specular',
+  'groundColor',
+]);
+
+/**
+ * A 24-bit hex number such as `0x120b1f`, the way Three.js code writes a
+ * colour. Numeric separators are removed before the test.
+ */
+const hexColourNumber = /^0x[0-9a-f]{6}$/i;
+
+/** Three.js `Color` methods that take a colour string. */
+const colourStringMethods = new Set(['setStyle', 'setColorName']);
 
 /**
  * The CSS named colours. `transparent` and `currentColor` are allowed, so
@@ -315,17 +340,49 @@ function isInsideStyleAttribute(node: ts.Node): boolean {
   return false;
 }
 
+/** Every string or template literal text inside a node, at any depth. */
+function nestedLiteralTexts(node: ts.Node): string[] {
+  const texts: string[] = [];
+  const visit = (child: ts.Node): void => {
+    if (ts.isStringLiteral(child) || ts.isNoSubstitutionTemplateLiteral(child)) texts.push(child.text);
+    ts.forEachChild(child, visit);
+  };
+  visit(node);
+  return texts;
+}
+
+/** The name of the function a call or `new` expression invokes (`Color`, `setStyle`, …). */
+function calleeName(node: ts.CallExpression | ts.NewExpression): string | undefined {
+  const callee = node.expression;
+  if (ts.isIdentifier(callee)) return callee.text;
+  if (ts.isPropertyAccessExpression(callee)) return callee.name.text;
+  return undefined;
+}
+
 /**
- * Colours in a TypeScript or TSX file that do not come from the tokens: hex
- * colours or colour functions in any string or template literal, and named
- * colours in colour attributes (`fill`, `stroke`, …) or colour properties of
- * a `style` object.
+ * Colours in a TypeScript or TSX file that do not come from the tokens:
+ * - hex colours or colour functions in any string or template literal;
+ * - 24-bit hex numbers (`0x120b1f`), as Three.js colours are often written;
+ * - named colours in colour attributes (`fill`, `stroke`, `color`, …), in
+ *   React Three Fiber `args` arrays (`<color args={['black']} />`), in
+ *   colour properties of a `style` object or of any object literal with a
+ *   plain identifier key (Three.js material parameters such as
+ *   `{ color: 'gray' }`), and in `new Color(…)`, `setStyle(…)` and
+ *   `setColorName(…)` arguments.
+ *
+ * Quoted object keys outside `style` are skipped, so Strings_Module entries
+ * whose identifier mentions a colour are not read as colours.
  */
 function findCodeColours(file: string, text: string): Finding[] {
   const source = parseTypeScript(file, text);
   const findings: Finding[] = [];
   const report = (node: ts.Node, snippet: string) => {
     findings.push({ file, line: lineOf(source, node.getStart(source)), snippet });
+  };
+  const reportNamed = (node: ts.Node, label: string, values: readonly string[]) => {
+    for (const value of values) {
+      if (namedColoursIn(value).length > 0) report(node, `${label}: ${value}`);
+    }
   };
 
   const visit = (node: ts.Node): void => {
@@ -337,16 +394,28 @@ function findCodeColours(file: string, text: string): Finding[] {
       ts.isTemplateTail(node)
     ) {
       if (hasColourLiteral(node.text)) report(node, node.text);
+    } else if (ts.isNumericLiteral(node)) {
+      const written = node.getText(source).replace(/_/g, '');
+      if (hexColourNumber.test(written)) report(node, written);
     } else if (ts.isJsxAttribute(node) && colourAttributes.has(attributeName(node))) {
       for (const value of attributeTexts(node)) {
         if (namedColoursIn(value).length > 0) report(node, `${attributeName(node)}="${value}"`);
       }
-    } else if (ts.isPropertyAssignment(node) && isInsideStyleAttribute(node)) {
+    } else if (ts.isJsxAttribute(node) && attributeName(node) === 'args' && node.initializer !== undefined) {
+      reportNamed(node, 'args', nestedLiteralTexts(node.initializer));
+    } else if (
+      ts.isPropertyAssignment(node) &&
+      (ts.isIdentifier(node.name) || isInsideStyleAttribute(node))
+    ) {
       const name = propertyName(node.name);
       if (name !== undefined && colourProperty.test(name)) {
-        for (const value of literalTexts(node.initializer)) {
-          if (namedColoursIn(value).length > 0) report(node, `${name}: ${value}`);
-        }
+        reportNamed(node, name, literalTexts(node.initializer));
+      }
+    } else if (ts.isNewExpression(node) || ts.isCallExpression(node)) {
+      const name = calleeName(node);
+      const takesColour = ts.isNewExpression(node) ? name === 'Color' : colourStringMethods.has(name ?? '');
+      if (name !== undefined && takesColour) {
+        reportNamed(node, name, (node.arguments ?? []).flatMap((argument) => literalTexts(argument)));
       }
     }
     ts.forEachChild(node, visit);
@@ -429,11 +498,31 @@ function findAbsoluteRootFontSize(file: string, css: string): Finding[] {
 // The rules, checked on the real files
 // ---------------------------------------------------------------------------
 
+/**
+ * Folder and extension pairs the scans must reach, so a narrowed file list
+ * cannot let the Catalog or the Viewer pass unchecked.
+ */
+function missingCoverage(
+  sources: readonly SourceFile[],
+  required: readonly (readonly [folder: string, extension: string])[],
+): string[] {
+  return required
+    .filter(([folder, extension]) => !sources.some(({ file }) => file.startsWith(folder) && file.endsWith(extension)))
+    .map(([folder, extension]) => `${folder}*${extension}`);
+}
+
 describe('source rules', () => {
   it('components show no user-facing text outside the Strings_Module', () => {
-    const findings = readSources(['src'], ['.ts', '.tsx'])
-      .filter(({ file }) => file !== stringsModule)
-      .flatMap(({ file, text }) => findUserFacingText(file, text));
+    const sources = readSources(['src'], ['.ts', '.tsx']).filter(({ file }) => file !== stringsModule);
+    const findings = sources.flatMap(({ file, text }) => findUserFacingText(file, text));
+    expect(
+      missingCoverage(sources, [
+        ['src/catalog/', '.ts'],
+        ['src/viewer/', '.ts'],
+        ['src/viewer/', '.tsx'],
+        ['src/ui/exercises/', '.tsx'],
+      ]),
+    ).toEqual([]);
     expect(describeFindings(findings)).toEqual([]);
   });
 
@@ -442,7 +531,16 @@ describe('source rules', () => {
     const findings = sources.flatMap(({ file, text }) =>
       file.endsWith('.css') ? findCssColours(file, text) : findCodeColours(file, text),
     );
-    expect(sources.some(({ file }) => file.endsWith('.css'))).toBe(true);
+    expect(
+      missingCoverage(sources, [
+        ['src/', '.css'],
+        ['src/catalog/', '.ts'],
+        ['src/viewer/', '.ts'],
+        ['src/viewer/', '.tsx'],
+        ['src/viewer/', '.css'],
+        ['src/ui/exercises/', '.css'],
+      ]),
+    ).toEqual([]);
     expect(describeFindings(findings)).toEqual([]);
   });
 
@@ -544,6 +642,93 @@ describe('source-rule scanners', () => {
 
     const tsx = `export const Good = () => <path className="red" href="#main" fill="currentColor" stroke="none" style={{ color: 'var(--color-text)' }} />;`;
     expect(findCodeColours('fixture.tsx', tsx)).toEqual([]);
+  });
+
+  it('the user-facing text scanner passes word separators and React Three Fiber props', () => {
+    const fixture = lines(
+      "import { t } from '../strings';",
+      'export function Entry({ names }: { names: readonly string[] }) {',
+      '  return (',
+      '    <a href="/exercises/grave-rise">',
+      "      <span>{t('exercise.graveRise.name')}</span>{' '}",
+      "      <span>{names.join(' · ')}</span>{' · '}",
+      '      <Canvas frameloop="demand" flat dpr={[1, 2]} shadows={false} gl={{ powerPreference: \'low-power\' }} aria-hidden>',
+      '        <color attach="background" args={[colors.sceneSky]} />',
+      '        <fog attach="fog" args={[colors.sceneSky, 8, 22]} />',
+      '      </Canvas>',
+      '    </a>',
+      '  );',
+      '}',
+    );
+    expect(findUserFacingText('fixture.tsx', fixture)).toEqual([]);
+  });
+
+  it('the colour scanner flags colour literals in React Three Fiber JSX and Three.js code', () => {
+    const tsx = lines(
+      'export const Bad = () => (',
+      '  <>',
+      "    <color attach=\"background\" args={['#120b1f']} />",
+      "    <fog attach=\"fog\" args={['black', 8, 22]} />",
+      '    <directionalLight color={0xd9d4ff} intensity={1.2} />',
+      '    <hemisphereLight groundColor="indigo" />',
+      '    <meshStandardMaterial emissive="purple" />',
+      '  </>',
+      ');',
+    );
+    expect(snippets(findCodeColours('fixture.tsx', tsx))).toEqual([
+      '#120b1f',
+      'args: black',
+      '0xd9d4ff',
+      'groundColor="indigo"',
+      'emissive="purple"',
+    ]);
+
+    const code = lines(
+      "import { Color, MeshBasicMaterial, MeshLambertMaterial } from 'three';",
+      "export const moon = new MeshBasicMaterial({ color: '#f4ecd0' });",
+      'export const stone = new MeshLambertMaterial({ color: 0x6d_64_78 });',
+      "export const piece = { role: 'ground', color: 'gray' };",
+      "export const sky = new Color('midnightblue');",
+      "sky.setStyle('rgb(0 0 0)');",
+      "sky.setColorName('ivory');",
+    );
+    expect(snippets(findCodeColours('fixture.ts', code))).toEqual([
+      '#f4ecd0',
+      '0x6d6478',
+      'color: gray',
+      'Color: midnightblue',
+      'rgb(0 0 0)',
+      'setColorName: ivory',
+    ]);
+  });
+
+  it('the colour scanner passes token colours in React Three Fiber JSX and Three.js code', () => {
+    const tsx = lines(
+      "import { colors } from '@/ui/theme/tokens';",
+      'export const Good = ({ piece }: { piece: { color: string } }) => (',
+      '  <Canvas frameloop="demand" flat gl={{ antialias: true, alpha: false, powerPreference: \'low-power\' }}>',
+      '    <color attach="background" args={[colors.sceneSky]} />',
+      '    <fog attach="fog" args={[colors.sceneSky, 8, 22]} />',
+      '    <hemisphereLight args={[colors.sceneAmbientSky, colors.sceneAmbientGround, 0.9]} />',
+      '    <directionalLight position={[-3, 6, -8]} color={colors.sceneMoonlight} intensity={1.2} />',
+      '    <meshBasicMaterial color={piece.color} fog={false} transparent opacity={0.7} />',
+      '    <boxGeometry args={[0.6, 0.75, 0.16]} />',
+      '  </Canvas>',
+      ');',
+    );
+    expect(findCodeColours('fixture.tsx', tsx)).toEqual([]);
+
+    const code = lines(
+      "import { Color, MeshLambertMaterial } from 'three';",
+      "import { colors } from '@/ui/theme/tokens';",
+      'export const stone = new MeshLambertMaterial({ color: colors.sceneGravestone });',
+      "export const piece = { role: 'moonGlow', color: colors.sceneMoonGlow, opacity: 0.7, fog: false };",
+      'export const sky = new Color(colors.sceneSky);',
+      'export const glbMagic = 0x46546c67;',
+      'export const mask = 0xff;',
+      "export const strings = { 'coach.color.black.name': 'Black' };",
+    );
+    expect(findCodeColours('fixture.ts', code)).toEqual([]);
   });
 
   it('the `any` scanner flags an `any` with no comment on its line or the line before', () => {

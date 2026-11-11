@@ -3,10 +3,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { locales } from '@/ui/strings';
 import { colors } from '@/ui/theme/tokens';
 
-const en = locales.en;
+import { screens } from './support/screens';
 
-/** The Home_Screen, the five Placeholder_Screens and the not-found screen. */
-const screens = ['/', '/exercises', '/stretches', '/routines', '/crypt', '/history', '/no-such-page'];
+const en = locales.en;
 
 /** Sample widths covering the fluid (< 768 px) and centred (≥ 768 px) layouts (Requirement 5.7). */
 const sampleWidths = [320, 360, 414, 768, 1024, 1440, 1920];
@@ -206,8 +205,10 @@ test.describe('Phone-first responsive layout', () => {
     }
   });
 
-  test('no screen scrolls sideways from 320 to 1920 px', async ({ page }) => {
-    for (const width of sampleWidths) {
+  // One test per sample width, so each width has its own time budget: with
+  // the Exercise screens there are too many navigations for one test.
+  for (const width of sampleWidths) {
+    test(`no screen scrolls sideways from 320 to 1920 px: ${width} px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
       for (const path of screens) {
         await openScreen(page, path);
@@ -215,8 +216,8 @@ test.describe('Phone-first responsive layout', () => {
         expect(size.scrollWidth, `${path} at ${width} px`).toBeLessThanOrEqual(size.clientWidth);
         expect(size.scrollWidth, `${path} at ${width} px`).toBeLessThanOrEqual(size.innerWidth);
       }
-    }
-  });
+    });
+  }
 
   test('every screen declares a responsive, zoomable viewport', async ({ page }) => {
     for (const path of screens) {

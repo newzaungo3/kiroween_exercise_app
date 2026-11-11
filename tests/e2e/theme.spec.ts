@@ -2,16 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { colors } from '@/ui/theme/tokens';
 
-/** The 7 screens: the Home_Screen, the five Placeholder_Screens and the not-found screen. */
-const screens = [
-  '/',
-  '/exercises',
-  '/stretches',
-  '/routines',
-  '/crypt',
-  '/history',
-  '/no-such-page',
-] as const;
+import { screens } from './support/screens';
 
 /** Turns a `#rrggbb` token into the `rgb(r, g, b)` form of computed styles. */
 function toRgb(hex: string): string {
@@ -90,7 +81,10 @@ test.describe('Halloween_Theme', () => {
       expect(firstFamily(fonts.headingFamily), `heading font on ${path}`).toBe(display);
 
       // Tagline and Navigation_Entries on the Home_Screen; message and
-      // back-home link on the Placeholder_Screens and the not-found screen.
+      // back-home link on the Placeholder_Screens and the not-found screen;
+      // Exercise_List_Entries and the back-home link on the
+      // Exercise_List_Screen; back link, live region and Safety_Message on
+      // the Exercise_Detail_Screen.
       expect(fonts.bodyText.length, `body text elements on ${path}`).toBeGreaterThanOrEqual(2);
       for (const element of fonts.bodyText) {
         expect(firstFamily(element.family), `font of "${element.text}" on ${path}`).toBe(body);

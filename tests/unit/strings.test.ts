@@ -16,6 +16,10 @@ const englishIds = Object.keys(locales.en) as EnglishId[];
 // depend on src/ui/sections.ts.
 const sectionIds = ['exercises', 'stretches', 'routines', 'crypt', 'history'] as const;
 
+// The Sections that still show a Placeholder_Screen. Exercises has the
+// Exercise_List_Screen instead, so it has no Placeholder_Screen message.
+const placeholderSectionIds = ['stretches', 'routines', 'crypt', 'history'] as const;
+
 describe('Strings_Module', () => {
   it('every English Locale entry has visible text', () => {
     // On failure, Vitest prints the offending string identifiers.
@@ -50,7 +54,7 @@ describe('Strings_Module', () => {
   });
 
   it('every Placeholder_Screen message is at most 160 characters', () => {
-    const tooLong = sectionIds
+    const tooLong = placeholderSectionIds
       .map((id) => ({ id, length: t(`section.${id}.message`).length }))
       .filter(({ length }) => length > 160);
 
@@ -62,6 +66,38 @@ describe('Strings_Module', () => {
 
     for (const [locale, strings] of Object.entries(locales)) {
       expect({ locale, ids: Object.keys(strings).sort() }).toEqual({ locale, ids: expected });
+    }
+  });
+
+  it('no string claims or implies that the user\'s form is correct', () => {
+    const formClaim = /\b(perfect|flawless|correct form|good form|right form|proper form)\b/i;
+    const offending = englishIds.filter((id) => formClaim.test(locales.en[id]));
+
+    // On failure, Vitest prints the offending string identifiers.
+    expect(offending).toEqual([]);
+  });
+
+  it('the Safety_Message says the Coach demonstrates but cannot see the user or check their form', () => {
+    const message = t('safety.coachMessage');
+
+    expect(message).toContain('I demonstrate');
+    expect(message).toContain("can't see you");
+    expect(message).toContain('check your form');
+  });
+
+  it('every registered Locale keeps the English placeholders', () => {
+    // Same placeholder syntax that format() replaces.
+    const placeholdersOf = (text: string): string[] =>
+      [...text.matchAll(/\{([a-z][a-zA-Z]*)\}/g)].map((match) => match[1] ?? '').sort();
+
+    for (const [locale, strings] of Object.entries(locales)) {
+      for (const id of englishIds) {
+        expect({ locale, id, placeholders: placeholdersOf(strings[id]) }).toEqual({
+          locale,
+          id,
+          placeholders: placeholdersOf(locales.en[id]),
+        });
+      }
     }
   });
 

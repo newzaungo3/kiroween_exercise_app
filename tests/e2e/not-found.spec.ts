@@ -5,8 +5,11 @@ import { colors } from '@/ui/theme/tokens';
 
 const en = locales.en;
 
-/** Paths the Site does not serve, including one nested under a Section route. */
-const unknownPaths = ['/no-such-page', '/exercises/unknown'];
+/**
+ * Paths the Site does not serve: one at the root, and slugs under the
+ * Exercise_Detail_Screen route that are not in the Catalog (Requirement 4.11).
+ */
+const unknownPaths = ['/no-such-page', '/exercises/unknown', '/exercises/no-such-exercise'];
 
 /** Converts a `#rrggbb` token to the `rgb(r, g, b)` form browsers report. */
 function hexToRgb(hex: string): string {

@@ -6,12 +6,12 @@
  */
 import Link from 'next/link';
 
-import { type SectionId, sectionMessage, sectionName } from '../sections';
+import { type PlaceholderSectionId, sectionMessage, sectionName } from '../sections';
 import { t } from '../strings';
 import styles from './PlaceholderScreen.module.css';
 
 export interface PlaceholderScreenProps {
-  readonly sectionId: SectionId;
+  readonly sectionId: PlaceholderSectionId;
 }
 
 export function PlaceholderScreen({ sectionId }: PlaceholderScreenProps) {

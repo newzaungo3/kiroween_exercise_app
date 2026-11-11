@@ -3,8 +3,8 @@
  *
  * The order of `sectionIds` is the Home_Navigation order. Every text comes
  * from the Strings_Module. The string identifiers are built as template
- * literals, so a Section without its name, message or title string fails the
- * Type_Check.
+ * literals, so a Section without its name or title string, or a Placeholder
+ * Section without its message string, fails the Type_Check.
  */
 import { t } from './strings';
 
@@ -12,6 +12,17 @@ import { t } from './strings';
 export const sectionIds = ['exercises', 'stretches', 'routines', 'crypt', 'history'] as const;
 
 export type SectionId = (typeof sectionIds)[number];
+
+/**
+ * The Sections that still show a Placeholder_Screen. Exercises has the
+ * Exercise_List_Screen instead, so it has no Placeholder_Screen message.
+ */
+export type PlaceholderSectionId = Exclude<SectionId, 'exercises'>;
+
+/** Every Section that still shows a Placeholder_Screen, in Home_Navigation order. */
+export const placeholderSectionIds: readonly PlaceholderSectionId[] = sectionIds.filter(
+  (id): id is PlaceholderSectionId => id !== 'exercises',
+);
 
 /** The route that serves a Section's screen, for example `/exercises`. */
 export function sectionPath(id: SectionId): `/${SectionId}` {
@@ -24,7 +35,7 @@ export function sectionName(id: SectionId): string {
 }
 
 /** The short message shown on the Section's Placeholder_Screen. */
-export function sectionMessage(id: SectionId): string {
+export function sectionMessage(id: PlaceholderSectionId): string {
   return t(`section.${id}.message`);
 }
 

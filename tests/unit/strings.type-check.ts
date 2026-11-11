@@ -9,7 +9,7 @@
  * The fixtures sit inside a function that is never called, so importing this
  * file runs nothing.
  */
-import { defineLocale, locales, t } from '@/ui/strings';
+import { defineLocale, format, locales, t } from '@/ui/strings';
 
 export function stringsTypeFixtures(): void {
   // @ts-expect-error an unknown string identifier fails the Type_Check
@@ -20,4 +20,17 @@ export function stringsTypeFixtures(): void {
 
   // @ts-expect-error a Locale with an identifier English does not define fails the Type_Check
   defineLocale({ ...locales.en, 'extra.string': 'Boo' });
+
+  // A template with every placeholder value passes, so the three lines below
+  // fail for the reason they name and not because `format` rejects everything.
+  format('viewer.coachLabel', { exercise: 'Grave Rise' });
+
+  // @ts-expect-error format needs a value for every placeholder
+  format('viewer.coachLabel', {});
+
+  // @ts-expect-error format rejects a placeholder the template does not have
+  format('viewer.coachLabel', { exercise: 'Grave Rise', extra: 'x' });
+
+  // @ts-expect-error format accepts only templates
+  format('app.name', {});
 }

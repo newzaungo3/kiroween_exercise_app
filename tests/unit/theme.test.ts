@@ -115,3 +115,17 @@ describe('Halloween_Theme tokens', () => {
     ).toEqual({});
   });
 });
+
+describe('Graveyard_Scene and Viewer tokens', () => {
+  it('the scene sky is dark', () => {
+    expect(relativeLuminance(colors.sceneSky)).toBeLessThanOrEqual(0.05);
+  });
+
+  it('the moon stands out against the sky', () => {
+    expect(pairsBelow([['sceneMoon', 'sceneSky']], 3)).toEqual({});
+  });
+
+  it('the selected Playback_Speed label is readable on its fill', () => {
+    expect(pairsBelow([['onAccent', 'orange']], 4.5)).toEqual({});
+  });
+});

@@ -10,6 +10,8 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 ├── docs/
 │   ├── adr/                # Architecture decision records 0001–0004
 │   └── agents/             # Agent guides: domain docs, issue tracker, triage labels
+├── public/
+│   └── assets/             # Delivered 3D assets: the Grave Rise Coach GLB and its Still_Images
 ├── src/
 │   ├── app/                # Next.js App Router route files, globals.css, icon.svg
 │   │   └── exercises/[slug]/  # Exercise detail route, one prerendered page per Catalog slug
@@ -36,7 +38,7 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 
 ## Proposed app layout
 
-Target for later tickets, derived from the spec's modules. `src/app/`, `src/catalog/`, `src/ui/`, `src/viewer/`, `tests/unit/`, `tests/e2e/` and `LICENSE` exist now; `workout-engine/`, `progress-store/` and `public/assets/` arrive with the tickets that need them. Update "Current state" whenever one is added.
+Target for later tickets, derived from the spec's modules. `src/app/`, `src/catalog/`, `src/ui/`, `src/viewer/`, `public/assets/`, `tests/unit/`, `tests/e2e/` and `LICENSE` exist now; `workout-engine/` and `progress-store/` arrive with the tickets that need them. Update "Current state" whenever one is added.
 
 ```
 src/

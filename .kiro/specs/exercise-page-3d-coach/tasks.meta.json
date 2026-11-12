@@ -1166,6 +1166,11 @@
         "executionId": "9bc79189-58f8-435a-9473-d3e20aaa712a",
         "chatSessionId": "sess_56ccc357-5245-47e7-8305-5e88ad5e60d1",
         "timestamp": 1794407006719
+      },
+      {
+        "executionId": "9bc79189-58f8-435a-9473-d3e20aaa712a",
+        "chatSessionId": "sess_56ccc357-5245-47e7-8305-5e88ad5e60d1",
+        "timestamp": 1794407079307
       }
     ],
     "16. Final checkpoint: after the Asset_Pipeline delivery": [
@@ -1173,6 +1178,21 @@
         "executionId": "9bc79189-58f8-435a-9473-d3e20aaa712a",
         "chatSessionId": "sess_56ccc357-5245-47e7-8305-5e88ad5e60d1",
         "timestamp": 1794400043241
+      },
+      {
+        "executionId": "3b605433-4dc0-4066-826c-1839562c27b9",
+        "chatSessionId": "sess_56ccc357-5245-47e7-8305-5e88ad5e60d1",
+        "timestamp": 1794411200687
+      },
+      {
+        "executionId": "3fc5f4a9-20c2-4b8d-9aae-d100b916562c",
+        "chatSessionId": "sess_56ccc357-5245-47e7-8305-5e88ad5e60d1",
+        "timestamp": 1794487852952
+      },
+      {
+        "executionId": "3fc5f4a9-20c2-4b8d-9aae-d100b916562c",
+        "chatSessionId": "sess_56ccc357-5245-47e7-8305-5e88ad5e60d1",
+        "timestamp": 1794490593127
       }
     ],
     "6. Build the load state machine and the GLB reader": [
@@ -1243,6 +1263,13 @@
         "executionId": "9bc79189-58f8-435a-9473-d3e20aaa712a",
         "chatSessionId": "sess_56ccc357-5245-47e7-8305-5e88ad5e60d1",
         "timestamp": 1794405521813
+      }
+    ],
+    "15. Update the steering and commit": [
+      {
+        "executionId": "9bc79189-58f8-435a-9473-d3e20aaa712a",
+        "chatSessionId": "sess_56ccc357-5245-47e7-8305-5e88ad5e60d1",
+        "timestamp": 1794407079436
       }
     ]
   }

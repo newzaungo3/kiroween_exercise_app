@@ -352,7 +352,7 @@ Ground rules for every task:
   - Ensure all tests pass, ask the user if questions arise.
   - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.10_
 
-- [ ] 15. Update the steering and commit
+- [x] 15. Update the steering and commit
   - [x] 15.1 Update `.kiro/steering/structure.md`
     - In "Current state", list `src/catalog/`, `src/viewer/` and the new route `src/app/exercises/[slug]/`, and add `public/assets/` only if it exists in the working tree. Drop `catalog/` and `viewer/` from the sentence about modules that "arrive with the tickets that need them". List no path that is absent
     - _Requirements: 14.9_
@@ -361,12 +361,12 @@ Ground rules for every task:
     - "app code adds no 3D asset files" (`*.glb`, `*.gltf`, `*.blend`, `*.fbx`, `*.obj` only under `assets/` and `public/assets/`), "every dependency is pinned exactly under an allowed licence" (MIT, ISC, BSD-2-Clause, BSD-3-Clause or Apache-2.0, matching the lockfile), "the structure steering lists only paths that exist" (and lists `src/catalog/`, `src/viewer/` and `public/assets/` once they exist)
     - _Requirements: 13.8, 14.9_
 
-  - [-] 15.3 Commit the ticket locally
+  - [x] 15.3 Commit the ticket locally
     - Ask the user before committing. Stage by name: `package.json`, `package-lock.json`, `playwright.config.ts`, the new and changed files under `src/` and `tests/`, `.kiro/steering/structure.md`, and every file in `.kiro/specs/exercise-page-3d-coach/`
     - Do not stage `assets/`, `[render_dir]/`, `public/assets/` (User tasks) or `.kiro/settings/mcp.json`. Do not push
     - _Requirements: 13.8, 14.8, 14.9_
 
-- [~] 16. Final checkpoint: after the Asset_Pipeline delivery
+- [x] 16. Final checkpoint: after the Asset_Pipeline delivery
   - Do not start until the user confirms that the Asset_Pipeline delivered `public/assets/coach/coach_grave_rise.glb` and the three Still_Images (User tasks). Check that the four files exist and do not modify them. If they are not committed yet, ask the user whether they commit them or want the agent to stage those four files by name
   - If `structure.md` does not list `public/assets/` yet, add it, and commit the change after asking
   - Run `npx tsc --noEmit`, `npx vitest --run`, `npm run build` and `npx playwright test`. All must exit 0 with no failures; there are no expected failures any more

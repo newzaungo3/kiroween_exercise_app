@@ -20,3 +20,4 @@ playwright/.cache/
 .scratch/
 CLAUDE.md
 skills-lock.json
+*.blend1

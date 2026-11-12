@@ -76,6 +76,17 @@ const speedControlIds = [
 /** Number of Viewer buttons outside the Still_Fallback: Play/Pause, the speeds and the Camera_Controls. */
 const viewerControlCount = 1 + speedControlIds.length + cameraControlIds.length;
 
+/**
+ * Buttons expected in the Viewer region while the Coach_Asset is held: every
+ * control, plus the Retry button once the Slow_Load_Notice is up. On a loaded
+ * test machine the held request can pass 10 s before the buttons are read
+ * (Requirement 9.3); Retry is a Viewer button too, so it is counted and
+ * measured with the others, never dropped.
+ */
+function loadingButtonCount(buttonNames: readonly string[]): number {
+  return viewerControlCount + (buttonNames.includes(en['viewer.retry']) ? 1 : 0);
+}
+
 /** Route pattern of the Exercise's Coach_Asset request, from the Catalog. */
 const coachAssetRoute = `**${exercise.coach.asset}`;
 
@@ -237,6 +248,13 @@ function overlap(a: ButtonBox, b: ButtonBox): boolean {
 
 /** Sub-pixel layout tolerance for size and gap checks. */
 const layoutTolerancePx = 0.5;
+
+/**
+ * Software WebGL is slow: with four workers, loading the Coach (`waitForCoach`
+ * alone may take 30 s), settling the picture and closing the WebGL context take
+ * longer than the default 30 s budget. Same budget as viewer-render-loop.spec.ts.
+ */
+test.describe.configure({ timeout: 90_000 });
 
 test.describe('Viewer', () => {
   test('the test browser can create a WebGL2 context', async ({ page }) => {
@@ -448,7 +466,10 @@ test.describe('Viewer', () => {
 
     // Shown but disabled, so the layout does not jump when the Coach appears (Requirements 7.7, 8.9).
     const buttons = viewerRegion(page).getByRole('button');
-    await expect(buttons).toHaveCount(viewerControlCount);
+    const names = await buttons.evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute('aria-label') ?? (element.textContent ?? '').trim()),
+    );
+    await expect(buttons).toHaveCount(loadingButtonCount(names));
     for (const id of [...cameraControlIds, ...speedControlIds]) {
       await expect(viewerButton(page, id), `${en[id]} while loading`).toBeDisabled();
     }
@@ -461,7 +482,7 @@ test.describe('Viewer', () => {
     // A failed Coach_Asset request: the Still_Fallback with only its Retry button.
     await failCoachAsset(page);
     await openDetail(page);
-    await expect(viewerArea(page)).toHaveAttribute('data-viewer-phase', 'fallback');
+    await expect(viewerArea(page)).toHaveAttribute('data-viewer-phase', 'fallback', { timeout: 30_000 });
     await expect(viewerRegion(page).getByRole('button')).toHaveCount(1);
     await expect(viewerButton(page, 'viewer.retry')).toBeVisible();
     for (const id of [...cameraControlIds, ...speedControlIds, 'viewer.play', 'viewer.pause'] as const) {
@@ -473,7 +494,7 @@ test.describe('Viewer', () => {
     try {
       await disableWebGL(noWebGL);
       await openDetail(noWebGL);
-      await expect(viewerArea(noWebGL)).toHaveAttribute('data-viewer-phase', 'fallback');
+      await expect(viewerArea(noWebGL)).toHaveAttribute('data-viewer-phase', 'fallback', { timeout: 30_000 });
       await expect(viewerRegion(noWebGL).getByRole('button')).toHaveCount(0);
     } finally {
       await noWebGL.close();
@@ -505,7 +526,7 @@ test.describe('Viewer', () => {
     await openLoadingDetail(page);
 
     const boxes = await viewerButtonBoxes(page);
-    expect(boxes).toHaveLength(viewerControlCount);
+    expect(boxes).toHaveLength(loadingButtonCount(boxes.map((box) => box.name)));
     for (const box of boxes) {
       expect(box.width, `${box.name} width`).toBeGreaterThanOrEqual(44 - layoutTolerancePx);
       expect(box.height, `${box.name} height`).toBeGreaterThanOrEqual(44 - layoutTolerancePx);
@@ -525,6 +546,8 @@ test.describe('Viewer', () => {
     try {
       await failCoachAsset(fallbackPage);
       await openDetail(fallbackPage);
+      // Hydration and the failed request can take seconds on a loaded test machine.
+      await expect(viewerArea(fallbackPage)).toHaveAttribute('data-viewer-phase', 'fallback', { timeout: 30_000 });
       const retry = viewerButton(fallbackPage, 'viewer.retry');
       await expect(retry).toBeVisible();
       const retryBox = await retry.boundingBox();
@@ -594,7 +617,7 @@ test.describe('Viewer', () => {
     expect(clipped).toEqual([]);
 
     const boxes = await viewerButtonBoxes(page);
-    expect(boxes).toHaveLength(viewerControlCount);
+    expect(boxes).toHaveLength(loadingButtonCount(boxes.map((box) => box.name)));
     for (let i = 0; i < boxes.length; i += 1) {
       for (let j = i + 1; j < boxes.length; j += 1) {
         const a = boxes[i] as ButtonBox;

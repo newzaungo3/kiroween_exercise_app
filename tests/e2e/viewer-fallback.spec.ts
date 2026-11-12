@@ -208,6 +208,13 @@ function recordStillImageRequests(page: Page, entry: ExerciseEntry = exercise): 
   return () => seen;
 }
 
+/**
+ * Software WebGL is slow: with four workers rendering the Coach at once, page
+ * loads and context teardown take longer than the default 30 s budget. Same
+ * budget as viewer.spec.ts and viewer-render-loop.spec.ts.
+ */
+test.describe.configure({ timeout: 90_000 });
+
 test.describe('Viewer loading and Still_Fallback', () => {
   test('a failed Coach_Asset request shows the Still_Fallback with the Written_Content and the Safety_Message', async ({
     page,
@@ -225,7 +232,7 @@ test.describe('Viewer loading and Still_Fallback', () => {
   });
 
   test('a Coach_Asset slower than 10 seconds adds the Slow_Load_Notice with a Retry', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
     // Hold the Coach_Asset response for more than 10 s and until the checks
     // below are done, so loading is still running while they look at it.
     // The answer after that does not matter.
@@ -379,7 +386,7 @@ test.describe('Viewer loading and Still_Fallback', () => {
   });
 
   test('Retry restarts loading without the Slow_Load_Notice', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
     const coachAsset = await holdCoachAsset(page);
 
     await page.goto(exercisePath(exercise));
@@ -410,8 +417,15 @@ test.describe('Viewer loading and Still_Fallback', () => {
     test.setTimeout(120_000);
     // Needs the real Coach_Asset; fails with the missing-file message before delivery.
     await expectCoachAssetDelivered(page, exercise);
+    // Hold the real Coach_Asset for more than 10 s and until the Slow_Load_Notice
+    // checks are done; a fixed delay alone left a one-second window that a
+    // loaded test machine could miss.
+    let release: () => void = () => undefined;
+    const checksDone = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     const coachAsset = await routeCoachAsset(page, async (route) => {
-      await delay(11_000);
+      await Promise.all([delay(11_000), checksDone]);
       await route.continue().catch(() => undefined);
     });
 
@@ -419,6 +433,7 @@ test.describe('Viewer loading and Still_Fallback', () => {
 
     await expect(liveRegion(page)).toHaveText(en['viewer.slowLoad'], { timeout: 20_000 });
     await expect(retryButton(page)).toBeVisible();
+    release();
 
     // The 3D scene replaces the Loading_State and the Slow_Load_Notice (Requirement 9.5).
     await waitForCoach(page, { exercise, timeoutMs: 60_000 });
@@ -428,7 +443,7 @@ test.describe('Viewer loading and Still_Fallback', () => {
   });
 
   test('the live region announces loading, slow loading and the Still_Fallback once each', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
     const liveRegionLog = await recordLiveRegion(page);
     const coachAsset = await holdCoachAsset(page);
     await routeStillImages(page);

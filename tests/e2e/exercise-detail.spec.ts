@@ -244,6 +244,13 @@ async function expectNothingStored(page: Page, exercise: ExerciseEntry): Promise
   expect(await page.context().cookies(), 'cookies').toEqual([]);
 }
 
+/**
+ * Software WebGL is slow: every visit here loads and renders the Coach, so with
+ * four workers page loads and context teardown take longer than the default
+ * 30 s budget. Same budget as viewer.spec.ts and viewer-render-loop.spec.ts.
+ */
+test.describe.configure({ timeout: 90_000 });
+
 test.describe('Exercise_Detail_Screen', () => {
   // Runs in both the phone and the laptop project (Requirement 14.4).
   test('Home_Screen → Exercises → Grave Rise shows the Written_Content and the Safety_Message', async ({
@@ -332,7 +339,7 @@ test.describe('Exercise_Detail_Screen', () => {
   test('the Written_Content and the Safety_Message stay visible while loading and while slow', async ({
     page,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
     const coachAsset = await holdCoachAsset(page, graveRise);
 
     await page.goto(exercisePath(graveRise));
@@ -364,7 +371,7 @@ test.describe('Exercise_Detail_Screen', () => {
   // Needs the delivered Coach_Asset. Until the Asset_Pipeline delivers it,
   // `waitForCoach` fails and names the missing file (Open decision 1).
   test('the Written_Content and the Safety_Message stay visible in the 3D scene', async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(90_000);
     await page.goto(exercisePath(graveRise));
 
     await waitForCoach(page, { exercise: graveRise });

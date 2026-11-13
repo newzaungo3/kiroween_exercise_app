@@ -1,38 +1,41 @@
-"""Build the skeleton Coach and its Grave Rise (air squat) loop.
+"""Build the skeleton Coach and its looping demo clips.
 
-Run headless from the repository root:
+Run headless from the repository root (all clips, or name some):
 
     blender -b --factory-startup --python assets/coach/build_coach.py
+    blender -b --factory-startup --python assets/coach/build_coach.py -- coffin_push
 
-Writes, next to this script:
-    coach_grave_rise.blend  - Blender source (rig, mesh, `demo_loop` action)
-    coach_grave_rise.glb    - export for the Site
+Clips: grave_rise, skeleton_jacks, coffin_push, stretch_side_reach,
+stretch_forward_fold. For each clip <c> it writes, next to this script:
+    coach_<c>.blend  - Blender source (rig, mesh, `demo_loop` action)
+    coach_<c>.glb    - export, also copied to public/assets/coach/ for the Site
 
-Everything is generated from code here, so the asset is original and can be
-rebuilt exactly (ADR 0003). Conventions:
+Every clip uses the same rig and mesh. Everything is generated from code
+here, so the assets are original and can be rebuilt exactly (ADR 0003).
+Conventions:
     * Blender is Z-up and the Coach faces -Y; the glTF exporter turns that
       into Y-up facing +Z, the glTF forward convention.
     * The Coach's left side is +X, so `.L` bones sit at +X.
     * Every mesh piece is rigidly bound to one bone (one influence per vertex),
       so joints cannot collapse or candy-wrap.
-    * The squat is posed analytically each frame: a two-bone IK solve keeps the
-      ankles fixed and the feet flat, so the feet cannot slide.
+    * Every frame is posed analytically and keyed: two-bone IK solves pin
+      whatever touches the floor (feet, or hands and toes), so it cannot slide.
 """
 
 import math
 import os
+import shutil
+import sys
 
 import bmesh
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-BLEND_PATH = os.path.join(HERE, "coach_grave_rise.blend")
-GLB_PATH = os.path.join(HERE, "coach_grave_rise.glb")
+PUBLIC_DIR = os.path.join(HERE, "..", "..", "public", "assets", "coach")
 
 FPS = 30
 CLIP_NAME = "demo_loop"
-FORWARD = Vector((0.0, -1.0, 0.0))
 
 # ---------------------------------------------------------------------------
 # Rig layout (rest pose = relaxed standing pose, metres, Z-up, facing -Y)
@@ -293,7 +296,7 @@ def build_mesh(arm_obj, materials):
 
 
 # ---------------------------------------------------------------------------
-# Animation: analytic posing, one key per frame
+# Posing toolkit: armature-space matrices, built top-down each frame
 # ---------------------------------------------------------------------------
 
 
@@ -302,47 +305,21 @@ def smooth(x):
     return 0.5 - 0.5 * math.cos(math.pi * x)
 
 
-# Timeline (frames at 30 fps): stand, descend, hold at the bottom, rise, stand.
-T_TOP_HOLD = 6
-T_DOWN = 30
-T_BOTTOM_HOLD = 6
-T_UP = 26
-LOOP_FRAMES = T_TOP_HOLD + T_DOWN + T_BOTTOM_HOLD + T_UP  # 68 frames ~ 2.27 s
+def track(i, keys):
+    """Value at frame i from [(frame, value), ...], eased between keys."""
+    if i <= keys[0][0]:
+        return keys[0][1]
+    for (f0, v0), (f1, v1) in zip(keys, keys[1:]):
+        if i <= f1:
+            return v0 + (v1 - v0) * smooth((i - f0) / (f1 - f0))
+    return keys[-1][1]
 
 
-def depth_at(i):
-    """Squat depth 0 (standing) .. 1 (bottom) at loop frame i."""
-    t = i
-    if t < T_TOP_HOLD:
-        return 0.0
-    t -= T_TOP_HOLD
-    if t < T_DOWN:
-        return smooth(t / T_DOWN)
-    t -= T_DOWN
-    if t < T_BOTTOM_HOLD:
-        return 1.0
-    t -= T_BOTTOM_HOLD
-    if t < T_UP:
-        return 1.0 - smooth(t / T_UP)
-    return 0.0
-
-
-def pose_params(s):
-    return {
-        "hip_drop": 0.40 * s,
-        "hip_back": 0.15 * s,
-        "pelvis_tilt": math.radians(16) * s,
-        "spine_bend": math.radians(12) * s,
-        "chest_bend": math.radians(8) * s,
-        "neck_bend": math.radians(-14) * s,
-        "head_bend": math.radians(-12) * s,
-        # Arms swing from hanging to reaching forward, slightly below horizontal.
-        "arm_reach": s,
-    }
-
-
-def world_rot(axis, angle):
-    return Matrix.Rotation(angle, 4, axis)
+def rotate_about_head(m, axis, angle):
+    head = m.translation.copy()
+    r = Matrix.Rotation(angle, 4, axis) @ m.to_3x3().to_4x4()
+    r.translation = head
+    return r
 
 
 def aim(inherited, direction):
@@ -356,6 +333,7 @@ def aim(inherited, direction):
 
 
 def solve_knee(hip, ankle, l1, l2, pole):
+    """Middle joint of a two-bone chain from `hip` to `ankle`, bending toward `pole`."""
     d_vec = ankle - hip
     d = min(d_vec.length, (l1 + l2) * 0.9999)
     u = d_vec.normalized()
@@ -365,81 +343,289 @@ def solve_knee(hip, ankle, l1, l2, pole):
     return hip + u * a + p * h
 
 
-def compute_pose(arm_obj, s):
-    """Armature-space matrices for every bone at squat depth s."""
-    bones = arm_obj.data.bones
-    rest = {b.name: b.matrix_local.copy() for b in bones}
-    prm = pose_params(s)
-    out = {}
+def frame_rotation(src_a, src_b, dst_a, dst_b):
+    """Rotation taking direction src_a onto dst_a, and src_b (as near as possible) onto dst_b."""
+    def basis(a, b):
+        a = a.normalized()
+        c = a.cross(b).normalized()
+        b = c.cross(a)
+        return Matrix((a, b, c)).transposed()
+    return basis(dst_a, dst_b) @ basis(src_a, src_b).transposed()
 
-    def inherited(name):
-        b = bones[name]
+
+SIDES = (("L", 1.0), ("R", -1.0))
+
+
+class Poser:
+    """Builds one frame's armature-space bone matrices.
+
+    Set bones parent-first; any bone not set follows its parent rigidly.
+    Rotations are about world axes (the Coach faces -Y, its left is +X, up is +Z):
+    +X rotation leans the torso forward, +Y rotation leans it to the Coach's left.
+    """
+
+    def __init__(self, arm_obj):
+        self.bones = arm_obj.data.bones
+        self.rest = {b.name: b.matrix_local.copy() for b in self.bones}
+        self.out = {}
+
+    def get(self, name):
+        if name not in self.out:
+            self.out[name] = self.inherited(name)
+        return self.out[name]
+
+    def inherited(self, name):
+        b = self.bones[name]
         if b.parent is None:
-            return rest[name].copy()
+            return self.rest[name].copy()
         p = b.parent.name
-        return out[p] @ rest[p].inverted() @ rest[name]
+        return self.get(p) @ self.rest[p].inverted() @ self.rest[name]
 
-    def rotate_about_head(m, axis, angle):
-        head = m.translation.copy()
-        r = world_rot(axis, angle) @ m.to_3x3().to_4x4()
-        r.translation = head
-        return r
+    def length(self, name):
+        return self.bones[name].length
 
-    out["root"] = rest["root"].copy()
+    def rest_dir(self, name):
+        return self.rest[name].col[1].xyz.normalized()
 
-    m = inherited("pelvis")
-    m = rotate_about_head(m, "X", prm["pelvis_tilt"])
-    m.translation += Vector((0, prm["hip_back"], -prm["hip_drop"]))
-    out["pelvis"] = m
+    def rest_tail(self, name):
+        return self.rest[name] @ Vector((0, self.length(name), 0))
 
-    out["spine"] = rotate_about_head(inherited("spine"), "X", prm["spine_bend"])
-    out["chest"] = rotate_about_head(inherited("chest"), "X", prm["chest_bend"])
-    out["neck"] = rotate_about_head(inherited("neck"), "X", prm["neck_bend"])
-    out["head"] = rotate_about_head(inherited("head"), "X", prm["head_bend"])
+    def body_turn(self, name="chest"):
+        """How far `name` has turned from rest, as a world rotation (3x3)."""
+        return self.get(name).to_3x3() @ self.rest[name].to_3x3().inverted()
 
-    for side, sx in (("L", 1.0), ("R", -1.0)):
-        out[f"shoulder.{side}"] = inherited(f"shoulder.{side}")
+    def set(self, name, m):
+        self.out[name] = m
 
-        # Arms: blend the hanging direction toward reaching forward.
-        r = prm["arm_reach"]
-        hang = (rest[f"upper_arm.{side}"].col[1].xyz).normalized()
+    def bend(self, name, axis, angle):
+        self.out[name] = rotate_about_head(self.inherited(name), axis, angle)
+
+    def aim(self, name, direction, head=None):
+        m = self.inherited(name)
+        if head is not None:
+            m.translation = head
+        self.out[name] = aim(m, direction)
+
+    def place(self, name, rot3, head):
+        m = rot3.to_4x4()
+        m.translation = head
+        self.out[name] = m
+
+    def leg(self, side, ankle, pole, foot_rot=None):
+        """Pin the ankle at `ankle`; the foot keeps `foot_rot` (default: flat, as at rest)."""
+        hip = self.inherited(f"thigh.{side}").translation.copy()
+        knee = solve_knee(hip, ankle, self.length(f"thigh.{side}"), self.length(f"shin.{side}"), pole)
+        self.aim(f"thigh.{side}", knee - hip)
+        self.aim(f"shin.{side}", ankle - knee, head=knee)
+        rot = foot_rot if foot_rot is not None else self.rest[f"foot.{side}"].to_3x3()
+        self.place(f"foot.{side}", rot, ankle)
+
+    def arm(self, side, wrist, pole, hand_rot):
+        """Pin the wrist at `wrist` with the hand held at `hand_rot`."""
+        shoulder = self.inherited(f"upper_arm.{side}").translation.copy()
+        elbow = solve_knee(shoulder, wrist, self.length(f"upper_arm.{side}"),
+                           self.length(f"forearm.{side}"), pole)
+        self.aim(f"upper_arm.{side}", elbow - shoulder)
+        self.aim(f"forearm.{side}", wrist - elbow, head=elbow)
+        self.place(f"hand.{side}", hand_rot, wrist)
+
+    def finish(self):
+        for b in self.bones:
+            self.get(b.name)
+        return self.out
+
+
+# ---------------------------------------------------------------------------
+# Clips. Each pose function returns the bone matrices for loop frame i
+# (0 <= i < loop length); frame `loop length` is keyed as a copy of frame 0.
+# ---------------------------------------------------------------------------
+
+
+def breathe(i, period, degrees):
+    """A small chest rise repeating every `period` frames, so holds never freeze."""
+    return math.radians(degrees) * math.sin(2 * math.pi * i / period)
+
+
+# Grave Rise (air squat): stand, descend, hold, rise. -------------------------
+
+def pose_grave_rise(arm_obj, i):
+    s = track(i, [(0, 0), (6, 0), (36, 1), (42, 1), (68, 0)])
+    P = Poser(arm_obj)
+    m = rotate_about_head(P.inherited("pelvis"), "X", math.radians(16) * s)
+    m.translation += Vector((0, 0.15 * s, -0.40 * s))
+    P.set("pelvis", m)
+    P.bend("spine", "X", math.radians(12) * s)
+    P.bend("chest", "X", math.radians(8) * s)
+    P.bend("neck", "X", math.radians(-14) * s)
+    P.bend("head", "X", math.radians(-12) * s)
+    for side, sx in SIDES:
+        # Arms swing from hanging to reaching forward, slightly below horizontal.
+        hang = P.rest_dir(f"upper_arm.{side}")
         reach = Vector((0.04 * sx, -1.0, -0.12)).normalized()
-        direction = hang.slerp(reach, smooth(r)) if r > 0 else hang
-        out[f"upper_arm.{side}"] = aim(inherited(f"upper_arm.{side}"), direction)
-        out[f"forearm.{side}"] = inherited(f"forearm.{side}")
-        out[f"hand.{side}"] = inherited(f"hand.{side}")
+        P.aim(f"upper_arm.{side}", hang.slerp(reach, smooth(s)) if s > 0 else hang)
+        P.leg(side, P.rest_tail(f"shin.{side}"), Vector((0.18 * sx, -1.0, 0.0)))
+    return P.finish()
 
-        # Legs: analytic two-bone IK with the ankle pinned at its rest spot.
-        thigh_rest = bones[f"thigh.{side}"]
-        shin_rest = bones[f"shin.{side}"]
-        l1 = thigh_rest.length
-        l2 = shin_rest.length
-        ankle = rest[f"shin.{side}"] @ Vector((0, l2, 0))
-        hip_m = inherited(f"thigh.{side}")
-        hip = hip_m.translation.copy()
-        pole = Vector((0.18 * sx, -1.0, 0.0))  # knees forward and a little out
-        knee = solve_knee(hip, ankle, l1, l2, pole)
 
-        thigh = aim(hip_m, knee - hip)
-        out[f"thigh.{side}"] = thigh
-        shin_inh = inherited(f"shin.{side}")
-        shin_inh.translation = knee
-        out[f"shin.{side}"] = aim(shin_inh, ankle - knee)
+# Skeleton Jacks (jumping jacks) ---------------------------------------------
+# 32 frames: closed landing -> hop open -> open landing -> hop closed.
+# Feet change position only while airborne, so they never slide on the floor.
 
-        # Feet stay flat: keep the rest orientation, pinned to the ankle.
-        foot = rest[f"foot.{side}"].copy()
-        foot.translation = ankle
-        out[f"foot.{side}"] = foot
-        out[f"toe.{side}"] = inherited(f"toe.{side}")
+JACK_AIR = ((4, 11), (20, 27))
+JACK_CONTACT = ((27, 9), (11, 9))  # (start frame, length) of each floor contact; the first wraps
+JACK_HOP = 0.07
 
-    return out
+
+def pose_skeleton_jacks(arm_obj, i):
+    loop = 32
+    open_ = track(i, [(0, 0), (4, 0), (11, 1), (20, 1), (27, 0), (32, 0)])
+    air = 0.0
+    for a, b in JACK_AIR:
+        if a <= i <= b:
+            air = JACK_HOP * math.sin(math.pi * (i - a) / (b - a))
+    dip = 0.0
+    for start, length in JACK_CONTACT:
+        phase = (i - start) % loop
+        if phase <= length:
+            dip = 0.04 * math.sin(math.pi * phase / length)
+
+    P = Poser(arm_obj)
+    m = P.inherited("pelvis")
+    m.translation += Vector((0, 0, -0.025 - 0.05 * open_ - dip + air))
+    P.set("pelvis", m)
+    P.bend("spine", "X", math.radians(4) * dip / 0.04)
+    for side, sx in SIDES:
+        # Arms sweep out to the side and meet overhead.
+        alpha = math.radians(8 + 177 * open_)
+        P.aim(f"upper_arm.{side}", Vector((sx * math.sin(alpha), -0.06, -math.cos(alpha))))
+        rest_ankle = P.rest_tail(f"shin.{side}")
+        ankle = Vector((sx * (0.14 + 0.18 * open_), rest_ankle.y, rest_ankle.z + air))
+        point = math.radians(18) * (air / JACK_HOP)  # toes point down a little in the air
+        foot_rot = Matrix.Rotation(point, 3, "X") @ P.rest[f"foot.{side}"].to_3x3()
+        P.leg(side, ankle, Vector((0.35 * sx, -1.0, 0.0)), foot_rot)
+    return P.finish()
+
+
+# Coffin Push (push-up) ------------------------------------------------------
+# The straight body pivots about the toe joints; hands stay planted under the
+# shoulders, so nothing touching the floor slides.
+
+PUSH_WRIST_Z = 0.018
+
+
+def _push_pivot(P):
+    return P.rest["toe.L"].translation.copy()  # both toe joints lie on this X-axis line
+
+
+def _push_shoulder(P, side, phi):
+    pivot = _push_pivot(P)
+    rel = P.rest[f"upper_arm.{side}"].translation - pivot
+    return pivot + Matrix.Rotation(phi, 3, "X") @ rel
+
+
+def _push_phi(P, shoulder_z):
+    """Body tilt (radians from upright) that puts the shoulders at `shoulder_z`."""
+    lo, hi = 0.0, math.radians(89)
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if _push_shoulder(P, "L", mid).z > shoulder_z:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+def pose_coffin_push(arm_obj, i):
+    s = track(i, [(0, 0), (8, 0), (35, 1), (39, 1), (64, 0)])
+    P = Poser(arm_obj)
+    reach = P.length("upper_arm.L") + P.length("forearm.L")
+    phi_top = _push_phi(P, PUSH_WRIST_Z + 0.985 * reach)
+    phi_bottom = _push_phi(P, 0.27)  # chest a fist above the floor, elbows near 90 degrees
+    phi = phi_top + (phi_bottom - phi_top) * s
+
+    pivot = _push_pivot(P)
+    turn = Matrix.Rotation(phi, 4, "X")
+    P.set("pelvis", Matrix.Translation(pivot) @ turn @ Matrix.Translation(-pivot) @ P.rest["pelvis"])
+    P.bend("head", "X", math.radians(6))  # neutral neck, gaze at the floor ahead of the hands
+    for side, sx in SIDES:
+        top = _push_shoulder(P, side, phi_top)
+        wrist = Vector((top.x + 0.07 * sx, top.y, PUSH_WRIST_Z))
+        # Palm flat, fingers forward: rest fingers (down) -> forward, inner palm -> floor.
+        hand_rot = frame_rotation(Vector((0, 0, -1)), Vector((-sx, 0, 0)),
+                                  Vector((0.12 * sx, -1, 0)), Vector((0, 0, -1))) @ P.rest[f"hand.{side}"].to_3x3()
+        # Elbows bend back toward the feet at about 45 degrees, not flared out wide.
+        P.arm(side, wrist, Vector((0.45 * sx, 1.0, 0.35)), hand_rot)
+        # Toes stay flat on the floor while the foot rolls over them.
+        P.place(f"toe.{side}", P.rest[f"toe.{side}"].to_3x3(), P.rest[f"toe.{side}"].translation)
+    return P.finish()
+
+
+# Stretch: overhead side reach ----------------------------------------------
+# Arms up, lean to the Coach's left and hold, back, lean right and hold, arms down.
+
+def pose_stretch_side_reach(arm_obj, i):
+    arms = track(i, [(0, 0), (8, 0), (32, 1), (248, 1), (272, 0), (280, 0)])
+    lean = track(i, [(0, 0), (32, 0), (56, 1), (116, 1), (140, 0), (164, -1), (224, -1), (248, 0), (280, 0)])
+    P = Poser(arm_obj)
+    m = rotate_about_head(P.inherited("pelvis"), "Y", math.radians(5) * lean)
+    m.translation += Vector((-0.045 * lean, 0, -0.01 * abs(lean)))
+    P.set("pelvis", m)
+    P.bend("spine", "Y", math.radians(13) * lean)
+    m = rotate_about_head(P.inherited("chest"), "Y", math.radians(14) * lean)
+    P.set("chest", rotate_about_head(m, "X", -breathe(i, 70, 1.5)))
+    P.bend("neck", "Y", math.radians(4) * lean)
+    turn = P.body_turn("chest")
+    for side, sx in SIDES:
+        # The outer arm sweeps over the head; the inner arm follows the torso.
+        outer = sx * lean < 0
+        overhead = Vector((0.1 * sx + lean * (0.42 if outer else 0.04), -0.04, 1.0))
+        body_dir = P.rest_dir(f"upper_arm.{side}").slerp(overhead.normalized(), arms)
+        P.aim(f"upper_arm.{side}", turn @ body_dir)
+        P.leg(side, P.rest_tail(f"shin.{side}"), Vector((0.15 * sx, -1.0, 0.0)))
+    return P.finish()
+
+
+# Stretch: standing forward fold --------------------------------------------
+# Hinge down with soft knees, hang and breathe, then roll up hips first, head last.
+
+def pose_stretch_forward_fold(arm_obj, i):
+    hips = track(i, [(0, 0), (10, 0), (70, 1), (160, 1), (200, 0), (240, 0)])
+    back = track(i, [(0, 0), (10, 0), (70, 1), (170, 1), (210, 0), (240, 0)])
+    head = track(i, [(0, 0), (10, 0), (70, 1), (180, 1), (220, 0), (240, 0)])
+    P = Poser(arm_obj)
+    m = rotate_about_head(P.inherited("pelvis"), "X", math.radians(55) * hips)
+    m.translation += Vector((0, 0.14 * hips, -0.05 * hips))
+    P.set("pelvis", m)
+    P.bend("spine", "X", math.radians(20) * back + breathe(i, 60, 1.2) * back)
+    P.bend("chest", "X", math.radians(20) * back)
+    P.bend("neck", "X", math.radians(15) * head)
+    P.bend("head", "X", math.radians(8) * head)
+    for side, sx in SIDES:
+        # Arms hang with gravity the whole time.
+        P.aim(f"upper_arm.{side}", Vector((0.03 * sx, -0.08 * back, -1.0)))
+        P.leg(side, P.rest_tail(f"shin.{side}"), Vector((0.15 * sx, -1.0, 0.0)))
+    return P.finish()
+
+
+# name: (pose function, loop length in frames at 30 fps)
+CLIPS = {
+    "grave_rise": (pose_grave_rise, 68),
+    "skeleton_jacks": (pose_skeleton_jacks, 32),
+    "coffin_push": (pose_coffin_push, 64),
+    "stretch_side_reach": (pose_stretch_side_reach, 280),
+    "stretch_forward_fold": (pose_stretch_forward_fold, 240),
+}
+
+
+# ---------------------------------------------------------------------------
+# Keying and export
+# ---------------------------------------------------------------------------
 
 
 def to_basis(arm_obj, pose):
     """Convert armature-space bone matrices into local pose (basis) matrices."""
-    bones = arm_obj.data.bones
     basis = {}
-    for b in bones:
+    for b in arm_obj.data.bones:
         rest = b.matrix_local
         if b.parent is None:
             inh = rest
@@ -449,7 +635,7 @@ def to_basis(arm_obj, pose):
     return basis
 
 
-def animate(arm_obj):
+def animate(arm_obj, pose_fn, loop_frames):
     scene = bpy.context.scene
     arm_obj.animation_data_create()
     action = bpy.data.actions.new(CLIP_NAME)
@@ -457,11 +643,10 @@ def animate(arm_obj):
     arm_obj.animation_data.action = action
 
     prev = {}
-    # Frames 1 .. LOOP_FRAMES+1; the last frame equals the first, so the loop is seamless.
-    for i in range(LOOP_FRAMES + 1):
+    # Frames 1 .. loop_frames+1; the last frame repeats the first, so the loop is seamless.
+    for i in range(loop_frames + 1):
         frame = i + 1
-        s = depth_at(i % LOOP_FRAMES)
-        basis = to_basis(arm_obj, compute_pose(arm_obj, s))
+        basis = to_basis(arm_obj, pose_fn(arm_obj, i % loop_frames))
         for pb in arm_obj.pose.bones:
             loc, rot, _scale = basis[pb.name].decompose()
             q = Quaternion(rot)
@@ -479,7 +664,7 @@ def animate(arm_obj):
             kp.interpolation = "LINEAR"
 
     scene.frame_start = 1
-    scene.frame_end = LOOP_FRAMES + 1
+    scene.frame_end = loop_frames + 1
     scene.frame_set(1)
     return action
 
@@ -495,25 +680,9 @@ def iter_fcurves(action):
         yield from action.fcurves
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-
-
-def main():
-    reset_scene()
-    materials = [
-        make_material("CoachBone", BONE_COLOR, 0.65),
-        make_material("CoachSocket", SOCKET_COLOR, 0.9),
-    ]
-    arm_obj = build_armature()
-    build_mesh(arm_obj, materials)
-    animate(arm_obj)
-
-    bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH, compress=True)
-
+def export_glb(path):
     bpy.ops.export_scene.gltf(
-        filepath=GLB_PATH,
+        filepath=path,
         export_format="GLB",
         export_yup=True,
         export_apply=False,
@@ -535,8 +704,37 @@ def main():
         export_cameras=False,
         export_lights=False,
     )
-    print("WROTE", BLEND_PATH)
-    print("WROTE", GLB_PATH)
+
+
+def build_clip(clip):
+    pose_fn, loop_frames = CLIPS[clip]
+    reset_scene()
+    materials = [
+        make_material("CoachBone", BONE_COLOR, 0.65),
+        make_material("CoachSocket", SOCKET_COLOR, 0.9),
+    ]
+    arm_obj = build_armature()
+    build_mesh(arm_obj, materials)
+    animate(arm_obj, pose_fn, loop_frames)
+
+    blend_path = os.path.join(HERE, f"coach_{clip}.blend")
+    glb_path = os.path.join(HERE, f"coach_{clip}.glb")
+    bpy.ops.wm.save_as_mainfile(filepath=blend_path, compress=True)
+    export_glb(glb_path)
+    os.makedirs(PUBLIC_DIR, exist_ok=True)
+    shutil.copyfile(glb_path, os.path.join(PUBLIC_DIR, f"coach_{clip}.glb"))
+    print("WROTE", blend_path)
+    print("WROTE", glb_path, "+ public/assets/coach copy")
+
+
+def main():
+    argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    clips = argv or list(CLIPS)
+    unknown = [c for c in clips if c not in CLIPS]
+    if unknown:
+        raise SystemExit(f"unknown clip(s) {unknown}; choose from {list(CLIPS)}")
+    for clip in clips:
+        build_clip(clip)
 
 
 if __name__ == "__main__":

@@ -448,7 +448,9 @@ test.describe('Viewer loading and Still_Fallback', () => {
     const coachAsset = await holdCoachAsset(page);
     await routeStillImages(page);
 
-    await page.goto(exercisePath(exercise));
+    // 'commit' returns at the first response byte, so a busy machine cannot let the
+    // 10-second slow-load timer pass before the first assertion starts to wait.
+    await page.goto(exercisePath(exercise), { waitUntil: 'commit' });
 
     await expect(viewerArea(page).getByRole('status')).toHaveCount(1);
     await expect(liveRegion(page)).toHaveText(en['viewer.loading'], { timeout: 15_000 });

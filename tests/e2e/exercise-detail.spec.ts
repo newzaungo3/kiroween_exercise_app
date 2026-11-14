@@ -1,9 +1,9 @@
 import { expect, type Locator, type Page, type Route, test } from '@playwright/test';
 
-import { type ExerciseEntry, exercises } from '@/catalog';
+import { entries, entriesOfKind, type ExerciseEntry, kinds, neighbours } from '@/catalog';
+import { backToListLabel, exercisePath, listPath } from '@/ui/exercises/labels';
 import { format, locales } from '@/ui/strings';
 
-import { exerciseListScreen } from './support/screens';
 import { waitForCoach } from './support/webgl';
 
 const en = locales.en;
@@ -18,10 +18,6 @@ const en = locales.en;
 
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function exercisePath(exercise: ExerciseEntry): string {
-  return `/exercises/${exercise.slug}`;
 }
 
 /** The text a visitor reads for each part of an Exercise's Written_Content. */
@@ -102,7 +98,7 @@ async function expectWrittenContentAndSafetyMessage(page: Page, exercise: Exerci
 
 /** The Grave Rise Exercise_Entry, the Exercise the Viewer-state tests open. */
 const graveRise: ExerciseEntry = (() => {
-  const entry = exercises.find((exercise) => exercise.id === 'grave-rise');
+  const entry = entries.find((exercise) => exercise.id === 'grave-rise');
   if (entry === undefined) throw new Error('the Catalog has no Grave Rise Exercise_Entry');
   return entry;
 })();
@@ -271,10 +267,12 @@ test.describe('Exercise_Detail_Screen', () => {
     await expectWrittenContentAndSafetyMessage(page, graveRise);
   });
 
-  test('the Exercise_Detail_Screen serves directly and on reload with the Spooky_Name in its title', async ({
-    page,
-  }) => {
-    for (const exercise of exercises) {
+  // One test per entry: each entry loads the Viewer twice, so a single looping test
+  // outgrew its timeout once the Catalog held five entries.
+  for (const exercise of entries) {
+    test(`the Exercise_Detail_Screen of ${exercisePath(exercise)} serves directly and on reload with the Spooky_Name in its title`, async ({
+      page,
+    }) => {
       const response = await page.goto(exercisePath(exercise));
       await expectServedDetailScreen(page, exercise, response, 'on a direct request');
       await expectWrittenContentAndSafetyMessage(page, exercise);
@@ -282,11 +280,11 @@ test.describe('Exercise_Detail_Screen', () => {
       const reloaded = await page.reload();
       await expectServedDetailScreen(page, exercise, reloaded, 'after reload');
       await expectWrittenContentAndSafetyMessage(page, exercise);
-    }
-  });
+    });
+  }
 
   test('the Written_Content and the Safety_Message are in the prerendered HTML', async ({ request }) => {
-    for (const exercise of exercises) {
+    for (const exercise of entries) {
       const response = await request.get(exercisePath(exercise));
       expect(response.status(), `status of ${exercisePath(exercise)}`).toBe(200);
       const text = readableHtmlText(await response.text());
@@ -299,7 +297,7 @@ test.describe('Exercise_Detail_Screen', () => {
   test('Instruction_Steps are one ordered list; Cues and Safety_Notes sit under their own headings', async ({
     page,
   }) => {
-    for (const exercise of exercises) {
+    for (const exercise of entries) {
       const content = writtenContent(exercise);
       await page.goto(exercisePath(exercise));
 
@@ -322,18 +320,70 @@ test.describe('Exercise_Detail_Screen', () => {
     }
   });
 
-  test('the Exercise_Detail_Screen links back to the Exercise_List_Screen', async ({ page }) => {
-    await page.goto(exercisePath(graveRise));
+  test('the Exercise_Detail_Screen links back to the list screen of its Kind', async ({ page }) => {
+    for (const kind of kinds) {
+      const entry = entriesOfKind(kind)[0];
+      if (entry === undefined) throw new Error(`the Catalog has no entry of Kind ${kind}`);
+      await page.goto(exercisePath(entry));
 
-    const back = page.getByRole('link', { name: en['exercise.backToList'], exact: true });
-    await expect(back).toBeVisible();
-    await expect(back).toHaveAttribute('href', exerciseListScreen);
+      const back = page.getByRole('link', { name: backToListLabel(kind), exact: true });
+      await expect(back).toBeVisible();
+      await expect(back).toHaveAttribute('href', listPath(kind));
 
-    await back.click();
-    await page.waitForURL(exerciseListScreen);
-    await expect(
-      page.getByRole('heading', { level: 1, name: en['section.exercises.name'], exact: true }),
-    ).toBeVisible();
+      await back.click();
+      await page.waitForURL(listPath(kind));
+      const sectionName = kind === 'stretch' ? en['section.stretches.name'] : en['section.exercises.name'];
+      await expect(page.getByRole('heading', { level: 1, name: sectionName, exact: true })).toBeVisible();
+    }
+  });
+
+  test('the target fact shows reps for an Exercise and seconds for a Stretch', async ({ page }) => {
+    for (const entry of entries) {
+      await page.goto(exercisePath(entry));
+      const label = entry.target.reps !== undefined ? en['exercise.facts.targetReps'] : en['exercise.facts.targetSeconds'];
+      const value = entry.target.reps ?? entry.target.seconds;
+      const fact = factValue(page, label);
+      await expect(fact, `target fact of ${entry.slug}`).toHaveText(String(value));
+      await expect(fact).toBeVisible();
+      // The other unit's label is absent.
+      const other =
+        entry.target.reps !== undefined ? en['exercise.facts.targetSeconds'] : en['exercise.facts.targetReps'];
+      await expect(factValue(page, other)).toHaveCount(0);
+    }
+  });
+
+  test('the Pager names its neighbours, omits the missing ends and leads to the neighbour', async ({ page }) => {
+    for (const kind of kinds) {
+      const list = entriesOfKind(kind);
+      for (const entry of list as readonly ExerciseEntry[]) {
+        const { previous, next } = neighbours<ExerciseEntry>(list, entry);
+        await page.goto(exercisePath(entry));
+        const pager = page.getByRole('navigation', { name: en['pager.label'], exact: true });
+
+        for (const [neighbour, template] of [
+          [previous, 'pager.previous'],
+          [next, 'pager.next'],
+        ] as const) {
+          const name = neighbour === undefined ? undefined : format(template, { exercise: en[neighbour.nameId] });
+          if (neighbour === undefined || name === undefined) {
+            await expect(
+              page.getByRole('link', { name: new RegExp(`^${escapeRegExp(en[template].split('{')[0] ?? '')}`) }),
+              `${template} on ${entry.slug}`,
+            ).toHaveCount(0);
+            continue;
+          }
+          const link = pager.getByRole('link', { name, exact: true });
+          await expect(link).toContainText(en[neighbour.nameId]);
+          await expect(link).toHaveAttribute('href', exercisePath(neighbour));
+        }
+
+        if (next !== undefined) {
+          await pager.getByRole('link', { name: format('pager.next', { exercise: en[next.nameId] }), exact: true }).click();
+          await page.waitForURL(exercisePath(next));
+          await expect(page.getByRole('heading', { level: 1, name: en[next.nameId], exact: true })).toBeVisible();
+        }
+      }
+    }
   });
 
   test('the Written_Content and the Safety_Message stay visible while loading and while slow', async ({
@@ -417,7 +467,7 @@ test.describe('Exercise_Detail_Screen without JavaScript', () => {
   test.use({ javaScriptEnabled: false });
 
   test('the Written_Content and the Safety_Message are shown before any script runs', async ({ page }) => {
-    for (const exercise of exercises) {
+    for (const exercise of entries) {
       await page.goto(exercisePath(exercise));
       await expect(page).toHaveTitle(exerciseTitle(exercise));
       await expectWrittenContentAndSafetyMessage(page, exercise);

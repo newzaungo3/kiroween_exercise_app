@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
-import { exercises } from '@/catalog';
+import { entriesOfKind, type Kind } from '@/catalog';
 
 import { sectionName } from '../sections';
 import { t } from '../strings';
 import styles from './ExerciseListScreen.module.css';
-import { difficultyLabel, exerciseName, exercisePath, muscleGroupLabel } from './labels';
+import { difficultyLabel, exerciseName, exercisePath, listSection, muscleGroupLabel } from './labels';
 
 /**
  * The Exercise_List_Screen: the Exercises Section heading, one
@@ -18,12 +18,12 @@ import { difficultyLabel, exerciseName, exercisePath, muscleGroupLabel } from '.
  * - This screen imports nothing from the Viewer, so it requests no
  *   Coach_Asset, Still_Image or 3D code (Requirement 3.8).
  */
-export function ExerciseListScreen() {
+export function ExerciseListScreen({ kind }: { readonly kind: Kind }) {
   return (
     <>
-      <h1 className={styles.title}>{sectionName('exercises')}</h1>
+      <h1 className={styles.title}>{sectionName(listSection(kind))}</h1>
       <ul className={styles.list}>
-        {exercises.map((exercise) => (
+        {entriesOfKind(kind).map((exercise) => (
           <li key={exercise.id}>
             <Link className={styles.entry} href={exercisePath(exercise)}>
               <span className={styles.name}>{exerciseName(exercise)}</span>{' '}

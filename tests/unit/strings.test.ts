@@ -16,9 +16,9 @@ const englishIds = Object.keys(locales.en) as EnglishId[];
 // depend on src/ui/sections.ts.
 const sectionIds = ['exercises', 'stretches', 'routines', 'crypt', 'history'] as const;
 
-// The Sections that still show a Placeholder_Screen. Exercises has the
-// Exercise_List_Screen instead, so it has no Placeholder_Screen message.
-const placeholderSectionIds = ['stretches', 'routines', 'crypt', 'history'] as const;
+// The Sections that still show a Placeholder_Screen. Exercises and Stretches
+// have a list screen instead, so they have no Placeholder_Screen message.
+const placeholderSectionIds = ['routines', 'crypt', 'history'] as const;
 
 describe('Strings_Module', () => {
   it('every English Locale entry has visible text', () => {
@@ -83,6 +83,17 @@ describe('Strings_Module', () => {
     expect(message).toContain('I demonstrate');
     expect(message).toContain("can't see you");
     expect(message).toContain('check your form');
+  });
+
+  it('no Exercise, Stretch, Viewer or Safety_Message string mentions Candy or a reward', () => {
+    const prefixes = ['exercise.', 'viewer.', 'safety.', 'pager.', 'routine.'];
+    const rewardWord = /\b(candy|reward|rewards|earn|earns|earned)\b/i;
+    const offending = englishIds.filter(
+      (id) => prefixes.some((prefix) => id.startsWith(prefix)) && rewardWord.test(locales.en[id]),
+    );
+
+    // On failure, Vitest prints the offending string identifiers.
+    expect(offending).toEqual([]);
   });
 
   it('every registered Locale keeps the English placeholders', () => {

@@ -11,25 +11,38 @@
  */
 import Link from 'next/link';
 
-import type { ExerciseEntry } from '@/catalog';
+import { entriesOfKind, neighbours, type ExerciseEntry } from '@/catalog';
 import { ViewerIsland } from '@/viewer/ViewerIsland';
 
-import { t } from '../strings';
+import { format, t } from '../strings';
 import styles from './ExerciseDetailScreen.module.css';
-import { difficultyLabel, exerciseName, muscleGroupLabel } from './labels';
+import {
+  backToListLabel,
+  difficultyLabel,
+  exerciseName,
+  exercisePath,
+  listPath,
+  muscleGroupLabel,
+  targetFact,
+} from './labels';
 
 export interface ExerciseDetailScreenProps {
   readonly exercise: ExerciseEntry;
 }
 
 export function ExerciseDetailScreen({ exercise }: ExerciseDetailScreenProps) {
+  const target = targetFact(exercise);
+  const { previous, next } = neighbours<ExerciseEntry>(
+    entriesOfKind(exercise.kind),
+    exercise,
+  );
   return (
     <>
-      <Link className={styles.back} href="/exercises">
-        {t('exercise.backToList')}
+      <Link className={styles.back} href={listPath(exercise.kind)}>
+        {backToListLabel(exercise.kind)}
       </Link>
       <h1 className={styles.title}>{exerciseName(exercise)}</h1>
-      <ViewerIsland exercise={exercise} />
+      <ViewerIsland key={exercise.id} exercise={exercise} />
       <section className={styles.safety} aria-labelledby="safety-heading">
         <h2 id="safety-heading" className={styles.safetyHeading}>
           {t('safety.heading')}
@@ -55,6 +68,10 @@ export function ExerciseDetailScreen({ exercise }: ExerciseDetailScreenProps) {
             </ul>
           </dd>
         </div>
+        <div className={styles.fact}>
+          <dt className={styles.factLabel}>{target.label}</dt>
+          <dd className={styles.factValue}>{target.value}</dd>
+        </div>
       </dl>
       <h2 className={styles.heading}>{t('exercise.steps.heading')}</h2>
       <ol className={styles.steps}>
@@ -74,6 +91,20 @@ export function ExerciseDetailScreen({ exercise }: ExerciseDetailScreenProps) {
           <li key={id}>{t(id)}</li>
         ))}
       </ul>
+      {previous !== undefined || next !== undefined ? (
+        <nav className={styles.pager} aria-label={t('pager.label')}>
+          {previous !== undefined ? (
+            <Link className={styles.pagerLink} href={exercisePath(previous)}>
+              {format('pager.previous', { exercise: exerciseName(previous) })}
+            </Link>
+          ) : null}
+          {next !== undefined ? (
+            <Link className={styles.pagerLink} href={exercisePath(next)}>
+              {format('pager.next', { exercise: exerciseName(next) })}
+            </Link>
+          ) : null}
+        </nav>
+      ) : null}
     </>
   );
 }

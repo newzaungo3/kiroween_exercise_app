@@ -15,6 +15,9 @@ export default defineConfig({
   // (half the logical CPUs), multi-page tests on a 20-thread machine timed out
   // while the server queued requests. Four workers keep the run reliable.
   workers: 4,
+  // Tests that visit every screen share the machine with software-WebGL pages in
+  // the other workers; 30 s was not enough once the Catalog held five entries.
+  timeout: 90_000,
   forbidOnly: true,
   retries: 0,
   reporter: [['list']],

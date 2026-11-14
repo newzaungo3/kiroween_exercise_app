@@ -12,7 +12,7 @@
  */
 import { expect, type Page } from '@playwright/test';
 
-import { type ExerciseEntry, findExercise } from '@/catalog';
+import { type ExerciseEntry, findEntry, type Kind } from '@/catalog';
 import { format, locales, t } from '@/ui/strings';
 
 const en = locales.en;
@@ -139,15 +139,22 @@ export async function simulatePageHidden(page: Page, hidden: boolean): Promise<v
   }, hidden);
 }
 
-/** The Exercise_Entry whose Exercise_Detail_Screen the page shows, from its URL. */
+/**
+ * The Catalog entry whose detail screen the page shows, from its URL:
+ * `/exercises/<slug>` or `/stretches/<slug>`, resolved by the Kind of the path.
+ */
 function exerciseOnPage(page: Page): ExerciseEntry {
-  const match = /^\/exercises\/([^/]+)\/?$/.exec(new URL(page.url()).pathname);
-  const slug = match?.[1];
-  const exercise = slug === undefined ? undefined : findExercise(slug);
-  if (exercise === undefined) {
-    throw new Error(`waitForCoach: ${page.url()} is not an Exercise_Detail_Screen; pass the Exercise_Entry.`);
+  const match = /^\/(exercises|stretches)\/([^/]+)\/?$/.exec(new URL(page.url()).pathname);
+  const folder = match?.[1];
+  const slug = match?.[2];
+  const kind: Kind = folder === 'stretches' ? 'stretch' : 'exercise';
+  const entry = slug === undefined ? undefined : findEntry(kind, slug);
+  if (entry === undefined) {
+    throw new Error(
+      `waitForCoach: ${page.url()} is not a detail screen under /exercises/ or /stretches/; pass the entry.`,
+    );
   }
-  return exercise;
+  return entry;
 }
 
 /**

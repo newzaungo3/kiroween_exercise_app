@@ -14,6 +14,8 @@ const templateIds: readonly TemplateId[] = [
   'viewer.still.front.alt',
   'viewer.still.side.alt',
   'viewer.still.back.alt',
+  'pager.previous',
+  'pager.next',
 ];
 
 // Values contain no `{`, so a replacement can never form a new placeholder.

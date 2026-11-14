@@ -4,5 +4,5 @@ import { sectionMetadata } from '@/ui/metadata';
 export const metadata = sectionMetadata('exercises');
 
 export default function ExercisesPage() {
-  return <ExerciseListScreen />;
+  return <ExerciseListScreen kind="exercise" />;
 }

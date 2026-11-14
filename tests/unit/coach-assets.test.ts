@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import type { BufferGeometry } from 'three';
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { exercises, stillViews, type SameOriginAssetPath } from '@/catalog';
+import { entries, stillViews, type SameOriginAssetPath } from '@/catalog';
 import { colors } from '@/ui/theme/tokens';
 import { computeFraming, projectToNdc } from '@/viewer/logic/framing';
 import type { Box3Value } from '@/viewer/logic/geometry-types';
@@ -76,13 +76,13 @@ interface CatalogAsset {
   readonly path: SameOriginAssetPath;
 }
 
-const coachAssets: readonly CatalogAsset[] = exercises.map((e) => ({
+const coachAssets: readonly CatalogAsset[] = entries.map((e) => ({
   exerciseId: e.id,
   kind: 'Coach_Asset',
   path: e.coach.asset,
 }));
 
-const stillImages: readonly CatalogAsset[] = exercises.flatMap((e) =>
+const stillImages: readonly CatalogAsset[] = entries.flatMap((e) =>
   stillViews.map((view): CatalogAsset => ({ exerciseId: e.id, kind: 'Still_Image', path: e.stills[view] })),
 );
 
@@ -141,7 +141,9 @@ const representativeAspects = [0.8, 1.125, 1.6, 2.4] as const;
 
 describe('Coach_Asset and Still_Image delivery', () => {
   it('every Coach_Asset and Still_Image in the Catalog is a file under public/', () => {
-    expect(catalogAssets.length).toBeGreaterThan(0);
+    expect(coachAssets).toHaveLength(5);
+    expect(stillImages).toHaveLength(15);
+    expect(catalogAssets).toHaveLength(20);
     const missing = catalogAssets
       .filter((asset) => {
         const absolute = path.join(root, repositoryPath(asset.path));
@@ -171,7 +173,7 @@ describe('Coach_Asset and Still_Image delivery', () => {
   });
 
   it('every Coach_Asset is a glTF 2.0 binary within the Viewer budget', () => {
-    for (const exercise of exercises) {
+    for (const exercise of entries) {
       const assetPath = exercise.coach.asset;
       const bytes = readDelivered(assetPath);
       const budget = readGlbBudget(bytes);
@@ -222,7 +224,7 @@ describe('Coach_Asset and Still_Image delivery', () => {
 describe('Graveyard_Scene', () => {
   it('the whole Graveyard_Scene with the Coach stays within 35,000 triangles', () => {
     expect(graveyardTriangles).toBeGreaterThan(0);
-    for (const exercise of exercises) {
+    for (const exercise of entries) {
       const coachTriangles = readGlbBudget(readDelivered(exercise.coach.asset)).triangles;
       const total = coachTriangles + graveyardTriangles;
 

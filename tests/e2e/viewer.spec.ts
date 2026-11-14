@@ -16,10 +16,12 @@
  */
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { type ExerciseEntry, exercises } from '@/catalog';
+import { type ExerciseEntry, entries, exercises } from '@/catalog';
+import { exercisePath } from '@/ui/exercises/labels';
 import { format, locales, type StringId, t } from '@/ui/strings';
 import { colors } from '@/ui/theme/tokens';
 
+import { settledPicture } from './support/pictures';
 import { disableWebGL, waitForCoach } from './support/webgl';
 
 const en = locales.en;
@@ -125,22 +127,6 @@ async function openLoadingDetail(page: Page): Promise<void> {
   await holdCoachAsset(page);
   await openDetail(page);
   await expect(viewerArea(page)).toHaveAttribute('data-viewer-phase', 'loading');
-}
-
-/**
- * Takes canvas screenshots until two in a row are equal, and returns that
- * picture: the 3D scene after the camera and the Demo_Clip have stopped.
- */
-async function settledPicture(page: Page): Promise<Buffer> {
-  const canvas = coachCanvas(page);
-  let previous = await canvas.screenshot();
-  for (let attempt = 0; attempt < 30; attempt += 1) {
-    await page.waitForTimeout(250);
-    const next = await canvas.screenshot();
-    if (next.equals(previous)) return next;
-    previous = next;
-  }
-  throw new Error('the 3D scene kept changing for 7.5 s although the Coach is paused');
 }
 
 /** Pauses the Demo_Clip with the Play/Pause button. */
@@ -268,6 +254,18 @@ test.describe('Viewer', () => {
         '(--use-angle=swiftshader, --enable-unsafe-swiftshader) stopped working, so every 3D test ' +
         'would see the Still_Fallback',
     ).toBe(true);
+  });
+
+  test('the Coach loads for every Exercise_Entry', async ({ page }) => {
+    for (const entry of entries) {
+      await page.goto(exercisePath(entry));
+      await waitForCoach(page, { exercise: entry });
+      const name = format('viewer.coachLabel', { exercise: t(entry.nameId) });
+      await expect(
+        page.getByRole('img', { name, exact: true }),
+        `the Coach image of ${t(entry.nameId)}`,
+      ).toBeVisible();
+    }
   });
 
   test('every Camera_Control and Playback_Control has its name from the Strings_Module', async ({

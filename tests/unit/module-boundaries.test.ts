@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
-import { exercises } from '@/catalog';
+import { entries, stretches } from '@/catalog';
 
 // ---------------------------------------------------------------------------
 // Files
@@ -457,7 +457,7 @@ const assetFolder = /(?:^|\/)assets\//;
 
 /** The Demo_Clip names and asset file names the Catalog holds, so the Viewer cannot repeat them. */
 function catalogAssetNames(): string[] {
-  const names = exercises.flatMap((entry) => [
+  const names = entries.flatMap((entry) => [
     entry.coach.demoClip,
     path.posix.basename(entry.coach.asset),
     ...Object.values(entry.stills).map((still) => path.posix.basename(still)),
@@ -610,6 +610,13 @@ describe('module boundaries', () => {
 
   it('the Viewer reads asset paths and clip names only from the Catalog', () => {
     const names = catalogAssetNames();
+    // The names cover the Stretches too, so the Viewer cannot repeat one.
+    const stretch = stretches[0];
+    expect(stretch).toBeDefined();
+    expect(names).toContain(path.posix.basename(stretch!.coach.asset));
+    expect(
+      findHardcodedAssetReferences('src/viewer/fixture.tsx', `const a = '${path.posix.basename(stretch!.coach.asset)}';`, names),
+    ).not.toEqual([]);
     expect(names.length).toBeGreaterThan(0);
     const findings = readSources([viewerDir], [...codeExtensions, '.css']).flatMap(({ file, text }) =>
       findHardcodedAssetReferences(file, text, names),

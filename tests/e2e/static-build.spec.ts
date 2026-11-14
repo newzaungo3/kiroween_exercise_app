@@ -3,7 +3,8 @@ import path from 'node:path';
 
 import { expect, test } from '@playwright/test';
 
-import { exerciseSlugs } from '@/catalog';
+import { entries } from '@/catalog';
+import { exercisePath } from '@/ui/exercises/labels';
 import { sectionIds, sectionPath } from '@/ui/sections';
 
 /**
@@ -44,11 +45,17 @@ function readManifest<T>(fileName: string): T {
   return JSON.parse(readFileSync(path.join(buildDir, fileName), 'utf8')) as T;
 }
 
-/** The path of every Exercise_Detail_Screen, one per Catalog slug. */
-const exerciseDetailRoutes = exerciseSlugs().map((slug) => `/exercises/${slug}`);
+/** The Exercise_Detail_Screen of every Catalog entry of both Kinds: its path and the App Router route that serves it. */
+const exerciseDetails = entries.map((entry) => ({
+  path: exercisePath(entry),
+  srcRoute: entry.kind === 'stretch' ? '/stretches/[slug]' : '/exercises/[slug]',
+}));
+
+/** The path of every Exercise_Detail_Screen, one per Catalog entry. */
+const exerciseDetailRoutes: string[] = exerciseDetails.map((detail) => detail.path);
 
 /**
- * The Home_Screen, the Section screens (the Exercise_List_Screen and the four
+ * The Home_Screen, the Section screens (the two list screens and the three
  * Placeholder_Screens), every Exercise_Detail_Screen and the not-found screen.
  */
 const screenRoutes = ['/', ...sectionIds.map(sectionPath), ...exerciseDetailRoutes, '/_not-found'];
@@ -99,8 +106,8 @@ test.describe('static Build', () => {
     expect(onDemand).toEqual([]);
 
     // Every page a dynamic route prerendered is an Exercise_Detail_Screen of a
-    // Catalog slug, and every Catalog slug was prerendered from the
-    // Exercise_Detail_Screen route.
+    // Catalog entry, and every Catalog entry was prerendered from the route
+    // of its Kind (`/exercises/[slug]` or `/stretches/[slug]`).
     for (const route of Object.keys(prerender.dynamicRoutes)) {
       const pages = Object.entries(prerender.routes)
         .filter(([, entry]) => entry.srcRoute === route)
@@ -109,8 +116,8 @@ test.describe('static Build', () => {
         expect(exerciseDetailRoutes, `page ${page} prerendered from ${route}`).toContain(page);
       }
     }
-    for (const page of exerciseDetailRoutes) {
-      expect(prerender.routes[page]?.srcRoute, `source route of ${page}`).toBe('/exercises/[slug]');
+    for (const detail of exerciseDetails) {
+      expect(prerender.routes[detail.path]?.srcRoute, `source route of ${detail.path}`).toBe(detail.srcRoute);
     }
   });
 });

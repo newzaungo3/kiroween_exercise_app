@@ -8,10 +8,19 @@
 import {
   difficulties,
   type CatalogDraft,
+  kinds,
   type CatalogRule,
   type CatalogViolation,
   type ExerciseDraft,
+  type RoutineDraft,
+  type RoutineStepDraft,
 } from './types';
+
+const knownKinds: ReadonlySet<string> = new Set(kinds);
+
+const minSets = 1;
+const maxSets = 10;
+const maxRestSeconds = 600;
 
 /** A slug may hold only lowercase letters, digits and hyphens. */
 const slugPattern = /^[a-z0-9-]+$/;
@@ -76,29 +85,121 @@ function entryRules(entry: ExerciseDraft): CatalogRule[] {
   if (stills.some(isBlank)) rules.push('still-image-missing');
   if (stills.some(isBadAssetPath)) rules.push('still-image-path');
 
+  if (entry.kind === undefined || !knownKinds.has(entry.kind)) {
+    rules.push('kind-unknown');
+  }
+  if (entry.kind === 'stretch' && reps !== undefined) rules.push('stretch-reps');
+
+  return rules;
+}
+
+type Unit = 'reps' | 'seconds';
+
+/** The one unit a target uses, or undefined when it has none or both. */
+function singleUnit(
+  target: { readonly reps?: number; readonly seconds?: number } | undefined,
+): Unit | undefined {
+  const hasReps = target?.reps !== undefined;
+  const hasSeconds = target?.seconds !== undefined;
+  if (hasReps === hasSeconds) return undefined;
+  return hasReps ? 'reps' : 'seconds';
+}
+
+function isIntegerInRange(value: number | undefined, min: number, max: number): boolean {
+  return value !== undefined && Number.isInteger(value) && value >= min && value <= max;
+}
+
+/** The rules one Routine_Step breaks, given the entries it may refer to. */
+function stepRules(
+  step: RoutineStepDraft,
+  list: 'steps' | 'coolDown',
+  entries: readonly ExerciseDraft[],
+): CatalogRule[] {
+  const rules: CatalogRule[] = [];
+  const entry = isBlank(step.entryId)
+    ? undefined
+    : entries.find((candidate) => !isBlank(candidate.id) && candidate.id === step.entryId);
+
+  if (entry === undefined) {
+    rules.push('step-entry-unknown');
+  } else if (entry.kind !== undefined && knownKinds.has(entry.kind)) {
+    const wanted = list === 'steps' ? 'exercise' : 'stretch';
+    if (entry.kind !== wanted) rules.push('step-entry-kind');
+  }
+
+  if (!isIntegerInRange(step.sets, minSets, maxSets)) rules.push('step-sets');
+
+  const stepUnit = singleUnit(step.target);
+  if (stepUnit === undefined) {
+    rules.push('step-target-kind');
+  } else if (!isPositiveInteger(step.target?.[stepUnit] ?? 0)) {
+    rules.push('step-target-value');
+  }
+
+  if (entry !== undefined && stepUnit !== undefined) {
+    const entryUnit = singleUnit(entry.target);
+    if (entryUnit !== undefined && entryUnit !== stepUnit) rules.push('step-target-unit');
+  }
+
+  if (!isIntegerInRange(step.restSeconds, 0, maxRestSeconds)) rules.push('step-rest');
+
+  return rules;
+}
+
+/** The rules one Routine_Entry breaks on its own, before its steps. */
+function routineRules(
+  routine: RoutineDraft,
+  seenIds: Set<string>,
+  seenSlugs: Set<string>,
+): CatalogRule[] {
+  const rules: CatalogRule[] = [];
+  const { id, slug } = routine;
+
+  if (isBlank(id)) {
+    rules.push('routine-id-missing');
+  } else {
+    if (seenIds.has(id)) rules.push('routine-id-duplicate');
+    seenIds.add(id);
+  }
+
+  if (!isBlank(slug)) {
+    if (seenSlugs.has(slug)) rules.push('routine-slug-duplicate');
+    seenSlugs.add(slug);
+  }
+  if (isBlank(slug) || !slugPattern.test(slug)) rules.push('routine-slug-format');
+
+  if (isBlank(routine.nameId)) rules.push('routine-name-missing');
+  if (routine.steps === undefined || routine.steps.length === 0) {
+    rules.push('routine-steps-empty');
+  }
+  if (routine.coolDown === undefined || routine.coolDown.length === 0) {
+    rules.push('routine-cool-down-empty');
+  }
+
   return rules;
 }
 
 /**
  * Returns every Catalog rule the content breaks, in Catalog order, each rule
- * at most once per Exercise_Entry. An Exercise_Entry without an identifier is
- * named `#<index>`. Valid content gives an empty list.
+ * at most once per subject. Subjects are named `#<index>` (entry),
+ * `routine#<index>` (Routine_Entry) and `<routine>/steps#<i>` or
+ * `<routine>/coolDown#<i>` (Routine_Step). Valid content gives an empty list.
  */
 export function validateCatalog(content: CatalogDraft): readonly CatalogViolation[] {
   const violations: CatalogViolation[] = [];
   const seenIds = new Set<string>();
   const seenSlugs = new Set<string>();
 
-  content.exercises.forEach((entry, index) => {
+  content.entries.forEach((entry, index) => {
     const { id, slug } = entry;
     const rules: CatalogRule[] = [];
-    let exerciseId: string;
+    let subjectId: string;
 
     if (isBlank(id)) {
-      exerciseId = `#${index}`;
+      subjectId = `#${index}`;
       rules.push('id-missing');
     } else {
-      exerciseId = id;
+      subjectId = id;
       if (seenIds.has(id)) rules.push('id-duplicate');
       seenIds.add(id);
     }
@@ -109,7 +210,26 @@ export function validateCatalog(content: CatalogDraft): readonly CatalogViolatio
     }
 
     rules.push(...entryRules(entry));
-    for (const rule of rules) violations.push({ exerciseId, rule });
+    for (const rule of rules) violations.push({ subjectId, rule });
+  });
+
+  const routineIds = new Set<string>();
+  const routineSlugs = new Set<string>();
+
+  content.routines.forEach((routine, index) => {
+    const routineSubject = isBlank(routine.id) ? `routine#${index}` : routine.id;
+    for (const rule of routineRules(routine, routineIds, routineSlugs)) {
+      violations.push({ subjectId: routineSubject, rule });
+    }
+
+    for (const list of ['steps', 'coolDown'] as const) {
+      (routine[list] ?? []).forEach((step, i) => {
+        const subjectId = `${routineSubject}/${list}#${i}`;
+        for (const rule of stepRules(step, list, content.entries)) {
+          violations.push({ subjectId, rule });
+        }
+      });
+    }
   });
 
   return violations;

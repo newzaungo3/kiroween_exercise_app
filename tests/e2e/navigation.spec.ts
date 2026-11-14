@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
-import { exerciseSlugs, exercises } from '@/catalog';
+import { entriesOfKind, exerciseSlugs } from '@/catalog';
 import { locales } from '@/ui/strings';
 import { colors } from '@/ui/theme/tokens';
 
@@ -16,15 +16,16 @@ const en = locales.en;
 const sections = [
   {
     screen: 'exercise-list',
+    kind: 'exercise',
     route: '/exercises',
     name: en['section.exercises.name'],
     title: en['section.exercises.title'],
   },
   {
-    screen: 'placeholder',
+    screen: 'exercise-list',
+    kind: 'stretch',
     route: '/stretches',
     name: en['section.stretches.name'],
-    message: en['section.stretches.message'],
     title: en['section.stretches.title'],
   },
   {
@@ -54,7 +55,7 @@ type Section = (typeof sections)[number];
 type PlaceholderSection = Extract<Section, { readonly screen: 'placeholder' }>;
 type ExerciseListSection = Extract<Section, { readonly screen: 'exercise-list' }>;
 
-/** The Sections that still serve a Placeholder_Screen: Stretches, Routines, Crypt and History. */
+/** The Sections that still serve a Placeholder_Screen: Routines, Crypt and History. */
 const placeholderSections = sections.filter(
   (section): section is PlaceholderSection => section.screen === 'placeholder',
 );
@@ -112,13 +113,17 @@ async function expectPlaceholderScreen(page: Page, section: PlaceholderSection):
 async function expectExerciseListScreen(page: Page, section: ExerciseListSection): Promise<void> {
   await expectSectionHeadingAndTitle(page, section);
 
-  for (const exercise of exercises) {
+  for (const exercise of entriesOfKind(section.kind)) {
     const spookyName = en[exercise.nameId];
     const entry = page.getByRole('link', { name: new RegExp(`^${escapeRegExp(spookyName)}`) });
     await expect(entry, `Exercise_List_Entry for ${spookyName}`).toHaveCount(1);
     await expect(entry).toBeVisible();
-    await expect(entry).toHaveAttribute('href', `/exercises/${exercise.slug}`);
+    await expect(entry).toHaveAttribute('href', `${section.route}/${exercise.slug}`);
   }
+
+  const backHome = page.getByRole('link', { name: en['common.backHome'], exact: true });
+  await expect(backHome).toBeVisible();
+  await expect(backHome).toHaveAttribute('href', '/');
 }
 
 /** Checks that the page shows the screen `section`'s Navigation_Entry leads to. */

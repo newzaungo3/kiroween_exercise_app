@@ -1,8 +1,8 @@
+import { ExerciseListScreen } from '@/ui/exercises/ExerciseListScreen';
 import { sectionMetadata } from '@/ui/metadata';
-import { PlaceholderScreen } from '@/ui/placeholder/PlaceholderScreen';
 
 export const metadata = sectionMetadata('stretches');
 
 export default function StretchesPage() {
-  return <PlaceholderScreen sectionId="stretches" />;
+  return <ExerciseListScreen kind="stretch" />;
 }

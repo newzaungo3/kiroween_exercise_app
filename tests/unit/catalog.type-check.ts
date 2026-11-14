@@ -9,7 +9,13 @@
  * The fixtures sit inside a function that is never called, so importing this
  * file runs nothing and changes no Catalog content.
  */
-import { exercises, type ExerciseTarget } from '@/catalog';
+import {
+  exercises,
+  routines,
+  stretches,
+  type EntryOfKind,
+  type ExerciseTarget,
+} from '@/catalog';
 
 export function catalogTypeFixtures(): void {
   const first = exercises[0];
@@ -32,5 +38,26 @@ export function catalogTypeFixtures(): void {
   // @ts-expect-error a target has reps or seconds, never both
   const both: ExerciseTarget = { reps: 1, seconds: 1 };
 
-  void [slug, repsOnly, secondsOnly, both];
+  // Kind and Routine fixtures. Each passing line is the counterpart of the
+  // error line after it: the same shape, minus the one thing the error names.
+  const stretch = stretches[0];
+  const routine = routines[0];
+  if (stretch === undefined || routine === undefined) return;
+
+  const stretchWithSeconds: EntryOfKind<'stretch'> = {
+    ...stretch,
+    target: { seconds: 1 },
+  };
+  [...routine.steps].push(routine.steps[0]!);
+
+  const stretchWithReps: EntryOfKind<'stretch'> = {
+    ...stretch,
+    // @ts-expect-error a stretch has seconds, never reps
+    target: { reps: 1 },
+  };
+
+  // @ts-expect-error Routine_Entry steps are read-only
+  routine.steps.push(routine.steps[0]!);
+
+  void [slug, repsOnly, secondsOnly, both, stretchWithSeconds, stretchWithReps];
 }

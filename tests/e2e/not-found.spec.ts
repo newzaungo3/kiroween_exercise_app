@@ -1,15 +1,26 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { exerciseSlugs, stretchSlugs } from '@/catalog';
 import { locales } from '@/ui/strings';
 import { colors } from '@/ui/theme/tokens';
 
 const en = locales.en;
 
 /**
- * Paths the Site does not serve: one at the root, and slugs under the
- * Exercise_Detail_Screen route that are not in the Catalog (Requirement 4.11).
+ * Paths the Site does not serve: one at the root, slugs under the detail
+ * routes that are not in the Catalog (Requirement 4.11), and slugs of the
+ * other Kind: a Stretch under /exercises and an Exercise under /stretches
+ * (Requirements 8.2, 12.5).
  */
-const unknownPaths = ['/no-such-page', '/exercises/unknown', '/exercises/no-such-exercise'];
+const unknownPaths = [
+  '/no-such-page',
+  '/exercises/unknown',
+  '/exercises/no-such-exercise',
+  `/exercises/${stretchSlugs()[0]}`,
+  `/stretches/${exerciseSlugs()[0]}`,
+  '/stretches/unknown',
+  '/stretches/no-such-stretch',
+];
 
 /** Converts a `#rrggbb` token to the `rgb(r, g, b)` form browsers report. */
 function hexToRgb(hex: string): string {

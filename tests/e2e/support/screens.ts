@@ -7,7 +7,8 @@
  * Catalog reaches every shared check without editing a spec. Only the
  * Home_Screen (`/`) and the not-found probe (`/no-such-page`) are literals.
  */
-import { exerciseSlugs } from '@/catalog';
+import { entries } from '@/catalog';
+import { exercisePath } from '@/ui/exercises/labels';
 import { placeholderSectionIds, sectionIds, sectionPath, type SectionId } from '@/ui/sections';
 
 /** A path a visitor can request on the Site. */
@@ -18,7 +19,8 @@ export const homeScreen: ScreenPath = '/';
 
 /**
  * Section screens that are not Placeholder_Screens. In this ticket that is
- * the Exercise_List_Screen at `/exercises`.
+ * the Exercise_List_Screen at `/exercises` and the Stretch_List_Screen at
+ * `/stretches`.
  */
 const placeholderIds: ReadonlySet<SectionId> = new Set(placeholderSectionIds);
 export const sectionScreens: readonly ScreenPath[] = sectionIds
@@ -28,12 +30,18 @@ export const sectionScreens: readonly ScreenPath[] = sectionIds
 /** The Exercise_List_Screen. */
 export const exerciseListScreen: ScreenPath = sectionPath('exercises');
 
-/** Every Exercise_Detail_Screen, one per Exercise_Entry, in Catalog order. */
-export const exerciseDetailScreens: readonly ScreenPath[] = exerciseSlugs().map(
-  (slug): ScreenPath => `${exerciseListScreen}/${slug}`,
+/** The Stretch_List_Screen. */
+export const stretchListScreen: ScreenPath = sectionPath('stretches');
+
+/**
+ * Every detail screen, one per Exercise_Entry of either Kind, in Catalog
+ * order. Exercises live under `/exercises`, Stretches under `/stretches`.
+ */
+export const exerciseDetailScreens: readonly ScreenPath[] = entries.map(
+  (entry): ScreenPath => exercisePath(entry),
 );
 
-/** The Placeholder_Screens: Stretches, Routines, Crypt and History. */
+/** The Placeholder_Screens: Routines, Crypt and History. */
 export const placeholderScreens: readonly ScreenPath[] = placeholderSectionIds.map((id) => sectionPath(id));
 
 /** A path that matches no route, so the Site answers with the not-found screen. */

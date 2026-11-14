@@ -78,7 +78,7 @@ import styles from './ViewerIsland.module.css';
 const Scene3D = dynamic(() => import('./scene/Scene3D'), { ssr: false, loading: () => null });
 
 /** Snapshot shown before a controller exists (server render, checking, no WebGL2). */
-const idleSnapshot: ViewerSnapshot = { ready: false, playing: false, speed: 1, activePreset: null };
+const idleSnapshot: ViewerSnapshot = { ready: false, playing: false, speed: 1, activePreset: null, held: false };
 
 const noSubscription = (): (() => void) => () => undefined;
 const getIdleSnapshot = (): ViewerSnapshot => idleSnapshot;
@@ -125,9 +125,11 @@ class SceneErrorBoundary extends Component<SceneErrorBoundaryProps, SceneErrorBo
 export interface ViewerIslandProps {
   /** The Exercise the Coach demonstrates. Asset path, Demo_Clip and Still_Images come only from here. */
   readonly exercise: ExerciseEntry;
+  /** Coach_Hold: freezes the Demo_Clip and disables Play/Pause while true. Defaults to false. */
+  readonly hold?: boolean;
 }
 
-export function ViewerIsland({ exercise }: ViewerIslandProps) {
+export function ViewerIsland({ exercise, hold = false }: ViewerIslandProps) {
   const [phase, dispatch] = useReducer(loadReducer, initialLoadState);
   const [download, setDownload] = useState<{ readonly attempt: number; readonly buffer: ArrayBuffer } | null>(null);
   const areaRef = useRef<HTMLDivElement>(null);
@@ -209,6 +211,11 @@ export function ViewerIsland({ exercise }: ViewerIslandProps) {
   useEffect(() => {
     controller?.setVisibility({ pageHidden, inView });
   }, [controller, pageHidden, inView]);
+
+  // Coach_Hold from the host (the paused Workout).
+  useEffect(() => {
+    controller?.setHold(hold);
+  }, [controller, hold]);
 
   const onReady = useCallback((reported: number) => dispatch({ type: 'loaded', attempt: reported }), []);
   const onFailed = useCallback(
@@ -292,6 +299,7 @@ export function ViewerIsland({ exercise }: ViewerIslandProps) {
             <PlaybackControls
               snapshot={snapshot}
               disabled={controlsDisabled}
+              playDisabled={snapshot.held}
               onTogglePlay={onTogglePlay}
               onSpeed={onSpeed}
             />

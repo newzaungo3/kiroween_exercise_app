@@ -13,7 +13,18 @@ import type {
   RoutineEntry,
   RoutineStep,
 } from '@/catalog';
-import { advance, confirmSet, startWorkout, workoutView } from '@/workout-engine';
+import {
+  advance,
+  autoPause,
+  confirmSet,
+  pauseWorkout,
+  quitWorkout,
+  resumeWorkout,
+  skipRest,
+  skipSet,
+  startWorkout,
+  workoutView,
+} from '@/workout-engine';
 import type { ExercisingView, Workout, WorkoutView } from '@/workout-engine';
 
 /** A target in the same unit as the entry's own target. */
@@ -221,3 +232,152 @@ export function playWorkout(routine: RoutineEntry, plan: PlayerPlan): PlayedWork
 
   return { routine, workout, played, startClock: plan.startAt, finalConfirmClock };
 }
+
+/** The kinds of command a script step can issue. */
+export type ScriptKind =
+  | 'confirm'
+  | 'skipSet'
+  | 'skipRest'
+  | 'pause'
+  | 'autoPause'
+  | 'resume'
+  | 'quit'
+  | 'advance';
+
+/** One script step: wait `wait` ms on the player's clock, then issue `kind`. */
+export interface ScriptStep {
+  readonly kind: ScriptKind;
+  readonly wait: number;
+  /** Actual reps (0 to 200) for a confirm on a rep Set; ignored otherwise. */
+  readonly reps: number;
+}
+
+const scriptKinds: readonly ScriptKind[] = [
+  'confirm',
+  'skipSet',
+  'skipRest',
+  'pause',
+  'autoPause',
+  'resume',
+  'quit',
+  'advance',
+];
+
+/** A command script of 0 to `maxLength` steps; waits are 0 to 700 000 ms. */
+export function commandScriptArbitrary(maxLength = 150): fc.Arbitrary<readonly ScriptStep[]> {
+  return fc.array(
+    fc.record({
+      kind: fc.constantFrom(...scriptKinds),
+      wait: fc.oneof(fc.constant(0), fc.integer({ min: 0, max: 700_000 })),
+      reps: fc.integer({ min: 0, max: 200 }),
+    }),
+    { maxLength },
+  );
+}
+
+/** A command the engine accepted (returned a new Workout object). */
+export interface AcceptedCommand {
+  readonly kind: ScriptKind;
+  /** The player's clock when the command was issued. */
+  readonly at: number;
+  /** Index into the script. */
+  readonly step: number;
+}
+
+/** A span of paused time on the player's clock; `end` is null while still paused. */
+export interface PausedSpan {
+  readonly start: number;
+  readonly end: number | null;
+}
+
+export interface ScriptRun {
+  readonly routine: RoutineEntry;
+  readonly startAt: number;
+  readonly workout: Workout;
+  /** The player's clock after the last step. */
+  readonly clock: number;
+  readonly accepted: readonly AcceptedCommand[];
+  readonly pausedSpans: readonly PausedSpan[];
+}
+
+/**
+ * Apply a script to a Routine_Entry. The player keeps its own clock (it never
+ * goes backwards), records each accepted command (the engine returned a new
+ * object) and the paused spans, and returns the final Workout. A confirm on a
+ * seconds Set first waits out the Set_Timer.
+ */
+export function playScript(
+  routine: RoutineEntry,
+  startAt: number,
+  script: readonly ScriptStep[],
+): ScriptRun {
+  let workout = startWorkout(routine, startAt);
+  let clock = startAt;
+  const accepted: AcceptedCommand[] = [];
+  const spans: { start: number; end: number | null }[] = [];
+
+  script.forEach((step, index) => {
+    clock += step.wait;
+    if (step.kind === 'confirm') {
+      const view = workoutView(advance(workout, clock));
+      if (view.phase === 'exercising' && view.timer.kind === 'seconds') {
+        clock += view.timer.remainingMs;
+      }
+    }
+
+    const before = workout;
+    switch (step.kind) {
+      case 'advance':
+        workout = advance(workout, clock);
+        return;
+      case 'confirm': {
+        const view = workoutView(advance(workout, clock));
+        const reps =
+          view.phase === 'exercising' && view.timer.kind === 'reps' ? step.reps : undefined;
+        workout = confirmSet(workout, clock, reps);
+        break;
+      }
+      case 'skipSet':
+        workout = skipSet(workout, clock);
+        break;
+      case 'skipRest':
+        workout = skipRest(workout, clock);
+        break;
+      case 'pause':
+        workout = pauseWorkout(workout, clock);
+        break;
+      case 'autoPause':
+        workout = autoPause(workout, clock);
+        break;
+      case 'resume':
+        workout = resumeWorkout(workout, clock);
+        break;
+      case 'quit':
+        workout = quitWorkout(workout, clock);
+        break;
+    }
+
+    if (workout === before) return;
+    accepted.push({ kind: step.kind, at: clock, step: index });
+    if (before.phase !== 'paused' && workout.phase === 'paused') {
+      // The engine pauses at its own advanced clock, which is the player's clock.
+      spans.push({ start: clock, end: null });
+    } else if (before.phase === 'paused') {
+      const open = spans[spans.length - 1];
+      if (open !== undefined && open.end === null && workout.phase !== 'summary') {
+        open.end = clock;
+      }
+    }
+  });
+
+  return { routine, startAt, workout, clock, accepted, pausedSpans: spans };
+}
+
+/** A generated Routine_Entry, start clock and script, played. */
+export const scriptRunArbitrary: fc.Arbitrary<ScriptRun> = fc
+  .record({
+    routine: routineArbitrary,
+    startAt: fc.integer({ min: 0, max: 1_000_000 }),
+    script: commandScriptArbitrary(),
+  })
+  .map(({ routine, startAt, script }) => playScript(routine, startAt, script));

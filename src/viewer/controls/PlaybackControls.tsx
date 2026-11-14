@@ -24,11 +24,19 @@ export interface PlaybackControlsProps {
   readonly snapshot: Pick<ViewerSnapshot, 'playing' | 'speed'>;
   /** True while the 3D scene is not shown yet (Requirement 8.9). */
   readonly disabled: boolean;
+  /** Disables only the Play/Pause button, e.g. while the Coach_Hold is on. */
+  readonly playDisabled?: boolean;
   readonly onTogglePlay: () => void;
   readonly onSpeed: (speed: PlaybackSpeed) => void;
 }
 
-export function PlaybackControls({ snapshot, disabled, onTogglePlay, onSpeed }: PlaybackControlsProps) {
+export function PlaybackControls({
+  snapshot,
+  disabled,
+  playDisabled = false,
+  onTogglePlay,
+  onSpeed,
+}: PlaybackControlsProps) {
   const { playing, speed } = snapshot;
   return (
     <div className={styles.controls} data-viewer-controls="playback">
@@ -36,7 +44,7 @@ export function PlaybackControls({ snapshot, disabled, onTogglePlay, onSpeed }: 
       <button
         type="button"
         className={`${styles.button} ${styles.playPause}`}
-        disabled={disabled}
+        disabled={disabled || playDisabled}
         onClick={onTogglePlay}
       >
         {playing ? <PauseIcon className={styles.icon} /> : <PlayIcon className={styles.icon} />}

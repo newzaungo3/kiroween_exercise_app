@@ -156,11 +156,18 @@ test.describe('Workout screen', () => {
     await expect(confirmButton(page)).toBeEnabled();
   });
 
-  test('a confirmed Set leads to a Rest with a timer and a Next line and no skip control, then to the next Set', async ({
+  test('a confirmed Set leads to a Rest with a timer, a Next line and the Rest controls, then to the next Set', async ({
     page,
   }) => {
     await openClocked(page);
     await startWorkout(page);
+
+    const setPanel = page.locator('section[aria-labelledby="set-heading"]');
+    await expect(setPanel.getByRole('button', { name: en['workout.pause'], exact: true })).toBeVisible();
+    await expect(setPanel.getByRole('button', { name: en['workout.skipSet'], exact: true })).toBeVisible();
+    await expect(setPanel.getByRole('button', { name: en['workout.quit'], exact: true })).toBeVisible();
+    await expect(setPanel.getByRole('button', { name: en['workout.skipRest'], exact: true })).toHaveCount(0);
+
     await confirmCurrentSet(page);
 
     await expect(restHeading(page)).toBeVisible();
@@ -182,7 +189,12 @@ test.describe('Workout screen', () => {
         { exact: true },
       ),
     ).toBeVisible();
-    await expect(panel.getByRole('button')).toHaveCount(0);
+    await expect(panel.getByRole('button', { name: en['workout.skipRest'], exact: true })).toBeVisible();
+    await expect(panel.getByRole('button', { name: en['workout.pause'], exact: true })).toBeVisible();
+    await expect(panel.getByRole('button', { name: en['workout.quit'], exact: true })).toBeVisible();
+    await expect(panel.getByRole('button', { name: en['workout.skipSet'], exact: true })).toHaveCount(0);
+    await expect(panel.getByRole('button', { name: en['workout.confirm'], exact: true })).toHaveCount(0);
+    await expect(panel.getByRole('button')).toHaveCount(3);
 
     await page.clock.fastForward(firstSlot.restSeconds * 1_000 + marginMs);
     await expect(setHeading(page, firstEntry)).toBeVisible();

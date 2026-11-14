@@ -1,0 +1,636 @@
+{
+  "pbtResults": {
+    "3.3 Write property test and examples for Coach_Hold": {
+      "status": "passed",
+      "lastRunTimestamp": 1794628725345
+    },
+    "2.4 Write property test for disallowed commands": {
+      "status": "passed",
+      "lastRunTimestamp": 1794628792850
+    }
+  },
+  "executionHistory": {
+    "1.1 Add the new English Locale entries to `src/ui/strings.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628135590
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628146677
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628468175
+      }
+    ],
+    "1.2 Add the new templates to `tests/unit/strings-format.test.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628135685
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628473686
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628646574
+      }
+    ],
+    "1.3 Add the string tests to `tests/unit/strings.test.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628135792
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628474475
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628646718
+      }
+    ],
+    "2.1 Extend `src/workout-engine/types.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628135872
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628147062
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628468932
+      }
+    ],
+    "2.2 Implement the new commands in `src/workout-engine/engine.ts` and `index.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628135961
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628475272
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628647394
+      }
+    ],
+    "2.3 Add the command-script support in `tests/unit/support/workout.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136084
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628653014
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628737647
+      }
+    ],
+    "2.4 Write property test for disallowed commands": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136160
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628745406
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628858013
+      }
+    ],
+    "2.5 Write property tests and examples for skipping": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136236
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628746064
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628858810
+      }
+    ],
+    "2.6 Write property tests and examples for pause and resume": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136306
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628746893
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628859614
+      }
+    ],
+    "2.7 Write property test and examples for quitting": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136396
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628750916
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628860355
+      }
+    ],
+    "2.8 Write property tests and examples for outcome, Active_Time and Set results": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136460
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628873869
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628972067
+      }
+    ],
+    "2.9 Extend the immutability property": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136526
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628874432
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628972723
+      }
+    ],
+    "2.10 Keep the happy-path engine tests green": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136619
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628653777
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628736053
+      }
+    ],
+    "3.1 Add `setHold` to `src/viewer/logic/controller.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136692
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628147481
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628469500
+      }
+    ],
+    "3.2 Add the hold input to the Viewer controls and island": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136754
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628476073
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628648186
+      }
+    ],
+    "3.3 Write property test and examples for Coach_Hold": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136824
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628654610
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628738127
+      }
+    ],
+    "4. Checkpoint - Engine and Viewer block": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136922
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629971387
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629995613
+      }
+    ],
+    "5.1 Create `src/ui/workout/dialogs.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628136994
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628476347
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628648699
+      }
+    ],
+    "5.2 Extend the run reducer `src/ui/workout/run.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137066
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628655271
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628736550
+      }
+    ],
+    "5.3 Create the page-visibility hook and extend `useWorkoutRun`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137136
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628745286
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628857255
+      }
+    ],
+    "5.4 Add the reducer and dialog tests to `tests/unit/workout-screen-logic.test.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137239
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628983861
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629074051
+      }
+    ],
+    "5.5 Write the page-visibility tests `tests/unit/page-visibility.test.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137320
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628984334
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629072686
+      }
+    ],
+    "6.1 Build the Confirm_Dialog": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137400
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628984846
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629071885
+      }
+    ],
+    "6.2 Add the controls to the Set and Rest panels and build the Paused_Panel": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137477
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628985560
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629073476
+      }
+    ],
+    "6.3 Update the Summary_Panel": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137581
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629090444
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629156179
+      }
+    ],
+    "6.4 Wire the Workout_Screen and the CoachViewer": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137657
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629161788
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629287459
+      }
+    ],
+    "6.5 Extend the isolation scan and the source-rule coverage": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137721
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629292841
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629353339
+      }
+    ],
+    "7.1 Extend `tests/e2e/support/workout.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137786
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629293613
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629354386
+      }
+    ],
+    "7.2 Add `tests/e2e/workout-controls.spec.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137886
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629504029
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629800562
+      }
+    ],
+    "7.3 Add `tests/e2e/workout-pause-coach.spec.ts`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628137969
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629801433
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629958326
+      }
+    ],
+    "7.4 Update the existing Workout specs": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628138060
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629363747
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629503414
+      }
+    ],
+    "8.1 Update `.kiro/steering/structure.md`": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628138133
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629294150
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629355175
+      }
+    ],
+    "9. Checkpoint - Final verification": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628138221
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629996202
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794630899543
+      }
+    ],
+    "10.1 Ask the user, then commit": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628138317
+      },
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794631185289
+      }
+    ],
+    "1. Strings_Module additions": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628646806
+      }
+    ],
+    "3. Viewer: Coach_Hold": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628738201
+      }
+    ],
+    "2. Workout_Engine: skip, pause, resume and quit": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794628972819
+      }
+    ],
+    "5. Screen logic and page visibility": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629074135
+      }
+    ],
+    "6. Confirm_Dialog, panels and Workout_Screen": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629353446
+      }
+    ],
+    "8. Structure steering": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629355258
+      }
+    ],
+    "7. E2E support and specs": [
+      {
+        "executionId": "bc7544a5-f95b-44d5-957a-b7c70280acb9",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794629958449
+      }
+    ]
+  }
+}

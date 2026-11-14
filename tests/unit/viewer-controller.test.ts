@@ -633,3 +633,187 @@ describe('Viewer controller', () => {
     expect(controller.getSnapshot().activePreset).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Coach_Hold
+// ---------------------------------------------------------------------------
+
+/** A step of the hold property: a Coach_Hold change or one of the commands the hold must survive. */
+type HoldStep =
+  | { readonly kind: 'hold'; readonly dtMs: number; readonly on: boolean }
+  | { readonly kind: 'command'; readonly command: ViewerCommand };
+
+const holdCommandArb: fc.Arbitrary<ViewerCommand> = viewerCommandArb.filter(
+  (cmd) =>
+    cmd.kind === 'frame' ||
+    cmd.kind === 'togglePlay' ||
+    cmd.kind === 'speed' ||
+    cmd.kind === 'preset' ||
+    cmd.kind === 'rotate' ||
+    cmd.kind === 'tilt' ||
+    cmd.kind === 'zoom',
+);
+
+const holdStepArb: fc.Arbitrary<HoldStep> = fc.oneof(
+  { arbitrary: fc.record({ kind: fc.constant('hold' as const), dtMs: dtArb, on: fc.boolean() }), weight: 3 },
+  { arbitrary: fc.record({ kind: fc.constant('command' as const), command: holdCommandArb }), weight: 8 },
+);
+
+describe('Coach_Hold', () => {
+  // Feature: skip-pause-quit, Property 11: A held Coach stays frozen and keeps its play state
+  // **Validates: Requirements 9.2, 9.5, 9.6, 9.9**
+  it('a held Coach stays frozen and keeps its play state', () => {
+    fc.assert(
+      fc.property(fc.boolean(), fc.array(holdStepArb, { minLength: 1, maxLength: 60 }), (reducedMotion, steps) => {
+        const { controller, sceneAt } = readyViewer({ reducedMotion, sceneAt: 0 });
+        let now = sceneAt;
+        // The small model: play state, hold, the clip time last shown and the end of the running camera move.
+        let playing = !reducedMotion;
+        let held = false;
+        let lastClip = 0;
+        let tweenEnd: number | null = null;
+        let releasedAwaitingFrame = false;
+
+        for (const step of steps) {
+          if (step.kind === 'hold') {
+            now += step.dtMs;
+            controller.setHold(step.on);
+            if (held && !step.on) releasedAwaitingFrame = true;
+            held = step.on;
+            expect(controller.getSnapshot().held).toBe(held);
+            // The hold never changes the user's play state.
+            expect(controller.getSnapshot().playing).toBe(playing);
+            continue;
+          }
+          const cmd = step.command;
+          now += cmd.dtMs;
+          if (cmd.kind === 'togglePlay' && !held) playing = !playing;
+          if (cmd.kind === 'preset' || cmd.kind === 'rotate' || cmd.kind === 'tilt' || cmd.kind === 'zoom') {
+            const ms = reducedMotion ? 0 : cmd.kind === 'preset' ? presetTweenMs : buttonTweenMs;
+            tweenEnd = ms > 0 ? now + ms : null;
+          }
+          const output = applyCommand(controller, cmd, now);
+          expect(controller.getSnapshot().playing).toBe(playing);
+          if (output === null) continue;
+
+          if (tweenEnd !== null && now >= tweenEnd) tweenEnd = null;
+          if (held) {
+            // Frozen clip, and a loop that runs only for a camera move.
+            expect(output.clipTime).toBe(lastClip);
+            expect(output.keepDrawing).toBe(tweenEnd !== null);
+          } else if (releasedAwaitingFrame) {
+            // The first frame after the release shows the frame the hold stopped on.
+            expect(output.clipTime).toBe(lastClip);
+          }
+          releasedAwaitingFrame = false;
+          lastClip = output.clipTime;
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('a held Coach draws no frame once the camera stops', () => {
+    let requests = 0;
+    const { controller, sceneAt } = readyViewer({
+      reducedMotion: false,
+      sceneAt: 0,
+      requestFrame: () => {
+        requests += 1;
+      },
+    });
+    controller.frame(sceneAt + 16);
+    controller.setHold(true);
+    requests = 0;
+
+    const pressAt = sceneAt + 100;
+    controller.rotate(45, pressAt);
+    // The camera still draws while it moves.
+    expect(controller.frame(pressAt + 16).keepDrawing).toBe(true);
+    const stopped = controller.frame(pressAt + buttonTweenMs);
+    expect(stopped.keepDrawing).toBe(false);
+    expect(controller.frame(pressAt + buttonTweenMs + 500).keepDrawing).toBe(false);
+    // Only the camera command asked for a frame.
+    expect(requests).toBe(1);
+  });
+
+  it('releasing the hold restarts the Render_Loop when the Coach is playing', () => {
+    let requests = 0;
+    const { controller, sceneAt } = readyViewer({
+      reducedMotion: false,
+      sceneAt: 0,
+      requestFrame: () => {
+        requests += 1;
+      },
+    });
+    controller.frame(sceneAt + 16);
+    controller.setHold(true);
+    expect(controller.frame(sceneAt + 32).keepDrawing).toBe(false);
+    requests = 0;
+
+    controller.setHold(false);
+    expect(requests).toBe(1);
+    expect(controller.getSnapshot().playing).toBe(true);
+    expect(controller.frame(sceneAt + 48).keepDrawing).toBe(true);
+  });
+
+  it('a Coach paused by the user stays paused after a hold', () => {
+    let requests = 0;
+    const { controller, sceneAt } = readyViewer({
+      reducedMotion: false,
+      sceneAt: 0,
+      requestFrame: () => {
+        requests += 1;
+      },
+    });
+    controller.frame(sceneAt + 16);
+    controller.togglePlay();
+    controller.frame(sceneAt + 32);
+    controller.setHold(true);
+    controller.setHold(false);
+    requests = 0;
+
+    expect(controller.getSnapshot()).toMatchObject({ playing: false, held: false });
+    expect(controller.frame(sceneAt + 48).keepDrawing).toBe(false);
+    expect(requests).toBe(0);
+  });
+
+  it('a Coach that started paused under the Reduced_Motion_Preference stays paused after a hold', () => {
+    const { controller, sceneAt } = readyViewer({ reducedMotion: true, sceneAt: 0 });
+    expect(controller.getSnapshot().playing).toBe(false);
+    controller.setHold(true);
+    controller.setHold(false);
+    expect(controller.getSnapshot().playing).toBe(false);
+    const output = controller.frame(sceneAt + 16);
+    expect(output.keepDrawing).toBe(false);
+    expect(output.clipTime).toBe(0);
+  });
+
+  it('speed changes while held keep the frame', () => {
+    let requests = 0;
+    const { controller, sceneAt } = readyViewer({
+      reducedMotion: false,
+      sceneAt: 0,
+      requestFrame: () => {
+        requests += 1;
+      },
+    });
+    let at = sceneAt;
+    for (let i = 0; i < 5; i += 1) controller.frame((at += 16));
+    const frozen = controller.frame((at += 16)).clipTime;
+    expect(frozen).toBeGreaterThan(0);
+
+    controller.setHold(true);
+    requests = 0;
+    controller.setSpeed(0.5);
+    expect(controller.getSnapshot().speed).toBe(0.5);
+    expect(requests).toBe(0);
+    expect(controller.frame((at += 16)).clipTime).toBe(frozen);
+    expect(controller.frame((at += 16)).clipTime).toBe(frozen);
+
+    // After the release the new speed applies from the frozen frame.
+    controller.setHold(false);
+    expect(controller.frame((at += 16)).clipTime).toBe(frozen);
+    expect(controller.frame((at += 16)).clipTime).toBeCloseTo(frozen + 0.008, 9);
+  });
+});

@@ -2,7 +2,7 @@
 
 ## Current state
 
-Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js site with a Home screen, placeholder Section screens, a not-found screen, and Vitest and Playwright harnesses. Ticket `03-exercise-page-3d-coach` added the Catalog, the Viewer, the Exercise list screen and the Exercise detail screen, where the 3D Coach demonstrates each Exercise. Ticket `05-catalog-and-stretches` added the Stretches to the Catalog, the Stretch list screen and the Stretch detail screen. Ticket `06-happy-path-workout` added the Workout engine, the Routine list and Routine detail screens and the Workout screen. Tracked files in the Repository:
+Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js site with a Home screen, placeholder Section screens, a not-found screen, and Vitest and Playwright harnesses. Ticket `03-exercise-page-3d-coach` added the Catalog, the Viewer, the Exercise list screen and the Exercise detail screen, where the 3D Coach demonstrates each Exercise. Ticket `05-catalog-and-stretches` added the Stretches to the Catalog, the Stretch list screen and the Stretch detail screen. Ticket `06-happy-path-workout` added the Workout engine, the Routine list and Routine detail screens and the Workout screen. Ticket `07-skip-pause-quit` added the Workout engine's skip, pause, resume, Auto_Pause and quit commands and its `paused` phase, the Coach_Hold input of the Viewer, and the Confirm_Dialog and Paused_Panel of the Workout screen. Tracked files in the Repository:
 
 ```
 /

@@ -5,8 +5,13 @@
  * the framing derived from the Coach's bounds, and it decides whether the
  * Render_Loop draws another frame:
  *
- *   keepDrawing = visible && (playing || cameraTweenActive || gestureActive)
+ *   keepDrawing = visible && ((playing && !held) || cameraTweenActive || gestureActive)
  *   visible     = !pageHidden && inView
+ *
+ * `held` is the Coach_Hold, a boolean the host sets with `setHold`. While held,
+ * the Demo_Clip is suspended like a hidden Viewer (the first frame after the
+ * release advances it by 0), Play/Pause is ignored and `playing` is unchanged.
+ * The camera stays live. A hold set before the scene is ready still applies.
  *
  * Commands that change the picture call the `requestFrame` hook (Scene3D wires
  * it to R3F's `invalidate`), but never while the Viewer is not visible. When
@@ -79,6 +84,8 @@ export interface ViewerSnapshot {
   readonly speed: PlaybackSpeed;
   /** The Camera_Preset the camera is at or moving to; null after any other camera change. */
   readonly activePreset: CameraPreset | null;
+  /** True while the Coach_Hold is on. */
+  readonly held: boolean;
 }
 
 /** What one drawn frame shows. */
@@ -102,6 +109,8 @@ export interface ViewerController {
   /** Viewer_Area width / height changed: recompute framing, re-clamp, re-fit if at a Camera_Preset. */
   setAspect(aspect: number): void;
   setVisibility(v: { readonly pageHidden: boolean; readonly inView: boolean }): void;
+  /** Coach_Hold: on freezes the Demo_Clip without changing `playing`; off continues from where it stopped. */
+  setHold(held: boolean): void;
   togglePlay(): void;
   setSpeed(speed: PlaybackSpeed): void;
   goToPreset(p: CameraPreset, now: number): void;
@@ -162,8 +171,9 @@ export function createViewerController(options: ViewerControllerOptions): Viewer
   let pageHidden = false;
   let inView = true;
   let aspect = 1;
+  let held = false;
   let scene: ReadyScene | null = null;
-  let snapshot: ViewerSnapshot = { ready: false, playing: false, speed: 1, activePreset: null };
+  let snapshot: ViewerSnapshot = { ready: false, playing: false, speed: 1, activePreset: null, held: false };
 
   const isVisible = (): boolean => !pageHidden && inView;
 
@@ -188,18 +198,20 @@ export function createViewerController(options: ViewerControllerOptions): Viewer
   function publish(): void {
     const next: ViewerSnapshot =
       scene === null
-        ? { ready: false, playing: false, speed: 1, activePreset: null }
+        ? { ready: false, playing: false, speed: 1, activePreset: null, held }
         : {
             ready: true,
             playing: scene.playback.playing,
             speed: scene.playback.speed,
             activePreset: scene.activePreset,
+            held,
           };
     if (
       next.ready === snapshot.ready &&
       next.playing === snapshot.playing &&
       next.speed === snapshot.speed &&
-      next.activePreset === snapshot.activePreset
+      next.activePreset === snapshot.activePreset &&
+      next.held === snapshot.held
     ) {
       return;
     }
@@ -326,9 +338,18 @@ export function createViewerController(options: ViewerControllerOptions): Viewer
       }
     },
 
+    setHold(nextHeld) {
+      if (nextHeld === held) return;
+      held = nextHeld;
+      const s = scene;
+      if (s !== null && held) s.playback = suspend(s.playback);
+      publish();
+      if (s !== null && !held && s.playback.playing) requestFrame();
+    },
+
     togglePlay() {
       const s = scene;
-      if (s === null) return;
+      if (s === null || held) return;
       s.playback = togglePlayback(s.playback);
       publish();
       requestFrame();
@@ -339,7 +360,7 @@ export function createViewerController(options: ViewerControllerOptions): Viewer
       if (s === null || s.playback.speed === speed) return;
       s.playback = setPlaybackSpeed(s.playback, speed);
       publish();
-      if (s.playback.playing) requestFrame();
+      if (s.playback.playing && !held) requestFrame();
     },
 
     goToPreset(p, now) {
@@ -411,9 +432,9 @@ export function createViewerController(options: ViewerControllerOptions): Viewer
         s.shown = s.orbit;
       }
       const visible = isVisible();
-      s.playback = visible ? tick(s.playback, now) : suspend(s.playback);
+      s.playback = visible && !held ? tick(s.playback, now) : suspend(s.playback);
       const keepDrawing =
-        visible && (s.playback.playing || s.tween !== null || s.gesture.kind !== 'idle');
+        visible && ((s.playback.playing && !held) || s.tween !== null || s.gesture.kind !== 'idle');
       return {
         clipTime: s.playback.clipTime,
         cameraPosition: cameraPosition(s.shown, s.framing.target),

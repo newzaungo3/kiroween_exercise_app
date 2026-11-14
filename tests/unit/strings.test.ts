@@ -107,8 +107,33 @@ describe('Strings_Module', () => {
     expect(offending).toEqual([]);
   });
 
-  it('the Workout outcome word exists for every outcome', () => {
-    expect(t('summary.outcome.completed').trim()).not.toBe('');
+  it('the Workout outcome word and the Set result word exist for every value', () => {
+    const ids = [
+      'summary.outcome.completed',
+      'summary.outcome.partial',
+      'summary.outcome.abandoned',
+      'summary.result.confirmed',
+      'summary.result.skipped',
+      'summary.result.notReached',
+    ] as const;
+
+    for (const id of ids) {
+      expect({ id, blank: t(id).trim() === '' }).toEqual({ id, blank: false });
+    }
+  });
+
+  it('no pause, skip, quit, dialog or summary string blames or shames the user', () => {
+    const blame = /\b(lazy|fail(ed|ure)?|gave up|give up|weak|quitter|shame)\b/i;
+    const offending = englishIds.filter(
+      (id) => (id.startsWith('workout.') || id.startsWith('summary.')) && blame.test(locales.en[id]),
+    );
+
+    expect(offending).toEqual([]);
+  });
+
+  it('a hidden-page pause text differs from a user pause text', () => {
+    expect(t('workout.paused.auto')).not.toBe(t('workout.paused.user'));
+    expect(t('workout.announce.paused.auto')).not.toBe(t('workout.announce.paused.user'));
   });
 
   it('every registered Locale keeps the English placeholders', () => {

@@ -8,6 +8,24 @@ import { findRoutine } from '@/catalog';
 import { initialRunState, runReducer } from '@/ui/workout/run';
 import { formatCountdown, formatElapsed } from '@/ui/workout/clock-text';
 import { parseActualReps } from '@/ui/workout/reps-field';
+import { dialogApplies } from '@/ui/workout/dialogs';
+import { workoutView } from '@/workout-engine';
+
+describe('the dialog rule', () => {
+  it('skip Set applies only while exercising and quit while exercising, resting or paused', () => {
+    // **Validates: Requirements 10.10**
+    const table = [
+      ['exercising', true, true],
+      ['resting', false, true],
+      ['paused', false, true],
+      ['summary', false, false],
+    ] as const;
+    for (const [phase, skipSet, quit] of table) {
+      expect(dialogApplies('skipSet', phase)).toBe(skipSet);
+      expect(dialogApplies('quit', phase)).toBe(quit);
+    }
+  });
+});
 
 /** Reads "m:ss" back into whole seconds, or null when the text has another shape. */
 function secondsOf(text: string): number | null {
@@ -111,6 +129,58 @@ describe('the run reducer', () => {
     const confirmed = runReducer(started, { type: 'confirm', now: 1000, actualReps: 12 });
     expect(confirmed.workout?.confirmed).toHaveLength(1);
     expect(confirmed.workout?.confirmed[0]?.actualReps).toBe(12);
+  });
+
+  it('the pause, skip, resume and quit actions are ignored before the start', () => {
+    // **Validates: Requirements 10.3, 11.4, 11.9**
+    for (const type of ['pause', 'autoPause', 'skipSet', 'skipRest', 'resume', 'quit'] as const) {
+      expect(runReducer(initialRunState, { type, now: 1000 })).toBe(initialRunState);
+    }
+  });
+
+  it('a rejected skip Set keeps the state and the notice', () => {
+    // **Validates: Requirements 11.4, 13.3**
+    const started = runReducer(initialRunState, { type: 'start', routine, now: 0 });
+    const paused = runReducer(started, { type: 'pause', now: 1000 });
+    const resumed = runReducer(paused, { type: 'resume', now: 2000 });
+    expect(resumed.notice).toBe('resumed');
+    // Skip Rest is rejected while exercising; the notice stays.
+    expect(runReducer(resumed, { type: 'skipRest', now: 3000 })).toBe(resumed);
+    // Skip Set is rejected while paused.
+    const pausedAgain = runReducer(resumed, { type: 'pause', now: 3000 });
+    expect(runReducer(pausedAgain, { type: 'skipSet', now: 4000 })).toBe(pausedAgain);
+  });
+
+  it('an accepted skip Rest sets the notice and a later confirm clears it', () => {
+    // **Validates: Requirements 11.4, 13.3, 13.4**
+    const started = runReducer(initialRunState, { type: 'start', routine, now: 0 });
+    const resting = runReducer(started, { type: 'confirm', now: 1000, actualReps: 10 });
+    if (resting.workout === null) throw new Error('expected a Workout');
+    expect(workoutView(resting.workout).phase).toBe('resting');
+    const skipped = runReducer(resting, { type: 'skipRest', now: 2000 });
+    expect(skipped.notice).toBe('skippedRest');
+    const confirmed = runReducer(skipped, { type: 'confirm', now: 3000, actualReps: 10 });
+    expect(confirmed.notice).toBeNull();
+  });
+
+  it('a resume sets the resumed notice', () => {
+    // **Validates: Requirements 11.9, 13.3**
+    const started = runReducer(initialRunState, { type: 'start', routine, now: 0 });
+    const paused = runReducer(started, { type: 'pause', now: 1000 });
+    expect(paused.notice).toBeNull();
+    const resumed = runReducer(paused, { type: 'resume', now: 2000 });
+    expect(resumed.notice).toBe('resumed');
+  });
+
+  it('an Auto_Pause after a user pause keeps the cause user', () => {
+    // **Validates: Requirements 5.2**
+    const started = runReducer(initialRunState, { type: 'start', routine, now: 0 });
+    const paused = runReducer(started, { type: 'pause', now: 1000 });
+    const again = runReducer(paused, { type: 'autoPause', now: 2000 });
+    if (again.workout === null) throw new Error('expected a Workout');
+    const view = workoutView(again.workout);
+    expect(view.phase).toBe('paused');
+    if (view.phase === 'paused') expect(view.cause).toBe('user');
   });
 
   it('the reducer file imports nothing from React', () => {

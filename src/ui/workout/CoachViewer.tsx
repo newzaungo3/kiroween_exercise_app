@@ -11,8 +11,11 @@ import { ViewerIsland } from '@/viewer/ViewerIsland';
  */
 export const CoachViewer = memo(function CoachViewer({
   exercise,
+  hold,
 }: {
   readonly exercise: ExerciseEntry;
+  /** True while the Workout is paused: the Coach freezes and keeps its play state. */
+  readonly hold: boolean;
 }) {
-  return <ViewerIsland exercise={exercise} />;
+  return <ViewerIsland exercise={exercise} hold={hold} />;
 });

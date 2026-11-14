@@ -12,7 +12,14 @@ import { findEntryById, routines, type ExerciseEntry } from '@/catalog';
 import { locales, type StringId } from '@/ui/strings';
 import { buildSetSlots } from '@/workout-engine';
 
-import { confirmCurrentSet, openPreparing, startWorkout, timerSeconds } from './support/workout';
+import {
+  confirmCurrentSet,
+  openPreparing,
+  pauseWorkout,
+  resumeWorkout,
+  startWorkout,
+  timerSeconds,
+} from './support/workout';
 import { waitForCoach } from './support/webgl';
 
 const en = locales.en;
@@ -107,6 +114,29 @@ test.describe('Workout time and Viewer controls', () => {
     await pressSpeed(page, 'viewer.speed.half');
     await confirmCurrentSet(page);
     await expectRestDropsTenSeconds(page);
+  });
+
+  test('a Playback_Speed of 0.5× leaves the frozen timer of a paused Rest unchanged and the resumed timer runs at the normal rate', async ({
+    page,
+  }) => {
+    await startWithCoach(page);
+    await confirmCurrentSet(page);
+    await expect(page.getByRole('heading', { level: 2, name: en['workout.rest.heading'] })).toBeVisible();
+    await pauseClock(page);
+    await page.clock.fastForward(1_000);
+
+    await pauseWorkout(page);
+    await expect(page.getByRole('heading', { level: 2, name: en['workout.paused.heading'] })).toBeVisible();
+    const frozen = await timerSeconds(restTimer(page));
+
+    await pressSpeed(page, 'viewer.speed.half');
+    await page.clock.fastForward('00:10');
+    expect(await timerSeconds(restTimer(page)), 'the paused timer after 0.5× and 10 s').toBe(frozen);
+
+    await resumeWorkout(page);
+    await expect(page.getByRole('heading', { level: 2, name: en['workout.rest.heading'] })).toBeVisible();
+    await page.clock.fastForward('00:05');
+    await expect.poll(() => timerSeconds(restTimer(page))).toBe(frozen - 5);
   });
 
   test('the Set number, target and Rest texts are the same before and after a speed change', async ({

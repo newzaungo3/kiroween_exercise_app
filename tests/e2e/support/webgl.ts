@@ -215,8 +215,10 @@ export async function waitForCoach(page: Page, options: WaitForCoachOptions = {}
   const coachName = format('viewer.coachLabel', { exercise: t(exercise.nameId) });
   await expect(page.getByRole('img', { name: coachName, exact: true })).toBeVisible({ timeout });
 
-  const playPause = page
+  // Scoped to the Viewer region: the Workout_Screen has its own "Pause" button.
+  const viewerRegion = page.getByRole('region', { name: en['viewer.region.label'], exact: true });
+  const playPause = viewerRegion
     .getByRole('button', { name: en['viewer.play'], exact: true })
-    .or(page.getByRole('button', { name: en['viewer.pause'], exact: true }));
+    .or(viewerRegion.getByRole('button', { name: en['viewer.pause'], exact: true }));
   await expect(playPause).toBeEnabled({ timeout });
 }

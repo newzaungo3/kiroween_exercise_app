@@ -531,6 +531,33 @@ describe('Workout engine isolation scanner', () => {
     expect(findProgressCodeImports('src/ui/workout/fixture.ts', fixture)).toEqual([]);
   });
 
+  it('flags a Viewer file that imports the Workout engine', () => {
+    const fixture = lines(
+      "import { advance } from '@/workout-engine';",
+      "import type { WorkoutView } from '../workout-engine/types';",
+    );
+    const inside = moduleReferences('src/viewer/ViewerIsland.tsx', fixture).filter((reference) =>
+      isInside(reference, engineDir),
+    );
+    expect(describeFindings(inside.map(referenceFinding))).toEqual([
+      'src/viewer/ViewerIsland.tsx:1 import @/workout-engine',
+      'src/viewer/ViewerIsland.tsx:2 import ../workout-engine/types',
+    ]);
+  });
+
+  it('passes a Viewer file that imports only Viewer, React and Three.js modules', () => {
+    const fixture = lines(
+      "import { useRef } from 'react';",
+      "import { Object3D } from 'three';",
+      "import { clampSpeed } from './logic/playback';",
+      "import { t } from '@/ui/strings';",
+    );
+    const inside = moduleReferences('src/viewer/ViewerIsland.tsx', fixture).filter((reference) =>
+      isInside(reference, engineDir),
+    );
+    expect(inside).toEqual([]);
+  });
+
   it('finds a reference into another folder, however it is written', () => {
     const fixture = lines(
       "import { a } from '@/workout-engine';",

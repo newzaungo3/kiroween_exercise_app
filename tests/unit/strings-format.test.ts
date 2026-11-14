@@ -50,6 +50,15 @@ const workoutTemplates: ReadonlyArray<readonly [TemplateId, readonly string[]]> 
   ['summary.activeTime', ['time']],
   ['summary.candy', ['candy']],
   ['summary.bonus', ['bonus']],
+  // Added by the skip-pause-quit ticket.
+  ['workout.skipSet.dialog.text', ['bonus']],
+  ['workout.quit.dialog.text', ['bonus']],
+  ['workout.announce.resumed', ['next']],
+  ['workout.announce.skippedSet', ['next']],
+  ['workout.announce.skippedRest', ['next']],
+  ['summary.setsNotReached', ['count']],
+  ['summary.noBonus', ['bonus']],
+  ['summary.set.line', ['exercise', 'number', 'count', 'state']],
 ];
 
 // Values contain no `{`, so a replacement can never form a new placeholder.

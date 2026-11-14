@@ -12,11 +12,23 @@ export interface RestPanelProps {
   readonly view: RestingView;
   /** The Exercise_Entry of the next Set. */
   readonly nextEntry: ExerciseEntry;
+  readonly onPause: () => void;
+  /** Skips the Rest at once, with no dialog. */
+  readonly onSkipRest: () => void;
+  /** Receives the clicked button so focus can return to it. */
+  readonly onAskQuit: (opener: HTMLElement) => void;
   readonly headingRef?: Ref<HTMLHeadingElement>;
 }
 
-/** Rest between Sets. Offers no skip control (ticket 07). */
-export function RestPanel({ view, nextEntry, headingRef }: RestPanelProps) {
+/** Rest between Sets. Offers pause, skip Rest and quit; there is no skip Set here. */
+export function RestPanel({
+  view,
+  nextEntry,
+  onPause,
+  onSkipRest,
+  onAskQuit,
+  headingRef,
+}: RestPanelProps) {
   const { next } = view;
   const target =
     next.target.reps !== undefined
@@ -38,6 +50,25 @@ export function RestPanel({ view, nextEntry, headingRef }: RestPanelProps) {
           target,
         })}
       </p>
+      <div className={styles.controls}>
+        <button type="button" className={`${styles.button} ${styles.secondary}`} onClick={onPause}>
+          {t('workout.pause')}
+        </button>
+        <button
+          type="button"
+          className={`${styles.button} ${styles.secondary}`}
+          onClick={onSkipRest}
+        >
+          {t('workout.skipRest')}
+        </button>
+        <button
+          type="button"
+          className={`${styles.button} ${styles.secondary}`}
+          onClick={(event) => onAskQuit(event.currentTarget)}
+        >
+          {t('workout.quit')}
+        </button>
+      </div>
     </section>
   );
 }

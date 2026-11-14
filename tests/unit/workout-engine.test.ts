@@ -104,6 +104,7 @@ describe('the Workout engine', () => {
         w = advance(w, clock);
         continue;
       }
+      if (view.phase !== 'exercising') throw new Error(`unexpected phase ${view.phase}`);
       clock += 1000;
       if (view.timer.kind === 'seconds') clock += view.timer.remainingMs;
       w = confirmSet(w, clock);

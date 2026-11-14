@@ -34,6 +34,35 @@ export async function confirmCurrentSet(page: Page): Promise<void> {
   await page.getByRole('button', { name: en['workout.confirm'] }).click();
 }
 
+/** Presses "Skip this Set", then the dialog's confirming button. */
+export async function skipCurrentSet(page: Page): Promise<void> {
+  await page.getByRole('button', { name: en['workout.skipSet'], exact: true }).click();
+  await page.getByRole('button', { name: en['workout.skipSet.dialog.confirm'], exact: true }).click();
+}
+
+/**
+ * Presses the Workout's pause button. The Coach's own "Pause" button has the
+ * same name, so buttons inside the Viewer region are left out.
+ */
+export async function pauseWorkout(page: Page): Promise<void> {
+  const outsideViewer = page.locator(`:not(section[aria-label="${en['viewer.region.label']}"] *)`);
+  await page
+    .getByRole('button', { name: en['workout.pause'], exact: true })
+    .and(outsideViewer)
+    .click();
+}
+
+/** Presses the resume button on the Paused_Panel. */
+export async function resumeWorkout(page: Page): Promise<void> {
+  await page.getByRole('button', { name: en['workout.resume'], exact: true }).click();
+}
+
+/** Presses the quit button, then the dialog's confirming button. */
+export async function quitWorkout(page: Page): Promise<void> {
+  await page.getByRole('button', { name: en['workout.quit'], exact: true }).click();
+  await page.getByRole('button', { name: en['workout.quit.dialog.confirm'], exact: true }).click();
+}
+
 /** Reads a `role="timer"` showing `m:ss` and returns its whole seconds. */
 export async function timerSeconds(timer: Locator): Promise<number> {
   const text = (await timer.textContent())?.trim() ?? '';
@@ -49,9 +78,15 @@ export async function timerSeconds(timer: Locator): Promise<number> {
  * target is waited out with `page.clock.fastForward`, then the Set is
  * confirmed; after every Set but the last, the Catalog's Rest is waited out
  * the same way. Call it after `startWorkout`, with the clock installed
- * before `goto`.
+ * before `goto`. The Set positions (0-based, in Routine order) listed in
+ * `skippedPositions` are skipped instead of confirmed; no Rest follows a
+ * skipped Set. With no positions, every Set is confirmed.
  */
-export async function completeWorkout(page: Page, routine: RoutineEntry): Promise<void> {
+export async function completeWorkout(
+  page: Page,
+  routine: RoutineEntry,
+  skippedPositions: readonly number[] = [],
+): Promise<void> {
   const slots = buildSetSlots(routine);
   const confirm = page.getByRole('button', { name: en['workout.confirm'] });
 
@@ -61,6 +96,11 @@ export async function completeWorkout(page: Page, routine: RoutineEntry): Promis
       throw new Error(`The Catalog has no entry "${slot.entryId}".`);
     }
     await expect(page.getByRole('heading', { level: 2, name: en[entry.nameId] })).toBeVisible();
+
+    if (skippedPositions.includes(index)) {
+      await skipCurrentSet(page);
+      continue;
+    }
 
     if (slot.target.seconds !== undefined) {
       await page.clock.fastForward(slot.target.seconds * 1_000 + marginMs);

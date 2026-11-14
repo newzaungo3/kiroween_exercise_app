@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import type { Ref } from 'react';
 
 import type { ExerciseEntry } from '@/catalog';
@@ -18,15 +17,29 @@ export interface SetPanelProps {
   readonly entry: ExerciseEntry;
   /** Called with the reported reps for a rep Set, with nothing for a seconds Set. */
   readonly onConfirm: (actualReps?: number) => void;
+  /** The rep field text; the caller owns it so it survives a pause. */
+  readonly repsText: string;
+  readonly onRepsText: (text: string) => void;
+  readonly onPause: () => void;
+  /** Receives the clicked button so focus can return to it. */
+  readonly onAskSkipSet: (opener: HTMLElement) => void;
+  readonly onAskQuit: (opener: HTMLElement) => void;
   readonly headingRef?: Ref<HTMLHeadingElement>;
 }
 
-/** The current Set. The caller keys it by `view.position` so the rep field resets each Set. */
-export function SetPanel({ view, entry, onConfirm, headingRef }: SetPanelProps) {
+/** The current Set. The caller keys it by `view.position`. */
+export function SetPanel({
+  view,
+  entry,
+  onConfirm,
+  repsText: text,
+  onRepsText: setText,
+  onPause,
+  onAskSkipSet,
+  onAskQuit,
+  headingRef,
+}: SetPanelProps) {
   const { slot, timer } = view;
-  const [text, setText] = useState(() =>
-    timer.kind === 'reps' ? String(timer.defaultReps) : '',
-  );
   const parsed = timer.kind === 'reps' ? parseActualReps(text) : null;
   const invalid = timer.kind === 'reps' && parsed === null;
   const secondsLeft = timer.kind === 'seconds' && timer.remainingMs > 0;
@@ -124,6 +137,26 @@ export function SetPanel({ view, entry, onConfirm, headingRef }: SetPanelProps) 
       >
         {t('workout.confirm')}
       </button>
+
+      <div className={styles.controls}>
+        <button type="button" className={`${styles.button} ${styles.secondary}`} onClick={onPause}>
+          {t('workout.pause')}
+        </button>
+        <button
+          type="button"
+          className={`${styles.button} ${styles.secondary}`}
+          onClick={(event) => onAskSkipSet(event.currentTarget)}
+        >
+          {t('workout.skipSet')}
+        </button>
+        <button
+          type="button"
+          className={`${styles.button} ${styles.secondary}`}
+          onClick={(event) => onAskQuit(event.currentTarget)}
+        >
+          {t('workout.quit')}
+        </button>
+      </div>
 
       <div className={styles.safety}>
         <h3 className={styles.safetyHeading}>{t('safety.heading')}</h3>

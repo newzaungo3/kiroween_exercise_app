@@ -2,8 +2,15 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { createProgressStore, storageKey } from '@/progress-store';
 import type { WorkoutRecord } from '@/progress-store';
-import { recordWorkout, validateRecord, emptyProgress } from '@/progress-store/rules';
 import {
+  recordWorkout,
+  validateRecord,
+  emptyProgress,
+  isCheckpointEnvelope,
+} from '@/progress-store/rules';
+import type { WorkoutCheckpoint } from '@/workout-engine';
+import {
+  checkpointArbitrary,
   createSpyAdapter,
   operationSequenceArbitrary,
   runOperations,
@@ -67,6 +74,175 @@ function record(overrides: Partial<WorkoutRecord> = {}): WorkoutRecord {
 function storedHistory(adapter: ReturnType<typeof createSpyAdapter>): WorkoutRecord[] {
   const text = adapter.backing.getItem(storageKey);
   return (JSON.parse(text ?? '{}') as { history?: WorkoutRecord[] }).history ?? [];
+}
+
+/** An independent statement of what the store accepts as a checkpoint envelope. */
+function oracleIsEnvelope(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const envelope = value as Record<string, unknown>;
+  const workout = envelope.workout;
+  return (
+    envelope.version === 1 &&
+    typeof workout === 'object' &&
+    workout !== null &&
+    !Array.isArray(workout) &&
+    typeof (workout as Record<string, unknown>).routineId === 'string' &&
+    (workout as Record<string, unknown>).routineId !== ''
+  );
+}
+
+/** Values near the envelope rule: valid, or broken in one named way, or arbitrary JSON. */
+const envelopeCandidateArbitrary: fc.Arbitrary<unknown> = fc.oneof(
+  fc.jsonValue(),
+  fc.record({
+    version: fc.oneof(fc.constant(1), fc.constantFrom(0, 2, '1'), fc.jsonValue()),
+    workout: fc.oneof(
+      fc.record({ routineId: fc.oneof(fc.constant(''), fc.constant('graveyard-shift'), fc.jsonValue()) }),
+      fc.constant([]),
+      fc.constant(null),
+      fc.jsonValue(),
+    ),
+  }),
+  checkpointArbitrary,
+);
+
+describe('saving and finishing with a checkpoint', () => {
+  it('only checkpoint envelopes are saved', () => {
+    // Feature: resume-after-refresh, Property 9: Only envelopes are saved
+    // **Validates: Requirements 6.3, 6.4**
+    fc.assert(
+      fc.property(
+        operationSequenceArbitrary({ distinctRecords: true, maxLength: 8 }),
+        envelopeCandidateArbitrary,
+        (operations, candidate) => {
+          expect(isCheckpointEnvelope(candidate)).toBe(oracleIsEnvelope(candidate));
+
+          const adapter = createSpyAdapter();
+          const { store } = runOperations(adapter, operations);
+          const snapshotBefore = store.snapshot();
+          const textBefore = adapter.backing.getItem(storageKey);
+          const writesBefore = adapter.setItemCalls();
+
+          const result = store.saveCheckpoint(candidate as WorkoutCheckpoint);
+
+          if (oracleIsEnvelope(candidate)) {
+            expect(result).toEqual({ saved: true });
+            expect(adapter.setItemCalls()).toBe(writesBefore + 1);
+          } else {
+            expect(result).toEqual({ saved: false, reason: 'invalid' });
+            expect(adapter.setItemCalls()).toBe(writesBefore);
+            expect(adapter.backing.getItem(storageKey)).toBe(textBefore);
+            expect(store.snapshot()).toEqual(snapshotBefore);
+          }
+        },
+      ),
+      { numRuns },
+    );
+  });
+
+  it('finishing a Workout is atomic and idempotent', () => {
+    // Feature: resume-after-refresh, Property 11: Finishing is atomic and idempotent
+    // **Validates: Requirements 6.6, 6.7, 6.8, 11.4**
+    fc.assert(
+      fc.property(
+        operationSequenceArbitrary({ distinctRecords: true, maxLength: 8 }),
+        checkpointArbitrary,
+        workoutRecordArbitrary,
+        looseRecordArbitrary,
+        fc.boolean(),
+        (operations, checkpoint, candidate, loose, withCheckpoint) => {
+          const adapter = createSpyAdapter();
+          const { store } = runOperations(adapter, operations);
+          fc.pre(!store.snapshot().history.some((entry) => entry.id === candidate.id));
+
+          // Invalid record: nothing changes, nothing is written.
+          if (withCheckpoint) store.saveCheckpoint(checkpoint);
+          if (!oracleIsValid(loose)) {
+            const snapshotBefore = store.snapshot();
+            const writes = adapter.setItemCalls();
+            expect(store.finishWorkout(loose as WorkoutRecord)).toEqual({
+              recorded: false,
+              reason: 'invalid',
+            });
+            expect(store.snapshot()).toEqual(snapshotBefore);
+            expect(adapter.setItemCalls()).toBe(writes);
+          }
+
+          // First finish: Candy once, record appended, checkpoint cleared, one write.
+          const before = store.snapshot();
+          const writesBefore = adapter.setItemCalls();
+          expect(store.finishWorkout(candidate)).toEqual({
+            recorded: true,
+            candyBalance: before.candyBalance + candidate.candyEarned,
+          });
+          expect(adapter.setItemCalls()).toBe(writesBefore + 1);
+          const after = store.snapshot();
+          expect(after.checkpoint).toBeNull();
+          expect(after.candyBalance).toBe(before.candyBalance + candidate.candyEarned);
+          expect(after.history[0]).toEqual(candidate);
+          expect(after.history).toHaveLength(before.history.length + 1);
+
+          // Duplicate without a checkpoint: no write, nothing changes.
+          const writesAfterFirst = adapter.setItemCalls();
+          expect(store.finishWorkout(candidate)).toEqual({ recorded: false, reason: 'duplicate' });
+          expect(adapter.setItemCalls()).toBe(writesAfterFirst);
+          expect(store.snapshot()).toEqual(after);
+
+          // Duplicate with a stale checkpoint: cleared with one write, no Candy.
+          store.saveCheckpoint(checkpoint);
+          const writesStale = adapter.setItemCalls();
+          expect(store.finishWorkout(candidate)).toEqual({ recorded: false, reason: 'duplicate' });
+          expect(adapter.setItemCalls()).toBe(writesStale + 1);
+          const cleared = store.snapshot();
+          expect(cleared.checkpoint).toBeNull();
+          expect(cleared.candyBalance).toBe(after.candyBalance);
+          expect(cleared.history).toEqual(after.history);
+        },
+      ),
+      { numRuns },
+    );
+  });
+
+  it('a finished Workout adds its Candy and clears the checkpoint in one write', () => {
+    const adapter = createSpyAdapter();
+    const store = createProgressStore(adapter);
+    store.saveCheckpoint(checkpointExample());
+    const writes = adapter.setItemCalls();
+    expect(store.finishWorkout(record())).toEqual({ recorded: true, candyBalance: 14 });
+    expect(adapter.setItemCalls()).toBe(writes + 1);
+    expect(store.snapshot().checkpoint).toBeNull();
+    expect(JSON.parse(adapter.backing.getItem(storageKey) ?? '{}')).toMatchObject({
+      candy: 14,
+      checkpoint: null,
+    });
+  });
+
+  it('finishing a Workout twice records it once', () => {
+    const store = createProgressStore(createSpyAdapter());
+    store.finishWorkout(record());
+    expect(store.finishWorkout(record())).toEqual({ recorded: false, reason: 'duplicate' });
+    expect(store.snapshot().history).toHaveLength(1);
+    expect(store.snapshot().candyBalance).toBe(14);
+  });
+
+  it('a duplicate finish clears a stale checkpoint and adds no Candy', () => {
+    const adapter = createSpyAdapter();
+    const store = createProgressStore(adapter);
+    store.finishWorkout(record());
+    store.saveCheckpoint(checkpointExample());
+    const writes = adapter.setItemCalls();
+    expect(store.finishWorkout(record({ candyEarned: 9 }))).toEqual({
+      recorded: false,
+      reason: 'duplicate',
+    });
+    expect(adapter.setItemCalls()).toBe(writes + 1);
+    expect(store.snapshot().checkpoint).toBeNull();
+    expect(store.snapshot().candyBalance).toBe(14);
+  });
+});
+
+function checkpointExample(): WorkoutCheckpoint {
+  return fc.sample(checkpointArbitrary, { numRuns: 1, seed: 7 })[0] as WorkoutCheckpoint;
 }
 
 describe('recording a Workout', () => {

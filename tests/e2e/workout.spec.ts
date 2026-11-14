@@ -306,7 +306,9 @@ test.describe('Workout screen', () => {
     await confirmCurrentSet(page);
     await expect(restHeading(page)).toBeVisible();
 
+    // A refresh mid-Workout now offers Resume or Discard; Discard leads to the Preparing_Panel.
     await page.reload();
+    await page.getByRole('button', { name: en['resume.discard'], exact: true }).click();
     await expect(preparingHeading(page)).toBeVisible();
     await expect(page.getByText(en['safety.coachMessage'], { exact: true })).toBeVisible();
 

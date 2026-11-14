@@ -1,12 +1,15 @@
 import type { ExerciseTarget } from '@/catalog';
 
-/** Where a Workout is. Ticket 09 adds nothing here. */
+/** Where a Workout is. A restored Workout is 'paused', so no phase is added. */
 export type Phase = 'exercising' | 'resting' | 'paused' | 'summary';
 
 export type WorkoutOutcome = 'completed' | 'partial' | 'abandoned';
 
-/** Who paused the Workout: the user, or the page becoming hidden. */
-export type PauseCause = 'user' | 'auto';
+/**
+ * Who paused the Workout: the user, the page becoming hidden, or a restore
+ * after the page was closed.
+ */
+export type PauseCause = 'user' | 'auto' | 'restored';
 
 /** What one Set slot shows in the views. 'notReached' appears only after a quit. */
 export type SetResult = 'confirmed' | 'skipped' | 'notReached' | 'pending';

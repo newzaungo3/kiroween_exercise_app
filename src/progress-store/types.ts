@@ -1,6 +1,6 @@
-import type { WorkoutOutcome } from '@/workout-engine';
+import type { WorkoutCheckpoint, WorkoutOutcome } from '@/workout-engine';
 
-export const schemaVersion = 1;
+export const schemaVersion = 2;
 export const welcomeGiftCandy = 15;
 export const storageKey = 'spooky-coach:progress';
 
@@ -17,11 +17,13 @@ export interface WorkoutRecord {
 
 /** The JSON value under `storageKey`. Plain, JSON-safe data. */
 export interface ProgressData {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly candy: number;
   readonly welcomeGiftGranted: boolean;
   /** Oldest first. */
   readonly history: readonly WorkoutRecord[];
+  /** The unfinished Workout, or null. Shape beyond the envelope is the engine's to judge. */
+  readonly checkpoint: WorkoutCheckpoint | null;
 }
 
 export interface ProgressSnapshot {
@@ -33,11 +35,17 @@ export interface ProgressSnapshot {
   readonly totalCandyEarned: number;
   /** False when the store works in memory only. */
   readonly persistent: boolean;
+  /** A copy of the Stored_Checkpoint. */
+  readonly checkpoint: WorkoutCheckpoint | null;
 }
 
 export type RecordResult =
   | { readonly recorded: true; readonly candyBalance: number }
   | { readonly recorded: false; readonly reason: 'invalid' | 'duplicate' };
+
+export type SaveCheckpointResult =
+  | { readonly saved: true }
+  | { readonly saved: false; readonly reason: 'invalid' };
 
 export interface StorageAdapter {
   getItem(key: string): string | null;
@@ -49,6 +57,11 @@ export interface ProgressStore {
   /** True if this call granted the gift. */
   grantWelcomeGift(): boolean;
   recordWorkout(record: WorkoutRecord): RecordResult;
+  saveCheckpoint(checkpoint: WorkoutCheckpoint): SaveCheckpointResult;
+  /** True if a checkpoint was cleared by this call. */
+  clearCheckpoint(): boolean;
+  /** Records the Workout and clears the checkpoint in one write. */
+  finishWorkout(record: WorkoutRecord): RecordResult;
   /** Returns the unsubscribe function. */
   subscribe(listener: () => void): () => void;
 }

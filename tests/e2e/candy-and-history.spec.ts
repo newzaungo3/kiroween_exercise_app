@@ -107,7 +107,7 @@ function record(id: string, finishedAt: number, outcome: string, candyEarned: nu
 }
 
 function progressText(candy: number, history: readonly unknown[], version: number = schemaVersion): string {
-  return JSON.stringify({ schemaVersion: version, candy, welcomeGiftGranted: true, history });
+  return JSON.stringify({ schemaVersion: version, candy, welcomeGiftGranted: true, history, checkpoint: null });
 }
 
 const seededAt = Date.parse('2026-11-20T09:00:00Z');
@@ -150,7 +150,8 @@ test.describe('the Welcome gift', () => {
     await expect(page.getByText(giftText, { exact: true })).toBeVisible();
 
     const stored = (await readProgress(page)) as { schemaVersion: number; welcomeGiftGranted: boolean };
-    expect(stored.schemaVersion).toBe(1);
+    expect(stored.schemaVersion).toBe(2);
+    expect(stored.schemaVersion).toBe(schemaVersion);
     expect(stored.welcomeGiftGranted).toBe(true);
 
     await page.reload();
@@ -167,9 +168,9 @@ test.describe('the Welcome gift', () => {
     await expect(page.getByText(en['progress.unavailable'], { exact: true })).toHaveCount(0);
   });
 
-  test('seeded schemaVersion 2 is left untouched and the not-persistent text shows', async ({ page }) => {
+  test('seeded schemaVersion 3 is left untouched and the not-persistent text shows', async ({ page }) => {
     await installClock(page);
-    const text = progressText(99, [], 2);
+    const text = progressText(99, [], schemaVersion + 1);
     await seedProgress(page, text);
     await page.goto('/');
     await expect(page.getByText(en['progress.unavailable'], { exact: true })).toBeVisible();

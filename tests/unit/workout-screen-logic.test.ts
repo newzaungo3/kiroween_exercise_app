@@ -183,6 +183,44 @@ describe('the run reducer', () => {
     if (view.phase === 'paused') expect(view.cause).toBe('user');
   });
 
+  it('the restore action restores a checkpoint at the given clock and pauses it', () => {
+    // **Validates: Requirements 7, 10**
+    const started = runReducer(initialRunState, { type: 'start', routine, now: 0 });
+    const checkpoint = { version: 1, workout: started.workout };
+    const restored = runReducer(initialRunState, {
+      type: 'restore',
+      checkpoint,
+      routine,
+      now: 50,
+    });
+    expect(restored.restoreTried).toBe(true);
+    if (restored.workout === null) throw new Error('expected a Workout');
+    const view = workoutView(restored.workout);
+    expect(view.phase).toBe('paused');
+    if (view.phase === 'paused') expect(view.cause).toBe('restored');
+    expect(restored.workout.clock).toBe(50);
+  });
+
+  it('a second restore action is ignored', () => {
+    // **Validates: Requirements 10**
+    const started = runReducer(initialRunState, { type: 'start', routine, now: 0 });
+    const checkpoint = { version: 1, workout: started.workout };
+    const once = runReducer(initialRunState, { type: 'restore', checkpoint, routine, now: 50 });
+    expect(runReducer(once, { type: 'restore', checkpoint, routine, now: 900 })).toBe(once);
+  });
+
+  it('a null restore sets restoreTried and leaves the Workout null', () => {
+    // **Validates: Requirements 10**
+    const state = runReducer(initialRunState, {
+      type: 'restore',
+      checkpoint: { nonsense: true },
+      routine,
+      now: 0,
+    });
+    expect(state.workout).toBeNull();
+    expect(state.restoreTried).toBe(true);
+  });
+
   it('the reducer file imports nothing from React', () => {
     // **Validates: Requirements 10.1, 10.3**
     const source = readFileSync(join(process.cwd(), 'src/ui/workout/run.ts'), 'utf8');

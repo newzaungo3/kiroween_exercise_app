@@ -7,10 +7,16 @@ import fc from 'fast-check';
 import {
   createMemoryStorage,
   createProgressStore,
+  schemaVersion,
   welcomeGiftCandy,
 } from '@/progress-store';
+import { checkpointOf } from '@/workout-engine';
+import type { WorkoutCheckpoint } from '@/workout-engine';
+import { unfinishedWorkoutArbitrary } from './workout';
 import type {
   MemoryStorage,
+  ProgressData,
+  SaveCheckpointResult,
   ProgressSnapshot,
   ProgressStore,
   RecordResult,
@@ -43,15 +49,65 @@ export function distinctRecordsArbitrary(
   });
 }
 
+/** A checkpoint made by the engine from a Workout that has not reached the summary. */
+export const checkpointArbitrary: fc.Arbitrary<WorkoutCheckpoint> = unfinishedWorkoutArbitrary
+  .map(({ workout }) => checkpointOf(workout))
+  .filter((checkpoint): checkpoint is WorkoutCheckpoint => checkpoint !== null);
+
+/** ProgressData at the current Schema_Version (2), with a checkpoint (null by default). */
+export function progressDataOf(
+  fields: Partial<Omit<ProgressData, 'schemaVersion'>> = {},
+): ProgressData {
+  return {
+    schemaVersion,
+    candy: 0,
+    welcomeGiftGranted: false,
+    history: [],
+    checkpoint: null,
+    ...fields,
+  } as ProgressData;
+}
+
+/** The stored text of ProgressData, as the store writes it. */
+export function storedTextOf(data: ProgressData): string {
+  return JSON.stringify(data);
+}
+
+/** Version 1 data: no checkpoint member. */
+export interface V1Data {
+  readonly schemaVersion: 1;
+  readonly candy: number;
+  readonly welcomeGiftGranted: boolean;
+  readonly history: readonly WorkoutRecord[];
+}
+
+export const v1DataArbitrary: fc.Arbitrary<V1Data> = fc.record({
+  schemaVersion: fc.constant<1>(1),
+  candy: fc.integer({ min: 0, max: 1_000_000 }),
+  welcomeGiftGranted: fc.boolean(),
+  history: distinctRecordsArbitrary(),
+});
+
+/** Stored text of version 1 data. */
+export const v1TextArbitrary: fc.Arbitrary<string> = v1DataArbitrary.map((data) =>
+  JSON.stringify(data),
+);
+
 export type Operation =
   | { readonly kind: 'grant' }
   | { readonly kind: 'record'; readonly record: WorkoutRecord }
+  | { readonly kind: 'saveCheckpoint'; readonly checkpoint: WorkoutCheckpoint }
+  | { readonly kind: 'clearCheckpoint' }
+  | { readonly kind: 'finish'; readonly record: WorkoutRecord }
   | { readonly kind: 'reload' };
 
 export const operationArbitrary: fc.Arbitrary<Operation> = fc.oneof(
   fc.constant<Operation>({ kind: 'grant' }),
   fc.constant<Operation>({ kind: 'reload' }),
+  fc.constant<Operation>({ kind: 'clearCheckpoint' }),
   workoutRecordArbitrary.map<Operation>((record) => ({ kind: 'record', record })),
+  workoutRecordArbitrary.map<Operation>((record) => ({ kind: 'finish', record })),
+  checkpointArbitrary.map<Operation>((checkpoint) => ({ kind: 'saveCheckpoint', checkpoint })),
 );
 
 export function operationSequenceArbitrary(
@@ -63,7 +119,7 @@ export function operationSequenceArbitrary(
   return sequence.map((operations) => {
     const seen = new Set<string>();
     return operations.filter((operation) => {
-      if (operation.kind !== 'record') return true;
+      if (operation.kind !== 'record' && operation.kind !== 'finish') return true;
       if (seen.has(operation.record.id)) return false;
       seen.add(operation.record.id);
       return true;
@@ -77,9 +133,16 @@ export interface Model {
   readonly candyBalance: number;
   /** Oldest first. */
   readonly recorded: readonly WorkoutRecord[];
+  /** The Stored_Checkpoint, or null. */
+  readonly checkpoint: WorkoutCheckpoint | null;
 }
 
-export const emptyModel: Model = { welcomeGiftGranted: false, candyBalance: 0, recorded: [] };
+export const emptyModel: Model = {
+  welcomeGiftGranted: false,
+  candyBalance: 0,
+  recorded: [],
+  checkpoint: null,
+};
 
 /** Applies one operation; a repeated record id changes nothing. */
 export function stepModel(model: Model, operation: Operation): Model {
@@ -100,6 +163,21 @@ export function stepModel(model: Model, operation: Operation): Model {
         ...model,
         candyBalance: model.candyBalance + operation.record.candyEarned,
         recorded: [...model.recorded, operation.record],
+      };
+    case 'saveCheckpoint':
+      return { ...model, checkpoint: operation.checkpoint };
+    case 'clearCheckpoint':
+      return { ...model, checkpoint: null };
+    case 'finish':
+      // A duplicate adds no Candy but still clears the checkpoint.
+      if (model.recorded.some((record) => record.id === operation.record.id)) {
+        return { ...model, checkpoint: null };
+      }
+      return {
+        ...model,
+        candyBalance: model.candyBalance + operation.record.candyEarned,
+        recorded: [...model.recorded, operation.record],
+        checkpoint: null,
       };
   }
 }
@@ -157,6 +235,9 @@ export function createSpyAdapter(
 export type StepResult =
   | { readonly kind: 'grant'; readonly granted: boolean }
   | { readonly kind: 'record'; readonly result: RecordResult }
+  | { readonly kind: 'saveCheckpoint'; readonly result: SaveCheckpointResult }
+  | { readonly kind: 'clearCheckpoint'; readonly cleared: boolean }
+  | { readonly kind: 'finish'; readonly result: RecordResult }
   | { readonly kind: 'reload' };
 
 export interface StepOutcome {
@@ -191,6 +272,15 @@ export function runOperations(
         break;
       case 'record':
         result = { kind: 'record', result: store.recordWorkout(operation.record) };
+        break;
+      case 'saveCheckpoint':
+        result = { kind: 'saveCheckpoint', result: store.saveCheckpoint(operation.checkpoint) };
+        break;
+      case 'clearCheckpoint':
+        result = { kind: 'clearCheckpoint', cleared: store.clearCheckpoint() };
+        break;
+      case 'finish':
+        result = { kind: 'finish', result: store.finishWorkout(operation.record) };
         break;
       case 'reload':
         store = createProgressStore(adapter);

@@ -8,7 +8,15 @@ import {
 } from '@/progress-store';
 import type { ProgressData } from '@/progress-store';
 import { parseProgress, serialiseProgress } from '@/progress-store/codec';
-import { distinctRecordsArbitrary } from './support/progress';
+import { isCheckpointEnvelope } from '@/progress-store/rules';
+import {
+  checkpointArbitrary,
+  createSpyAdapter,
+  distinctRecordsArbitrary,
+  progressDataOf,
+  storedTextOf,
+  v1TextArbitrary,
+} from './support/progress';
 
 const progressDataArbitrary: fc.Arbitrary<ProgressData> = fc
   .record({
@@ -16,10 +24,9 @@ const progressDataArbitrary: fc.Arbitrary<ProgressData> = fc
     welcomeGiftGranted: fc.boolean(),
     history: distinctRecordsArbitrary({ maxLength: 15 }),
   })
-  .map((fields) => ({ schemaVersion: 1 as const, ...fields }));
+  .map((fields) => progressDataOf(fields));
 
-const validData: ProgressData = {
-  schemaVersion: 1,
+const validData: ProgressData = progressDataOf({
   candy: 29,
   welcomeGiftGranted: true,
   history: [
@@ -31,7 +38,7 @@ const validData: ProgressData = {
       candyEarned: 14,
     },
   ],
-};
+});
 
 /** Text that no stored-data reader should accept as Progress data. */
 const unreadableTextArbitrary: fc.Arbitrary<string> = fc.oneof(
@@ -72,7 +79,7 @@ const unreadableTextArbitrary: fc.Arbitrary<string> = fc.oneof(
       { requiredKeys: ['candy', 'welcomeGiftGranted', 'history'] },
     )
     .map((value) => JSON.stringify(value)),
-  // Version 1 with a broken shape.
+  // Version 2 with a broken shape.
   fc
     .tuple(
       progressDataArbitrary,
@@ -130,7 +137,7 @@ describe('the Progress codec', () => {
         const text = serialiseProgress(data);
         const parsed = parseProgress(text);
         expect(parsed).toEqual({ kind: 'data', data });
-        expect((JSON.parse(text) as { schemaVersion: number }).schemaVersion).toBe(1);
+        expect((JSON.parse(text) as { schemaVersion: number }).schemaVersion).toBe(2);
       }),
       { numRuns: 200 },
     );
@@ -151,15 +158,97 @@ describe('the Progress codec', () => {
     );
   });
 
-  it('the stored text carries the schema version 1', () => {
-    const text = serialiseProgress(validData);
+  it('the stored text carries the schema version 2', () => {
+    const text = storedTextOf(validData);
     expect((JSON.parse(text) as { schemaVersion: number }).schemaVersion).toBe(schemaVersion);
-    expect(schemaVersion).toBe(1);
+    expect(schemaVersion).toBe(2);
   });
 
-  it('text from a newer schema version parses as newer', () => {
-    const text = JSON.stringify({ schemaVersion: 2, anything: 'else' });
-    expect(parseProgress(text)).toEqual({ kind: 'newer', version: 2 });
+  it('version 3 parses as newer', () => {
+    const text = JSON.stringify({ schemaVersion: 3, anything: 'else' });
+    expect(parseProgress(text)).toEqual({ kind: 'newer', version: 3 });
+  });
+
+  it('version 1 text parses as version 2 with no checkpoint', () => {
+    const { schemaVersion: _version, checkpoint: _checkpoint, ...core } = validData;
+    const text = JSON.stringify({ schemaVersion: 1, ...core });
+    expect(parseProgress(text)).toEqual({ kind: 'data', data: progressDataOf(core) });
+  });
+
+  it('a missing checkpoint member in version 2 parses as no data', () => {
+    const { checkpoint: _checkpoint, ...without } = validData;
+    expect(parseProgress(JSON.stringify(without))).toEqual({ kind: 'none' });
+  });
+
+  it('version 0 parses as no data', () => {
+    expect(parseProgress(JSON.stringify({ ...validData, schemaVersion: 0 }))).toEqual({
+      kind: 'none',
+    });
+  });
+
+  it('a junk checkpoint parses with the Candy and history kept', () => {
+    const text = JSON.stringify({ ...validData, checkpoint: { version: 1 } });
+    expect(parseProgress(text)).toEqual({ kind: 'data', data: validData });
+  });
+
+  it('migration from version 1 keeps Candy and history', () => {
+    // Feature: resume-after-refresh, Property 6: Migration from version 1 keeps Candy and history
+    // **Validates: Requirements 5.2, 5.9**
+    fc.assert(
+      fc.property(v1TextArbitrary, (text) => {
+        const old = JSON.parse(text) as ProgressData;
+        expect(parseProgress(text)).toEqual({
+          kind: 'data',
+          data: progressDataOf({
+            candy: old.candy,
+            welcomeGiftGranted: old.welcomeGiftGranted,
+            history: old.history,
+          }),
+        });
+        const adapter = createSpyAdapter({ [storageKey]: text });
+        const snapshot = createProgressStore(adapter).snapshot();
+        expect(snapshot.candyBalance).toBe(old.candy);
+        expect(snapshot.welcomeGiftGranted).toBe(old.welcomeGiftGranted);
+        expect(snapshot.history).toEqual([...old.history].reverse());
+        expect(snapshot.checkpoint).toBeNull();
+        expect(adapter.setItemCalls()).toBe(0);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('a version 2 value with a checkpoint round trips through its text', () => {
+    // Feature: resume-after-refresh, Property 7: Version 2 serialisation round trip
+    // **Validates: Requirements 5.1, 5.10**
+    fc.assert(
+      fc.property(
+        progressDataArbitrary,
+        fc.option(checkpointArbitrary, { nil: null }),
+        (data, checkpoint) => {
+          const full = progressDataOf({ ...data, checkpoint });
+          const text = storedTextOf(full);
+          expect(parseProgress(text)).toEqual({ kind: 'data', data: full });
+          expect((JSON.parse(text) as { schemaVersion: number }).schemaVersion).toBe(2);
+        },
+      ),
+      { numRuns: 200 },
+    );
+  });
+
+  it('a damaged checkpoint never costs Candy', () => {
+    // Feature: resume-after-refresh, Property 8: A damaged checkpoint never costs Candy
+    // **Validates: Requirements 5.4, 5.5, 5.6, 5.7, 5.8**
+    const junk = fc.jsonValue().filter((value) => value !== null && !isCheckpointEnvelope(value));
+    fc.assert(
+      fc.property(progressDataArbitrary, junk, (data, checkpoint) => {
+        const text = JSON.stringify({ ...data, checkpoint });
+        expect(parseProgress(text)).toEqual({
+          kind: 'data',
+          data: progressDataOf({ ...data, checkpoint: null }),
+        });
+      }),
+      { numRuns: 200 },
+    );
   });
 
   it('a missing history list parses as no data', () => {
@@ -172,7 +261,7 @@ describe('the Progress codec', () => {
     expect(parseProgress(JSON.stringify(bad))).toEqual({ kind: 'none' });
   });
 
-  it('a version 1 history with a repeated id parses as no data', () => {
+  it('a version 2 history with a repeated id parses as no data', () => {
     const entry = validData.history[0];
     const bad = { ...validData, history: [entry, { ...entry }] };
     expect(parseProgress(JSON.stringify(bad))).toEqual({ kind: 'none' });

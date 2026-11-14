@@ -569,7 +569,9 @@ test.describe('refresh', () => {
     await openStarted(page);
     await pauseWorkout(page);
     await expect(pausedHeading(page)).toBeVisible();
+    // A refresh mid-Workout now offers Resume or Discard; Discard leads to the Preparing_Panel.
     await page.reload();
+    await page.getByRole('button', { name: en['resume.discard'], exact: true }).click();
     await expect(preparingHeading(page)).toBeVisible();
     await expect(pausedHeading(page)).toHaveCount(0);
   });

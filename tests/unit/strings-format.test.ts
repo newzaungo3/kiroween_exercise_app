@@ -64,6 +64,10 @@ const workoutTemplates: ReadonlyArray<readonly [TemplateId, readonly string[]]> 
   ['home.candy.welcome', ['candy']],
   ['summary.balance', ['balance']],
   ['history.total', ['candy']],
+  // Added by the resume-after-refresh ticket.
+  ['resume.text', ['routine', 'exercise', 'number', 'count', 'candy']],
+  ['resume.text.rest', ['routine', 'exercise', 'number', 'count', 'candy']],
+  ['resume.discarded', ['candy']],
 ];
 
 // Values contain no `{`, so a replacement can never form a new placeholder.

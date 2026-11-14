@@ -5,6 +5,7 @@ import {
   confirmSet,
   pauseWorkout,
   quitWorkout,
+  restoreWorkout,
   resumeWorkout,
   skipRest,
   skipSet,
@@ -19,10 +20,18 @@ export type RunNotice = 'skippedSet' | 'skippedRest' | 'resumed';
 export interface RunState {
   readonly workout: Workout | null;
   readonly notice: RunNotice | null;
+  /** True once a restore action ran, whether or not it produced a Workout. */
+  readonly restoreTried: boolean;
 }
 
 export type RunAction =
   | { readonly type: 'start'; readonly routine: RoutineEntry; readonly now: number }
+  | {
+      readonly type: 'restore';
+      readonly checkpoint: unknown;
+      readonly routine: RoutineEntry;
+      readonly now: number;
+    }
   | { readonly type: 'tick'; readonly now: number }
   | { readonly type: 'confirm'; readonly now: number; readonly actualReps?: number }
   | { readonly type: 'skipSet'; readonly now: number }
@@ -32,7 +41,7 @@ export type RunAction =
   | { readonly type: 'resume'; readonly now: number }
   | { readonly type: 'quit'; readonly now: number };
 
-export const initialRunState: RunState = { workout: null, notice: null };
+export const initialRunState: RunState = { workout: null, notice: null, restoreTried: false };
 
 /** Apply a command that sets `notice` only when the engine accepted it. */
 function withNotice(
@@ -41,22 +50,30 @@ function withNotice(
   next: Workout,
   notice: RunNotice,
 ): RunState {
-  return next === workout ? state : { workout: next, notice };
+  return next === workout ? state : { ...state, workout: next, notice };
 }
 
-/** Pure: start only from null; every other action is ignored while null. */
+/** Pure: start and restore only from null; every other action is ignored while null. */
 export function runReducer(state: RunState, action: RunAction): RunState {
   const { workout } = state;
   if (action.type === 'start') {
     if (workout !== null) return state;
-    return { workout: startWorkout(action.routine, action.now), notice: null };
+    return { ...state, workout: startWorkout(action.routine, action.now), notice: null };
+  }
+  if (action.type === 'restore') {
+    if (workout !== null) return state;
+    return {
+      workout: restoreWorkout(action.checkpoint, action.routine, action.now),
+      notice: null,
+      restoreTried: true,
+    };
   }
   if (workout === null) return state;
   switch (action.type) {
     case 'tick':
-      return { workout: advance(workout, action.now), notice: state.notice };
+      return { ...state, workout: advance(workout, action.now) };
     case 'confirm':
-      return { workout: confirmSet(workout, action.now, action.actualReps), notice: null };
+      return { ...state, workout: confirmSet(workout, action.now, action.actualReps), notice: null };
     case 'skipSet':
       return withNotice(state, workout, skipSet(workout, action.now), 'skippedSet');
     case 'skipRest':
@@ -64,10 +81,10 @@ export function runReducer(state: RunState, action: RunAction): RunState {
     case 'resume':
       return withNotice(state, workout, resumeWorkout(workout, action.now), 'resumed');
     case 'pause':
-      return { workout: pauseWorkout(workout, action.now), notice: null };
+      return { ...state, workout: pauseWorkout(workout, action.now), notice: null };
     case 'autoPause':
-      return { workout: autoPause(workout, action.now), notice: null };
+      return { ...state, workout: autoPause(workout, action.now), notice: null };
     case 'quit':
-      return { workout: quitWorkout(workout, action.now), notice: null };
+      return { ...state, workout: quitWorkout(workout, action.now), notice: null };
   }
 }

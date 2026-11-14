@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { findEntryById } from '@/catalog';
 import type { ExerciseEntry, RoutineEntry } from '@/catalog';
 import { completionBonus } from '@/workout-engine';
-import type { SummaryView, WorkoutView } from '@/workout-engine';
+import type { SummaryView, WorkoutCheckpoint, WorkoutView } from '@/workout-engine';
 
 import { exerciseName } from '../exercises/labels';
 import { routineName } from '../routines/labels';
@@ -37,6 +37,10 @@ export interface WorkoutScreenProps {
   readonly onFinished?: (view: SummaryView) => void;
   /** The Candy balance after the Workout was recorded; null or absent until known. */
   readonly recordedBalance?: number | null;
+  /** An unfinished Workout to restore on mount, paused. */
+  readonly resume?: WorkoutCheckpoint;
+  /** Called with the checkpoint on each Checkpoint_Moment. */
+  readonly onCheckpoint?: (checkpoint: WorkoutCheckpoint) => void;
 }
 
 interface OpenDialog {
@@ -59,9 +63,26 @@ function panelKey(view: WorkoutView | null): string {
   return 'summary';
 }
 
-export function WorkoutScreen({ routine, onFinished, recordedBalance }: WorkoutScreenProps) {
-  const { view, slots, notice, start, confirm, skipSet, skipRest, pause, resume, quit } =
-    useWorkoutRun(routine);
+export function WorkoutScreen({
+  routine,
+  onFinished,
+  recordedBalance,
+  resume: resumeFrom,
+  onCheckpoint,
+}: WorkoutScreenProps) {
+  const {
+    view,
+    slots,
+    notice,
+    restoring,
+    start,
+    confirm,
+    skipSet,
+    skipRest,
+    pause,
+    resume,
+    quit,
+  } = useWorkoutRun(routine, { resume: resumeFrom, onCheckpoint });
   const headingRef = useRef<HTMLHeadingElement>(null);
   const shownKey = useRef<string | null>(null);
   const key = panelKey(view);
@@ -77,14 +98,16 @@ export function WorkoutScreen({ routine, onFinished, recordedBalance }: WorkoutS
     if (dialog !== null && !dialogOpen) setDialog(null);
   }, [dialog, dialogOpen]);
 
-  // Move focus to the new panel heading, but not on first render.
+  // Move focus to the new panel heading, but not on first render, except
+  // when a restored Workout shows its first panel.
+  const restoredFirst = resumeFrom !== undefined;
   useEffect(() => {
     const previous = shownKey.current;
     shownKey.current = key;
-    if (previous !== null && previous !== key) {
+    if (previous !== null ? previous !== key : restoredFirst && !restoring) {
       headingRef.current?.focus({ preventScroll: true });
     }
-  }, [key]);
+  }, [key, restoredFirst, restoring]);
 
   // Report the finished Workout once, whatever its outcome.
   const finishedReported = useRef(false);
@@ -122,8 +145,10 @@ export function WorkoutScreen({ routine, onFinished, recordedBalance }: WorkoutS
   let viewerEntry: ExerciseEntry | null = null;
   let hold = false;
   let announcement = '';
-  let panel;
-  if (view === null) {
+  let panel = null;
+  if (view === null && restoring) {
+    panel = null;
+  } else if (view === null) {
     panel = <PreparingPanel routine={routine} onStart={start} headingRef={headingRef} />;
   } else if (view.phase === 'exercising') {
     viewerEntry = entryOrThrow(view.slot.entryId);
@@ -181,7 +206,11 @@ export function WorkoutScreen({ routine, onFinished, recordedBalance }: WorkoutS
     viewerEntry = entryOrThrow(held.phase === 'exercising' ? held.slot.entryId : held.next.entryId);
     hold = true;
     announcement = t(
-      view.cause === 'user' ? 'workout.announce.paused.user' : 'workout.announce.paused.auto',
+      view.cause === 'user'
+        ? 'workout.announce.paused.user'
+        : view.cause === 'auto'
+          ? 'workout.announce.paused.auto'
+          : 'workout.announce.paused.restored',
     );
     panel = (
       <PausedPanel view={view} onResume={resume} onAskQuit={askQuit} headingRef={headingRef} />

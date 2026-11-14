@@ -7,16 +7,22 @@ import {
   type ProgressSnapshot,
   type ProgressStore,
   type RecordResult,
+  type SaveCheckpointResult,
   type WorkoutRecord,
 } from '@/progress-store';
+import type { WorkoutCheckpoint } from '@/workout-engine';
 
 export interface ProgressApi {
   /** null until the browser has read storage. */
   readonly snapshot: ProgressSnapshot | null;
   /** True during the visit in which this screen's mount granted the gift. */
   readonly welcomeJustGranted: boolean;
-  readonly recordWorkout: (record: WorkoutRecord) => RecordResult;
   readonly ensureWelcomeGift: () => void;
+  readonly saveCheckpoint: (checkpoint: WorkoutCheckpoint) => SaveCheckpointResult;
+  /** True if a checkpoint was cleared by this call. */
+  readonly clearCheckpoint: () => boolean;
+  /** Records the Workout and clears the checkpoint in one write. */
+  readonly finishWorkout: (record: WorkoutRecord) => RecordResult;
 }
 
 // One store per page, created lazily so it never exists during server rendering.
@@ -43,16 +49,29 @@ export function useProgress(): ProgressApi {
     if (getStore().grantWelcomeGift()) setWelcomeJustGranted(true);
   }, []);
 
-  const recordWorkout = useCallback(
-    (record: WorkoutRecord): RecordResult => getStore().recordWorkout(record),
-    [],
-  );
   const ensureWelcomeGift = useCallback((): void => {
     getStore().grantWelcomeGift();
   }, []);
+  const saveCheckpoint = useCallback(
+    (checkpoint: WorkoutCheckpoint): SaveCheckpointResult =>
+      getStore().saveCheckpoint(checkpoint),
+    [],
+  );
+  const clearCheckpoint = useCallback((): boolean => getStore().clearCheckpoint(), []);
+  const finishWorkout = useCallback(
+    (record: WorkoutRecord): RecordResult => getStore().finishWorkout(record),
+    [],
+  );
 
   return useMemo(
-    () => ({ snapshot, welcomeJustGranted, recordWorkout, ensureWelcomeGift }),
-    [snapshot, welcomeJustGranted, recordWorkout, ensureWelcomeGift],
+    () => ({
+      snapshot,
+      welcomeJustGranted,
+      ensureWelcomeGift,
+      saveCheckpoint,
+      clearCheckpoint,
+      finishWorkout,
+    }),
+    [snapshot, welcomeJustGranted, ensureWelcomeGift, saveCheckpoint, clearCheckpoint, finishWorkout],
   );
 }

@@ -21,7 +21,9 @@ const marginMs = 1_000;
 /** Opens the Workout_Screen of a Routine; it shows the Preparing_Panel. */
 export async function openPreparing(page: Page, routine: RoutineEntry): Promise<void> {
   await page.goto(workoutPath(routine));
+  // The first render is the loading text; the panel shows once the Progress_Snapshot is read.
   await expect(page.getByRole('heading', { level: 2, name: en[routine.nameId] })).toBeVisible();
+  await expect(page.getByRole('button', { name: en['workout.start'] })).toBeVisible();
 }
 
 /** Presses "Start the Workout" on the Preparing_Panel. */

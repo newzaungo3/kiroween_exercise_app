@@ -129,7 +129,7 @@ describe('Strings_Module', () => {
 
   it('no pause, skip, quit, dialog or summary string blames or shames the user', () => {
     const blame = /\b(lazy|fail(ed|ure)?|gave up|give up|weak|quitter|shame)\b/i;
-    const prefixes = ['workout.', 'home.', 'history.', 'progress.', 'summary.'];
+    const prefixes = ['workout.', 'home.', 'history.', 'progress.', 'summary.', 'resume.'];
     const offending = englishIds.filter(
       (id) => prefixes.some((prefix) => id.startsWith(prefix)) && blame.test(locales.en[id]),
     );
@@ -168,6 +168,38 @@ describe('Strings_Module', () => {
   it('a hidden-page pause text differs from a user pause text', () => {
     expect(t('workout.paused.auto')).not.toBe(t('workout.paused.user'));
     expect(t('workout.announce.paused.auto')).not.toBe(t('workout.announce.paused.user'));
+  });
+
+  it('every new resume identifier is non-blank', () => {
+    const ids = [
+      'resume.loading',
+      'resume.heading',
+      'resume.text',
+      'resume.text.rest',
+      'resume.awayNote',
+      'resume.question',
+      'resume.resume',
+      'resume.discard',
+      'resume.discard.hint',
+      'resume.discarded',
+      'workout.paused.restored',
+      'workout.announce.paused.restored',
+    ] as const;
+
+    for (const id of ids) {
+      expect({ id, blank: t(id).trim() === '' }).toEqual({ id, blank: false });
+    }
+  });
+
+  it('the restored pause text and announcement differ from the user and auto texts', () => {
+    for (const other of ['user', 'auto'] as const) {
+      expect(t('workout.paused.restored')).not.toBe(t(`workout.paused.${other}`));
+      expect(t('workout.announce.paused.restored')).not.toBe(t(`workout.announce.paused.${other}`));
+    }
+  });
+
+  it('the restored pause text says the time away does not count', () => {
+    expect(t('workout.paused.restored')).toContain('The time you were away does not count');
   });
 
   it('every registered Locale keeps the English placeholders', () => {

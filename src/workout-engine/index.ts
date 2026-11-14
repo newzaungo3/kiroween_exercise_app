@@ -10,6 +10,8 @@ export {
   startWorkout,
   workoutView,
 } from './engine';
+export { checkpointOf, checkpointVersion, restoreWorkout } from './checkpoint';
+export type { WorkoutCheckpoint } from './checkpoint';
 export { candyFor, candyPerSet, completionBonus } from './candy';
 export { isValidActualReps, maxActualReps, minActualReps } from './reps';
 export { buildSetSlots } from './slots';

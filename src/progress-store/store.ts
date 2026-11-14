@@ -1,11 +1,21 @@
 import { parseProgress, serialiseProgress } from './codec';
-import { emptyProgress, grantWelcomeGift, recordWorkout, snapshotOf } from './rules';
+import {
+  emptyProgress,
+  finishWorkout,
+  grantWelcomeGift,
+  recordWorkout,
+  snapshotOf,
+  withCheckpoint,
+  withoutCheckpoint,
+} from './rules';
+import type { WorkoutCheckpoint } from '@/workout-engine';
 import {
   storageKey,
   type ProgressData,
   type ProgressSnapshot,
   type ProgressStore,
   type RecordResult,
+  type SaveCheckpointResult,
   type StorageAdapter,
   type WorkoutRecord,
 } from './types';
@@ -51,7 +61,8 @@ export function createProgressStore(storage: StorageAdapter): ProgressStore {
       snapshot.candyBalance === data.candy &&
       snapshot.welcomeGiftGranted === data.welcomeGiftGranted &&
       snapshot.history.length === data.history.length &&
-      snapshot.persistent === persistent
+      snapshot.persistent === persistent &&
+      JSON.stringify(snapshot.checkpoint) === JSON.stringify(data.checkpoint)
     );
   }
 
@@ -104,6 +115,44 @@ export function createProgressStore(storage: StorageAdapter): ProgressStore {
       }
       commit(next);
       return { recorded: true, candyBalance: next.candy };
+    },
+
+    saveCheckpoint(checkpoint: WorkoutCheckpoint): SaveCheckpointResult {
+      const next = withCheckpoint(load(), checkpoint);
+      if (next === 'invalid') {
+        if (refresh()) notify();
+        return { saved: false, reason: 'invalid' };
+      }
+      commit(next);
+      return { saved: true };
+    },
+
+    clearCheckpoint(): boolean {
+      const next = withoutCheckpoint(load());
+      if (next === null) {
+        if (refresh()) notify();
+        return false;
+      }
+      commit(next);
+      return true;
+    },
+
+    finishWorkout(record: WorkoutRecord): RecordResult {
+      const outcome = finishWorkout(load(), record);
+      if (outcome.kind === 'invalid') {
+        if (refresh()) notify();
+        return { recorded: false, reason: 'invalid' };
+      }
+      if (outcome.kind === 'duplicate') {
+        if (outcome.data === null) {
+          if (refresh()) notify();
+        } else {
+          commit(outcome.data);
+        }
+        return { recorded: false, reason: 'duplicate' };
+      }
+      commit(outcome.data);
+      return { recorded: true, candyBalance: outcome.data.candy };
     },
 
     subscribe(listener: () => void): () => void {

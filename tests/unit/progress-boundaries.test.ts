@@ -24,6 +24,7 @@ const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const storeDir = 'src/progress-store';
 const storageFile = 'src/progress-store/local-storage.ts';
 const engineDir = 'src/workout-engine';
+const uiProgressDir = 'src/ui/progress';
 const allowedImporterDirs = ['src/progress-store', 'src/ui/progress'] as const;
 
 interface SourceFile {
@@ -311,6 +312,12 @@ describe('Progress_Store module boundaries', () => {
     expect(adapter !== undefined && namesLocalStorage(adapter.file, adapter.text)).toBe(true);
   });
 
+  it('no file of src/ui/progress names localStorage, sessionStorage or indexedDB', () => {
+    const uiSources = readSources(uiProgressDir);
+    expect(uiSources.length).toBeGreaterThan(0);
+    expect(describeFindings(uiSources.flatMap(({ file, text }) => findAnyStorage(file, text)))).toEqual([]);
+  });
+
   it('only src/progress-store and src/ui/progress import the Progress_Store', () => {
     const sources = readSources('src');
     expect(sources.length).toBeGreaterThan(storeSources.length);
@@ -437,6 +444,29 @@ describe('Progress_Store boundary scanner', () => {
     );
     expect(findStorageViolations('src/progress-store/store.ts', fixture)).toEqual([]);
     expect(namesLocalStorage(storageFile, fixture)).toBe(false);
+  });
+
+  it('flags browser storage named in a file of src/ui/progress', () => {
+    const fixture = lines(
+      "export const a = localStorage.getItem('k');",
+      "export const b = window.sessionStorage.getItem('k');",
+      'export const c = globalThis.indexedDB;',
+    );
+    expect(snippets(findAnyStorage('src/ui/progress/Fixture.tsx', fixture))).toEqual([
+      'localStorage',
+      'sessionStorage',
+      'indexedDB',
+    ]);
+  });
+
+  it('passes a file of src/ui/progress that only uses the Progress_Store and mentions storage in text', () => {
+    const fixture = lines(
+      '// Never names localStorage.',
+      "import { createProgressStore } from '@/progress-store';",
+      "export const note = 'sessionStorage';",
+      'export const jar = { indexedDB: 1 };',
+    );
+    expect(findAnyStorage('src/ui/progress/Fixture.tsx', fixture)).toEqual([]);
   });
 
   it('flags an import of the Progress_Store from a disallowed folder, however it is written', () => {

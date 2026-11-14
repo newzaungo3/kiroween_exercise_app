@@ -381,3 +381,171 @@ export const scriptRunArbitrary: fc.Arbitrary<ScriptRun> = fc
     script: commandScriptArbitrary(),
   })
   .map(({ routine, startAt, script }) => playScript(routine, startAt, script));
+
+/** A Routine_Entry and a Workout of it that has not reached the summary. */
+export interface UnfinishedWorkout {
+  readonly routine: RoutineEntry;
+  readonly workout: Workout;
+}
+
+/**
+ * A reachable Workout whose phase is exercising, resting or paused (user and
+ * auto pauses included), built by the command-script player. The script never
+ * quits; a script that ends in the summary is discarded.
+ */
+export const unfinishedWorkoutArbitrary: fc.Arbitrary<UnfinishedWorkout> = fc
+  .record({
+    routine: routineArbitrary,
+    startAt: fc.integer({ min: 0, max: 1_000_000 }),
+    script: commandScriptArbitrary(80).map((script) =>
+      script.filter((step) => step.kind !== 'quit'),
+    ),
+  })
+  .map(({ routine, startAt, script }) => ({
+    routine,
+    workout: playScript(routine, startAt, script).workout,
+  }))
+  .filter(({ workout }) => workout.phase !== 'summary');
+
+/** The ways a valid checkpoint can be damaged. Each is always rejected by restore. */
+export type CorruptionKind =
+  | 'wrongRoutineId'
+  | 'changedSlot'
+  | 'indexOutOfRange'
+  | 'confirmedRepeated'
+  | 'confirmedOutOfRange'
+  | 'skippedRepeated'
+  | 'skippedOutOfRange'
+  | 'bothConfirmedAndSkipped'
+  | 'repsOfWrongKind'
+  | 'repsOutOfRange'
+  | 'nonFiniteTime'
+  | 'pauseMismatch'
+  | 'phaseSummary'
+  | 'outcomeSet'
+  | 'finishedAtSet';
+
+const corruptionKinds: readonly CorruptionKind[] = [
+  'wrongRoutineId',
+  'changedSlot',
+  'indexOutOfRange',
+  'confirmedRepeated',
+  'confirmedOutOfRange',
+  'skippedRepeated',
+  'skippedOutOfRange',
+  'bothConfirmedAndSkipped',
+  'repsOfWrongKind',
+  'repsOutOfRange',
+  'nonFiniteTime',
+  'pauseMismatch',
+  'phaseSummary',
+  'outcomeSet',
+  'finishedAtSet',
+];
+
+/** A corruption: its kind and a number that picks the slot, field or value. */
+export interface Corruption {
+  readonly kind: CorruptionKind;
+  readonly pick: number;
+}
+
+export const corruptionArbitrary: fc.Arbitrary<Corruption> = fc.record({
+  kind: fc.constantFrom(...corruptionKinds),
+  pick: fc.integer({ min: 0, max: 1_000 }),
+});
+
+const nonFiniteValues: readonly number[] = [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
+const timeFields = ['startedAt', 'clock', 'phaseStartedAt', 'pausedMs'] as const;
+
+/**
+ * Damage a checkpoint in one way. Returns a plain object (the input is not
+ * changed); every result must make `restoreWorkout` return null.
+ */
+export function applyCorruption(
+  checkpoint: { readonly version: 1; readonly workout: Workout },
+  corruption: Corruption,
+): unknown {
+  const w = checkpoint.workout;
+  const slotTotal = w.slots.length;
+  const slotAt = corruption.pick % slotTotal;
+  const wrap = (changes: Record<string, unknown>): unknown => ({
+    ...checkpoint,
+    workout: { ...w, ...changes },
+  });
+  const repsFor = (slotIndex: number): number | null =>
+    w.slots[slotIndex]?.target.seconds !== undefined ? null : 5;
+
+  switch (corruption.kind) {
+    case 'wrongRoutineId':
+      return wrap({ routineId: `${w.routineId}-other` });
+    case 'changedSlot':
+      return wrap({
+        slots: w.slots.map((slot, i) =>
+          i === slotAt ? { ...slot, setCount: slot.setCount + 1 } : slot,
+        ),
+      });
+    case 'indexOutOfRange':
+      return wrap({ index: corruption.pick % 2 === 0 ? slotTotal + (corruption.pick % 5) : -1 - (corruption.pick % 5) });
+    case 'confirmedRepeated': {
+      const entry = { slotIndex: slotAt, actualReps: repsFor(slotAt) };
+      return wrap({ confirmed: [...w.confirmed, entry, entry] });
+    }
+    case 'confirmedOutOfRange':
+      return wrap({
+        confirmed: [...w.confirmed, { slotIndex: slotTotal + (corruption.pick % 5), actualReps: 5 }],
+      });
+    case 'skippedRepeated':
+      return wrap({ skipped: [...w.skipped, slotAt, slotAt] });
+    case 'skippedOutOfRange':
+      return wrap({ skipped: [...w.skipped, corruption.pick % 2 === 0 ? slotTotal : -1] });
+    case 'bothConfirmedAndSkipped':
+      return wrap({
+        confirmed: [...w.confirmed, { slotIndex: slotAt, actualReps: repsFor(slotAt) }],
+        skipped: [...w.skipped, slotAt],
+      });
+    case 'repsOfWrongKind': {
+      // A null on a rep Set, or a number on a seconds Set.
+      const wrongFor = (slotIndex: number): number | null =>
+        w.slots[slotIndex]?.target.seconds !== undefined ? 5 : null;
+      if (w.confirmed.length > 0) {
+        const at = corruption.pick % w.confirmed.length;
+        return wrap({
+          confirmed: w.confirmed.map((c, i) =>
+            i === at ? { ...c, actualReps: wrongFor(c.slotIndex) } : c,
+          ),
+        });
+      }
+      return wrap({ confirmed: [{ slotIndex: slotAt, actualReps: wrongFor(slotAt) }] });
+    }
+    case 'repsOutOfRange': {
+      const bad = corruption.pick % 2 === 0 ? 201 + (corruption.pick % 50) : -1;
+      const repSlot = w.slots.findIndex((slot) => slot.target.reps !== undefined);
+      const target = w.confirmed.findIndex((c) => w.slots[c.slotIndex]?.target.reps !== undefined);
+      if (target >= 0) {
+        return wrap({
+          confirmed: w.confirmed.map((c, i) => (i === target ? { ...c, actualReps: bad } : c)),
+        });
+      }
+      // No confirmed rep Set: add one (also breaks the resolved-prefix rule or the reps rule).
+      return wrap({
+        confirmed: [...w.confirmed, { slotIndex: Math.max(repSlot, 0), actualReps: bad }],
+      });
+    }
+    case 'nonFiniteTime': {
+      const field = timeFields[corruption.pick % timeFields.length] ?? 'clock';
+      const value = nonFiniteValues[corruption.pick % nonFiniteValues.length] ?? Number.NaN;
+      return wrap({ [field]: value });
+    }
+    case 'pauseMismatch':
+      return wrap({
+        pause:
+          w.phase === 'paused' ? null : { cause: 'user', from: 'exercising', at: w.clock },
+      });
+    case 'phaseSummary':
+      return wrap({ phase: 'summary' });
+    case 'outcomeSet':
+      return wrap({ outcome: (['completed', 'partial', 'abandoned'] as const)[corruption.pick % 3] });
+    case 'finishedAtSet':
+      return wrap({ finishedAt: w.clock });
+  }
+}

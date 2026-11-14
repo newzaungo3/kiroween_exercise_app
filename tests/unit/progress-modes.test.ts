@@ -8,6 +8,7 @@ import {
 } from '@/progress-store';
 import type { ProgressSnapshot, ProgressStore } from '@/progress-store';
 import {
+  checkpointArbitrary,
   createSpyAdapter,
   emptyModel,
   modelAfter,
@@ -24,9 +25,17 @@ const changeArbitrary: fc.Arbitrary<Operation> = operationArbitrary.filter(
 
 const changeSequenceArbitrary = fc.array(changeArbitrary, { maxLength: 20 });
 
+/** The model steps return a new object even for a no-op such as clearing an empty checkpoint, so compare by value. */
+function modelChanged(before: Model, after: Model): boolean {
+  return JSON.stringify(before) !== JSON.stringify(after);
+}
+
 function apply(store: ProgressStore, operation: Operation): unknown {
   if (operation.kind === 'grant') return store.grantWelcomeGift();
   if (operation.kind === 'record') return store.recordWorkout(operation.record);
+  if (operation.kind === 'saveCheckpoint') return store.saveCheckpoint(operation.checkpoint);
+  if (operation.kind === 'clearCheckpoint') return store.clearCheckpoint();
+  if (operation.kind === 'finish') return store.finishWorkout(operation.record);
   return undefined;
 }
 
@@ -36,6 +45,7 @@ function expectSnapshotMatches(snapshot: ProgressSnapshot, model: Model): void {
   expect(snapshot.candyBalance).toBe(model.candyBalance);
   expect(snapshot.history).toEqual([...model.recorded].reverse());
   expect(snapshot.totalCandyEarned).toBe(modelTotalCandyEarned(model));
+  expect(snapshot.checkpoint).toEqual(model.checkpoint);
   expect(new Set(snapshot.history.map((record) => record.id)).size).toBe(snapshot.history.length);
 }
 
@@ -44,7 +54,7 @@ describe('memory-only modes', () => {
   it('keeps the Candy rules and writes nothing it must not in memory-only modes', () => {
     const scenario = fc.record({
       mode: fc.constantFrom<'newer' | FailureMode>('newer', 'read', 'write', 'both'),
-      version: fc.integer({ min: 2, max: 1_000_000 }),
+      version: fc.integer({ min: 3, max: 1_000_000 }),
       extra: fc.string({ maxLength: 12 }),
       operations: changeSequenceArbitrary,
     });
@@ -72,12 +82,68 @@ describe('memory-only modes', () => {
         expect(model).toEqual(modelAfter(operations));
         // A read throws at creation; a write throws at the first change.
         if (mode === 'read' || mode === 'both') expect(store.snapshot().persistent).toBe(false);
-        if (mode === 'write' && model !== emptyModel) {
+        if (mode === 'write' && modelChanged(emptyModel, model)) {
           expect(store.snapshot().persistent).toBe(false);
         }
       }),
       { numRuns: 200 },
     );
+  });
+
+  // Feature: resume-after-refresh, Property 12: Memory-only modes keep working
+  it('keeps the model, checkpoint and Persistent_Flag in memory-only modes', () => {
+    const scenario = fc.record({
+      mode: fc.constantFrom<'newer' | 'write' | 'both'>('newer', 'write', 'both'),
+      version: fc.integer({ min: 3, max: 1_000_000 }),
+      operations: changeSequenceArbitrary,
+    });
+    fc.assert(
+      fc.property(scenario, ({ mode, version, operations }) => {
+        const newerText = JSON.stringify({ schemaVersion: version, future: 'x' });
+        const adapter =
+          mode === 'newer'
+            ? createSpyAdapter({ [storageKey]: newerText })
+            : createSpyAdapter({}, mode);
+        const store = createProgressStore(adapter);
+        let model = emptyModel;
+        for (const operation of operations) {
+          apply(store, operation);
+          model = stepModel(model, operation);
+          expectSnapshotMatches(store.snapshot(), model);
+          // A write that throws is attempted only for a change.
+          if (mode === 'newer' || modelChanged(emptyModel, model)) {
+            expect(store.snapshot().persistent).toBe(false);
+          }
+          if (mode === 'newer') expect(adapter.backing.dump()[storageKey]).toBe(newerText);
+        }
+        if (mode === 'newer') {
+          expect(adapter.setItemCalls()).toBe(0);
+          expect(adapter.backing.dump()[storageKey]).toBe(newerText);
+        }
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('a checkpoint saved over a throwing adapter stays in memory', () => {
+    const checkpoint = fc.sample(checkpointArbitrary, 1)[0]!;
+    const store = createProgressStore(createSpyAdapter({}, 'write'));
+    expect(store.saveCheckpoint(checkpoint)).toEqual({ saved: true });
+    expect(store.snapshot().checkpoint).toEqual(checkpoint);
+    expect(store.snapshot().persistent).toBe(false);
+  });
+
+  it('a checkpoint is never written over newer data', () => {
+    const text = JSON.stringify({ schemaVersion: 3, candy: 99 });
+    const adapter = createSpyAdapter({ [storageKey]: text });
+    const store = createProgressStore(adapter);
+    const checkpoint = fc.sample(checkpointArbitrary, 1)[0]!;
+    store.saveCheckpoint(checkpoint);
+    expect(store.snapshot().checkpoint).toEqual(checkpoint);
+    store.clearCheckpoint();
+    expect(adapter.backing.dump()[storageKey]).toBe(text);
+    expect(adapter.setItemCalls()).toBe(0);
+    expect(store.snapshot().persistent).toBe(false);
   });
 
   it('an adapter that throws on write keeps the Candy in memory and reports not persistent', () => {
@@ -98,7 +164,7 @@ describe('memory-only modes', () => {
   });
 
   it('data from a newer schema version is never overwritten', () => {
-    const text = JSON.stringify({ schemaVersion: 2, candy: 99, unlocks: ['witch-hat'] });
+    const text = JSON.stringify({ schemaVersion: 3, candy: 99, unlocks: ['witch-hat'] });
     const adapter = createSpyAdapter({ [storageKey]: text });
     const store = createProgressStore(adapter);
     store.grantWelcomeGift();
@@ -197,7 +263,7 @@ describe('listeners', () => {
           const callsBefore = calls;
           apply(store, operation);
           const next = stepModel(model, operation);
-          const changed = next !== model;
+          const changed = modelChanged(model, next);
           model = next;
 
           expect(calls - callsBefore).toBe(changed ? 1 : 0);

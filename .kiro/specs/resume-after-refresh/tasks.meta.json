@@ -1,0 +1,571 @@
+{
+  "pbtResults": {
+    "2.4 Write the property test for closed time": {
+      "status": "passed",
+      "lastRunTimestamp": 1794644672300
+    }
+  },
+  "executionHistory": {
+    "1.1 Add the new English Locale entries to `src/ui/strings.ts`": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644380391
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644387687
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644482438
+      }
+    ],
+    "1.2 Update the string tests": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644380452
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644489662
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644598980
+      }
+    ],
+    "2.1 Add the Pause_Cause `restored` and create `src/workout-engine/checkpoint.ts`": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644380512
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644388308
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644482685
+      }
+    ],
+    "2.2 Add the reachable-Workout support in `tests/unit/support/workout.ts`": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644380620
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644489809
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644599514
+      }
+    ],
+    "2.3 Write property tests for checkpoint and restore": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644380768
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644609933
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644724917
+      }
+    ],
+    "2.4 Write the property test for closed time": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644380855
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644610048
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644725069
+      }
+    ],
+    "2.5 Write property tests for rejected and arbitrary checkpoints": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644380918
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644610768
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644726112
+      }
+    ],
+    "3.1 Update the types, the pure rules and the codec": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644380981
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644489919
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644600308
+      }
+    ],
+    "3.2 Add the checkpoint operations to the store and the module index": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381032
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644609799
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644726925
+      }
+    ],
+    "3.3 Extend the test support in `tests/unit/support/progress.ts`": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381113
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644735954
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644832251
+      }
+    ],
+    "3.4 Update and extend the codec tests": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381213
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644840132
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644957400
+      }
+    ],
+    "3.5 Update and extend the store tests": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381258
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644840231
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644957894
+      }
+    ],
+    "3.6 Update and extend the rules tests": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381307
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644840698
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644958698
+      }
+    ],
+    "3.7 Update and extend the memory-only mode tests": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381358
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644841496
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644959488
+      }
+    ],
+    "4. Checkpoint - Engine and Progress_Store block": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381432
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794645204870
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646334638
+      }
+    ],
+    "5.1 Create `src/ui/workout/checkpoint-plan.ts`": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381479
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644490296
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644601139
+      }
+    ],
+    "5.2 Write the property test for checkpoint moments": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381530
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644736214
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644832360
+      }
+    ],
+    "5.3 Add restore to the run reducer and the saving hook": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381573
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644611344
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644727963
+      }
+    ],
+    "5.4 Update the Workout_Screen and the Paused_Panel": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381650
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644842100
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644960599
+      }
+    ],
+    "6.1 Create the pure Resume_Prompt modules in `src/ui/progress/`": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381695
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644736939
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644832989
+      }
+    ],
+    "6.2 Write the tests for the Resume_Prompt logic": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381740
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644969601
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794645080122
+      }
+    ],
+    "6.3 Build the prompt components and the Home_Screen island": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381791
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644969731
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794645081140
+      }
+    ],
+    "6.4 Rewrite the Recording_Bridge `src/ui/progress/RecordedWorkoutScreen.tsx`": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381836
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794645086829
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794645197351
+      }
+    ],
+    "7.1 Extend the boundary scan": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381880
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794645087115
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794645197579
+      }
+    ],
+    "7.2 Update the earlier E2E specs that this ticket changes": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381924
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794645204961
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646334757
+      }
+    ],
+    "8.1 Extend `tests/e2e/support/progress.ts`": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644381965
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794645205218
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646335369
+      }
+    ],
+    "8.2 Add `tests/e2e/resume-after-refresh.spec.ts`": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644382011
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646341191
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646700395
+      }
+    ],
+    "9.1 Update `.kiro/steering/structure.md`": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644382066
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646341676
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646700940
+      }
+    ],
+    "10. Checkpoint - Final verification": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644382129
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646701621
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794647573254
+      }
+    ],
+    "11.1 Ask the user, then commit": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644382170
+      },
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794648981828
+      }
+    ],
+    "1. Strings_Module additions": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644599045
+      }
+    ],
+    "2. Workout_Engine: checkpoint and restore": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644726171
+      }
+    ],
+    "3. Progress_Store: Schema_Version 2": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644959547
+      }
+    ],
+    "5. Workout_Screen: saving and restoring": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794644960704
+      }
+    ],
+    "6. Resume_Prompt and Recording_Bridge": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794645197430
+      }
+    ],
+    "7. Scans and earlier tests": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646334822
+      }
+    ],
+    "8. E2E support and the acceptance spec": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646700454
+      }
+    ],
+    "9. Structure steering": [
+      {
+        "executionId": "4b4f9aaa-e577-4070-b508-2252605ce2f4",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794646700977
+      }
+    ]
+  }
+}

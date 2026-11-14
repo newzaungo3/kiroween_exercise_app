@@ -24,6 +24,19 @@ const en = {
   'progress.unavailable':
     'This browser cannot keep your Candy. It will be forgotten when you leave this page.',
 
+  'resume.loading': 'Looking for an unfinished Workout…',
+  'resume.heading': 'An unfinished Workout is waiting',
+  'resume.text': '{routine}: {exercise}, Set {number} of {count}. Candy earned so far: {candy}.',
+  'resume.text.rest':
+    '{routine}: resting before {exercise}, Set {number} of {count}. Candy earned so far: {candy}.',
+  'resume.awayNote': 'The time you were away does not count.',
+  'resume.question': 'Resume or Discard?',
+  'resume.resume': 'Resume the Workout',
+  'resume.discard': 'Discard the Workout',
+  'resume.discard.hint':
+    'Discard ends the Workout as abandoned. The Candy for the Sets you confirmed still counts.',
+  'resume.discarded': 'The Workout was recorded as abandoned. Candy for the confirmed Sets: {candy}.',
+
   'history.loading': 'Opening the book of past Workouts…',
   'history.total': 'Total Candy earned: {candy}',
   'history.list.label': 'Past Workouts, newest first',
@@ -137,6 +150,8 @@ const en = {
   'workout.paused.user': 'You paused the Workout. The timer and the Coach are stopped.',
   'workout.paused.auto':
     'The Workout paused because this page was hidden. The timer and the Coach are stopped.',
+  'workout.paused.restored':
+    'Welcome back. The Workout is paused where you left it. The time you were away does not count.',
   'workout.dialog.cancel': 'Keep going',
   'workout.skipSet.dialog.heading': 'Skip this Set?',
   'workout.skipSet.dialog.text':
@@ -148,6 +163,7 @@ const en = {
   'workout.quit.dialog.confirm': 'Quit now',
   'workout.announce.paused.user': 'Workout paused.',
   'workout.announce.paused.auto': 'Workout paused because the page was hidden.',
+  'workout.announce.paused.restored': 'Workout restored and paused.',
   'workout.announce.resumed': 'Workout resumed. {next}',
   'workout.announce.skippedSet': 'Set skipped. Now: {next}',
   'workout.announce.skippedRest': 'Rest ended. Now: {next}',

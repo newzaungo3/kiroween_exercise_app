@@ -8,6 +8,7 @@ export type {
   ProgressSnapshot,
   ProgressStore,
   RecordResult,
+  SaveCheckpointResult,
   StorageAdapter,
   WorkoutRecord,
 } from './types';

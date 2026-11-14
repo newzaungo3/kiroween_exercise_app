@@ -69,7 +69,13 @@ export function PausedPanel({ view, onResume, onAskQuit, headingRef }: PausedPan
         {t('workout.paused.heading')}
       </h2>
       <p className={styles.text}>
-        {view.cause === 'auto' ? t('workout.paused.auto') : t('workout.paused.user')}
+        {t(
+          view.cause === 'auto'
+            ? 'workout.paused.auto'
+            : view.cause === 'restored'
+              ? 'workout.paused.restored'
+              : 'workout.paused.user',
+        )}
       </p>
       <p className={styles.text}>{exerciseName(entry)}</p>
       {position}

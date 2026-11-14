@@ -1,0 +1,25 @@
+/*
+ * Candy_Balance styles on the Home_Screen.
+ * Colours come only from Halloween_Theme token variables. Sizes are in rem so
+ * the browser's text-size setting scales the layout. No animation.
+ */
+
+/* Reserves one line so the loading text and the balance take the same space. */
+.block {
+  min-block-size: 1.5rem;
+  margin-block: 0 1.25rem;
+  margin-inline: 0;
+}
+
+.line {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.line + .line {
+  margin-block-start: 0.25rem;
+}

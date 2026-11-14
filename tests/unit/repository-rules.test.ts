@@ -465,7 +465,7 @@ describe('repository rules', () => {
     // Everything else under src/ sits in src/ui (components), src/catalog (the Catalog),
     // src/viewer (the Viewer) or src/workout-engine (the Workout engine), apart from
     // the tracked Next.js type references.
-    const allowedPrefixes = ['src/app/', 'src/ui/', 'src/catalog/', 'src/viewer/', 'src/workout-engine/'];
+    const allowedPrefixes = ['src/app/', 'src/ui/', 'src/catalog/', 'src/viewer/', 'src/workout-engine/', 'src/progress-store/'];
     const knownExceptions = ['src/types/next.d.ts'];
     const strayFiles = srcFiles
       .filter((file) => !allowedPrefixes.some((prefix) => file.startsWith(prefix)))

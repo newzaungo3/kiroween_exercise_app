@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { findEntryById } from '@/catalog';
 import type { ExerciseEntry, RoutineEntry } from '@/catalog';
 import { completionBonus } from '@/workout-engine';
-import type { WorkoutView } from '@/workout-engine';
+import type { SummaryView, WorkoutView } from '@/workout-engine';
 
 import { exerciseName } from '../exercises/labels';
 import { routineName } from '../routines/labels';
@@ -33,6 +33,10 @@ import styles from './WorkoutScreen.module.css';
 
 export interface WorkoutScreenProps {
   readonly routine: RoutineEntry;
+  /** Called exactly once when the Workout reaches the summary, for every outcome. */
+  readonly onFinished?: (view: SummaryView) => void;
+  /** The Candy balance after the Workout was recorded; null or absent until known. */
+  readonly recordedBalance?: number | null;
 }
 
 interface OpenDialog {
@@ -55,7 +59,7 @@ function panelKey(view: WorkoutView | null): string {
   return 'summary';
 }
 
-export function WorkoutScreen({ routine }: WorkoutScreenProps) {
+export function WorkoutScreen({ routine, onFinished, recordedBalance }: WorkoutScreenProps) {
   const { view, slots, notice, start, confirm, skipSet, skipRest, pause, resume, quit } =
     useWorkoutRun(routine);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -81,6 +85,14 @@ export function WorkoutScreen({ routine }: WorkoutScreenProps) {
       headingRef.current?.focus({ preventScroll: true });
     }
   }, [key]);
+
+  // Report the finished Workout once, whatever its outcome.
+  const finishedReported = useRef(false);
+  useEffect(() => {
+    if (view === null || view.phase !== 'summary' || finishedReported.current) return;
+    finishedReported.current = true;
+    onFinished?.(view);
+  }, [view, onFinished]);
 
   const askSkipSet = useCallback((opener: HTMLElement) => {
     setDialog({ kind: 'skipSet', opener });
@@ -178,7 +190,15 @@ export function WorkoutScreen({ routine }: WorkoutScreenProps) {
     announcement = t(
       view.outcome === 'abandoned' ? 'workout.announce.ended' : 'workout.announce.summary',
     );
-    panel = <SummaryPanel view={view} routine={routine} slots={slots} headingRef={headingRef} />;
+    panel = (
+      <SummaryPanel
+        view={view}
+        routine={routine}
+        slots={slots}
+        headingRef={headingRef}
+        balance={recordedBalance}
+      />
+    );
   }
 
   const bonus = String(completionBonus);

@@ -17,6 +17,19 @@ const en = {
   'home.title': 'Spooky Coach',
   'home.tagline': 'Rattle your bones with a skeleton Coach.',
   'home.nav.label': 'Spooky Coach sections',
+  'home.candy.loading': 'Counting your Candy…',
+  'home.candy.balance': 'Candy balance: {candy}',
+  'home.candy.welcome': 'Welcome gift: {candy} Candy from the Coach.',
+
+  'progress.unavailable':
+    'This browser cannot keep your Candy. It will be forgotten when you leave this page.',
+
+  'history.loading': 'Opening the book of past Workouts…',
+  'history.total': 'Total Candy earned: {candy}',
+  'history.list.label': 'Past Workouts, newest first',
+  'history.empty': 'No Workouts yet. Start a Routine and your Workouts will be written here.',
+  'history.empty.link': 'Choose a Routine',
+  'history.entry.unknownRoutine': 'A Routine that has left the crypt',
 
   'section.exercises.name': 'Exercises',
   'section.exercises.title': 'Exercises · Spooky Coach',
@@ -32,7 +45,6 @@ const en = {
   'section.crypt.title': 'Crypt · Spooky Coach',
 
   'section.history.name': 'History',
-  'section.history.message': 'Not built yet. No ghosts of Workouts past have appeared.',
   'section.history.title': 'History · Spooky Coach',
 
   'common.backHome': 'Back to the home screen',
@@ -160,6 +172,7 @@ const en = {
   'summary.result.confirmed': 'confirmed',
   'summary.result.skipped': 'skipped',
   'summary.result.notReached': 'not reached',
+  'summary.balance': 'Your Candy balance is now {balance}.',
 
   'exercise.graveRise.name': 'Grave Rise',
   'exercise.graveRise.realName': 'Air squat',

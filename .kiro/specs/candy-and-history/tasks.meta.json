@@ -1,0 +1,474 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Add the new English Locale entries to `src/ui/strings.ts`": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634267643
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634274087
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634339166
+      }
+    ],
+    "1.2 Update the string tests": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634267749
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634345554
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634399825
+      }
+    ],
+    "2.1 Create the types, the pure rules and the codec": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634267823
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634274731
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634339929
+      }
+    ],
+    "2.2 Create the store, the adapters and the module index": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634267908
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634346105
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634400584
+      }
+    ],
+    "2.3 Add the test support in `tests/unit/support/progress.ts`": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268040
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634406391
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634454908
+      }
+    ],
+    "2.4 Write property tests for the codec": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268122
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634459300
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634555902
+      }
+    ],
+    "2.5 Write property tests for persistence, the Welcome gift and the invariant": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268197
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634460068
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634556036
+      }
+    ],
+    "2.6 Write property tests for recording": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268266
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634460632
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634556688
+      }
+    ],
+    "2.7 Write property tests for memory-only modes, interleaved stores and listeners": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268360
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634461432
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634616460
+      }
+    ],
+    "2.8 Add the module-boundary scan `tests/unit/progress-boundaries.test.ts`": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268433
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634462113
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634557724
+      }
+    ],
+    "3. Checkpoint - Progress_Store block": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268495
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634617110
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634647683
+      }
+    ],
+    "4.1 Create `src/ui/progress/workout-record.ts`": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268566
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634648421
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634703719
+      }
+    ],
+    "4.2 Add the hook points to the Workout_Screen and the Summary_Panel": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268677
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634649542
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634703869
+      }
+    ],
+    "4.3 Create the client hook `src/ui/progress/useProgress.ts`": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268768
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634650125
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634704652
+      }
+    ],
+    "5.1 Build the Home_Screen balance": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268836
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634709914
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634784966
+      }
+    ],
+    "5.2 Build the History_Screen and move History out of the Placeholders": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634268909
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634710708
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634785094
+      }
+    ],
+    "5.3 Update and add the unit tests for the screens": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634269024
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634792609
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634958235
+      }
+    ],
+    "6.1 Create the Recording_Bridge and render it from the Workout route": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634269100
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634711504
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634785814
+      }
+    ],
+    "6.2 Write the property test for the record mapping": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634269171
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634712136
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634786637
+      }
+    ],
+    "6.3 Update the earlier E2E specs that assumed empty storage": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634269237
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634792868
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634958574
+      }
+    ],
+    "7.1 Add `tests/e2e/support/progress.ts`": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634269346
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634793485
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634959375
+      }
+    ],
+    "7.2 Add `tests/e2e/candy-and-history.spec.ts`": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634269418
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634960708
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794635146916
+      }
+    ],
+    "8.1 Update `.kiro/steering/structure.md`": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634269496
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634794166
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634960195
+      }
+    ],
+    "9. Checkpoint - Final verification": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634269561
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794635147264
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794636053599
+      }
+    ],
+    "10.1 Ask the user, then commit": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634269667
+      },
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794640505229
+      }
+    ],
+    "1. Strings_Module additions": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634399907
+      }
+    ],
+    "2. Progress_Store": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634616554
+      }
+    ],
+    "4. Recording a Workout": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634704727
+      }
+    ],
+    "5. Screens": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634958335
+      }
+    ],
+    "6. Recording_Bridge and the earlier tests": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634958649
+      }
+    ],
+    "8. Structure steering": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794634960293
+      }
+    ],
+    "7. E2E support and the acceptance spec": [
+      {
+        "executionId": "370ddf47-677c-4000-b287-7bba6c0ef310",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794635147014
+      }
+    ]
+  }
+}

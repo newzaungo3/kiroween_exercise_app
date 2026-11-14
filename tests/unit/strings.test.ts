@@ -18,7 +18,7 @@ const sectionIds = ['exercises', 'stretches', 'routines', 'crypt', 'history'] as
 
 // The Sections that still show a Placeholder_Screen. Exercises and Stretches
 // and Routines have a list screen instead, so they have no Placeholder_Screen message.
-const placeholderSectionIds = ['crypt', 'history'] as const;
+const placeholderSectionIds = ['crypt'] as const;
 
 describe('Strings_Module', () => {
   it('every English Locale entry has visible text', () => {
@@ -99,8 +99,13 @@ describe('Strings_Module', () => {
   it('no Workout, Summary, Routine or Safety_Message string says the Candy was saved or added to a balance', () => {
     const prefixes = ['workout.', 'summary.', 'routine.', 'safety.'];
     const savedClaim = /\b(saved?|saving|kept|stored?|balance|banked?|wallet|added to)\b/i;
+    // Ticket 08 (candy-and-history) supersedes this rule for exactly one line:
+    // the Summary_Panel shows the new Candy balance in `summary.balance`.
     const offending = englishIds.filter(
-      (id) => prefixes.some((prefix) => id.startsWith(prefix)) && savedClaim.test(locales.en[id]),
+      (id) =>
+        id !== 'summary.balance' &&
+        prefixes.some((prefix) => id.startsWith(prefix)) &&
+        savedClaim.test(locales.en[id]),
     );
 
     // On failure, Vitest prints the offending string identifiers.
@@ -124,11 +129,40 @@ describe('Strings_Module', () => {
 
   it('no pause, skip, quit, dialog or summary string blames or shames the user', () => {
     const blame = /\b(lazy|fail(ed|ure)?|gave up|give up|weak|quitter|shame)\b/i;
+    const prefixes = ['workout.', 'home.', 'history.', 'progress.', 'summary.'];
     const offending = englishIds.filter(
-      (id) => (id.startsWith('workout.') || id.startsWith('summary.')) && blame.test(locales.en[id]),
+      (id) => prefixes.some((prefix) => id.startsWith(prefix)) && blame.test(locales.en[id]),
     );
 
     expect(offending).toEqual([]);
+  });
+
+  it('every new identifier is non-blank', () => {
+    const ids = [
+      'home.candy.loading',
+      'home.candy.balance',
+      'home.candy.welcome',
+      'progress.unavailable',
+      'summary.balance',
+      'history.loading',
+      'history.total',
+      'history.list.label',
+      'history.empty',
+      'history.empty.link',
+      'history.entry.unknownRoutine',
+    ] as const;
+
+    for (const id of ids) {
+      expect({ id, blank: t(id).trim() === '' }).toEqual({ id, blank: false });
+    }
+  });
+
+  it('the empty History text and the loading texts contain no digit', () => {
+    const ids = ['history.empty', 'history.loading', 'home.candy.loading'] as const;
+
+    for (const id of ids) {
+      expect({ id, hasDigit: /\d/.test(t(id)) }).toEqual({ id, hasDigit: false });
+    }
   });
 
   it('a hidden-page pause text differs from a user pause text', () => {

@@ -9,6 +9,7 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { findEntryById, findRoutine, type ExerciseEntry, type RoutineEntry } from '@/catalog';
+import { storageKey } from '@/progress-store';
 import { format, locales } from '@/ui/strings';
 import { colors } from '@/ui/theme/tokens';
 import { buildSetSlots, candyPerSet, completionBonus } from '@/workout-engine';
@@ -252,11 +253,13 @@ async function expectStill(scope: Locator, label: string): Promise<void> {
 
 test.afterEach(async ({ page }) => {
   const stored = await page.evaluate(async () => ({
-    local: window.localStorage.length,
+    local: Object.keys(window.localStorage),
     session: window.sessionStorage.length,
     databases: (await window.indexedDB.databases()).length,
   }));
-  expect(stored).toEqual({ local: 0, session: 0, databases: 0 });
+  expect(stored.local.filter((key) => key !== storageKey)).toEqual([]);
+  expect(stored.session).toBe(0);
+  expect(stored.databases).toBe(0);
   expect(await page.context().cookies()).toEqual([]);
 });
 

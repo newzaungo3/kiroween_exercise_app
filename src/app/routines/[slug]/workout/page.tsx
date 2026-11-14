@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { findRoutine, routines } from '@/catalog';
 import { workoutMetadata } from '@/ui/metadata';
-import { WorkoutScreen } from '@/ui/workout/WorkoutScreen';
+import { RecordedWorkoutScreen } from '@/ui/progress/RecordedWorkoutScreen';
 
 /**
  * Workout_Screen route. Every Catalog Routine slug is prerendered at Build
@@ -30,5 +30,5 @@ export default async function WorkoutPage({ params }: WorkoutPageProps) {
   const { slug } = await params;
   const routine = findRoutine(slug);
   if (routine === undefined) notFound();
-  return <WorkoutScreen routine={routine} />;
+  return <RecordedWorkoutScreen routine={routine} />;
 }

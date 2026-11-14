@@ -59,6 +59,11 @@ const workoutTemplates: ReadonlyArray<readonly [TemplateId, readonly string[]]> 
   ['summary.setsNotReached', ['count']],
   ['summary.noBonus', ['bonus']],
   ['summary.set.line', ['exercise', 'number', 'count', 'state']],
+  // Added by the candy-and-history ticket.
+  ['home.candy.balance', ['candy']],
+  ['home.candy.welcome', ['candy']],
+  ['summary.balance', ['balance']],
+  ['history.total', ['candy']],
 ];
 
 // Values contain no `{`, so a replacement can never form a new placeholder.

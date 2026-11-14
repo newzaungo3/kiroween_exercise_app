@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { CandyBalance } from '../progress/CandyBalance';
 import { sectionIds, sectionName, sectionPath } from '../sections';
 import { t } from '../strings';
 import styles from './HomeScreen.module.css';
@@ -16,6 +17,7 @@ export function HomeScreen() {
     <>
       <h1 className={styles.title}>{t('app.name')}</h1>
       <p className={styles.tagline}>{t('home.tagline')}</p>
+      <CandyBalance />
       <nav aria-label={t('home.nav.label')}>
         <ul className={styles.navList}>
           {sectionIds.map((id) => (

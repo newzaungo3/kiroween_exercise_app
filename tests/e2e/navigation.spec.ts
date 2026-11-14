@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { entriesOfKind, exerciseSlugs, routines } from '@/catalog';
-import { locales } from '@/ui/strings';
+import { format, locales } from '@/ui/strings';
 import { colors } from '@/ui/theme/tokens';
 
 const en = locales.en;
@@ -43,10 +43,9 @@ const sections = [
     title: en['section.crypt.title'],
   },
   {
-    screen: 'placeholder',
+    screen: 'history',
     route: '/history',
     name: en['section.history.name'],
-    message: en['section.history.message'],
     title: en['section.history.title'],
   },
 ] as const;
@@ -56,8 +55,9 @@ type PlaceholderSection = Extract<Section, { readonly screen: 'placeholder' }>;
 type ExerciseListSection = Extract<Section, { readonly screen: 'exercise-list' }>;
 
 type RoutineListSection = Extract<Section, { readonly screen: 'routine-list' }>;
+type HistorySection = Extract<Section, { readonly screen: 'history' }>;
 
-/** The Sections that still serve a Placeholder_Screen: Crypt and History. */
+/** The Sections that still serve a Placeholder_Screen: Crypt. */
 const placeholderSections = sections.filter(
   (section): section is PlaceholderSection => section.screen === 'placeholder',
 );
@@ -155,12 +155,25 @@ async function expectRoutineListScreen(page: Page, section: RoutineListSection):
   await expect(backHome).toHaveAttribute('href', '/');
 }
 
+/**
+ * Checks that the page shows the History_Screen: its heading, its title, the
+ * total line (0: the Welcome gift is not Candy earned) and the empty text.
+ */
+async function expectHistoryScreen(page: Page, section: HistorySection): Promise<void> {
+  await expectSectionHeadingAndTitle(page, section);
+
+  await expect(page.getByText(format('history.total', { candy: '0' }), { exact: true })).toBeVisible();
+  await expect(page.getByText(en['history.empty'], { exact: true })).toBeVisible();
+}
+
 /** Checks that the page shows the screen `section`'s Navigation_Entry leads to. */
 async function expectSectionScreen(page: Page, section: Section): Promise<void> {
   if (section.screen === 'exercise-list') {
     await expectExerciseListScreen(page, section);
   } else if (section.screen === 'routine-list') {
     await expectRoutineListScreen(page, section);
+  } else if (section.screen === 'history') {
+    await expectHistoryScreen(page, section);
   } else {
     await expectPlaceholderScreen(page, section);
   }

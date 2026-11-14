@@ -21,10 +21,12 @@ export interface SummaryPanelProps {
    */
   readonly slots: readonly SetSlot[];
   readonly headingRef?: Ref<HTMLHeadingElement>;
+  /** The Candy balance after the Workout was recorded; nothing is shown when null or absent. */
+  readonly balance?: number | null;
 }
 
 /** End of the Workout. Shows no Viewer and says nothing about saving Candy. */
-export function SummaryPanel({ view, routine, slots, headingRef }: SummaryPanelProps) {
+export function SummaryPanel({ view, routine, slots, headingRef, balance }: SummaryPanelProps) {
   const bonus = String(completionBonus);
   return (
     <section className={styles.panel} aria-labelledby="summary-heading">
@@ -48,6 +50,9 @@ export function SummaryPanel({ view, routine, slots, headingRef }: SummaryPanelP
       ) : (
         <p className={styles.text}>{format('summary.noBonus', { bonus })}</p>
       )}
+      {typeof balance === 'number' ? (
+        <p className={styles.text}>{format('summary.balance', { balance: String(balance) })}</p>
+      ) : null}
       <h3 className={styles.subheading}>{t('summary.sets.heading')}</h3>
       <ol className={styles.setList}>
         {slots.map((slot, index) => {

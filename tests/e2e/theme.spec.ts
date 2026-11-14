@@ -125,7 +125,8 @@ test.describe('Halloween_Theme', () => {
 
     const textElements = [
       page.getByRole('heading', { level: 1 }),
-      page.locator('main p'),
+      // Ticket 08 added Candy balance paragraphs to Home; check every paragraph.
+      ...(await page.locator('main p').all()),
       ...(await page.getByRole('navigation').getByRole('link').all()),
     ];
     expect(textElements.length).toBeGreaterThanOrEqual(7);

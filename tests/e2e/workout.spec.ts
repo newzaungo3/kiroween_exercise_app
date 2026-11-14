@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { findEntryById, findRoutine, type ExerciseEntry, type RoutineEntry } from '@/catalog';
+import { storageKey } from '@/progress-store';
 import { lengthLabel, routinePath, workoutPath } from '@/ui/routines/labels';
 import { format, locales } from '@/ui/strings';
 import { buildSetSlots, completionBonus } from '@/workout-engine';
@@ -286,11 +287,13 @@ test.describe('Workout screen', () => {
     await expectNoPerfectForm(page);
 
     const stored = await page.evaluate(async () => ({
-      local: window.localStorage.length,
+      local: Object.keys(window.localStorage),
       session: window.sessionStorage.length,
       databases: (await window.indexedDB.databases()).length,
     }));
-    expect(stored).toEqual({ local: 0, session: 0, databases: 0 });
+    expect(stored.local.filter((key) => key !== storageKey)).toEqual([]);
+    expect(stored.session).toBe(0);
+    expect(stored.databases).toBe(0);
     expect(await page.context().cookies()).toEqual([]);
   });
 

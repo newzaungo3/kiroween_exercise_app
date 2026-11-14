@@ -17,14 +17,15 @@ export type SectionId = (typeof sectionIds)[number];
  * The Sections that show the Exercise_List_Screen. They have no
  * Placeholder_Screen message.
  */
-export type ListSectionId = 'exercises' | 'stretches' | 'routines';
+export type ListSectionId = 'exercises' | 'stretches' | 'routines' | 'history';
 
 /** The Sections that still show a Placeholder_Screen. */
 export type PlaceholderSectionId = Exclude<SectionId, ListSectionId>;
 
 /** Every Section that still shows a Placeholder_Screen, in Home_Navigation order. */
 export const placeholderSectionIds: readonly PlaceholderSectionId[] = sectionIds.filter(
-  (id): id is PlaceholderSectionId => id !== 'exercises' && id !== 'stretches' && id !== 'routines',
+  (id): id is PlaceholderSectionId =>
+    id !== 'exercises' && id !== 'stretches' && id !== 'routines' && id !== 'history',
 );
 
 /** The route that serves a Section's screen, for example `/exercises`. */

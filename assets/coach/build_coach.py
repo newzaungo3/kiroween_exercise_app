@@ -126,10 +126,13 @@ def build_armature():
 
 
 class Builder:
-    def __init__(self):
+    def __init__(self, colors=False):
         self.bm = bmesh.new()
         self.deform = self.bm.verts.layers.deform.verify()
         self.groups = []  # bone names, index = vertex group index
+        # Optional per-face-corner color, exported as glTF COLOR_0.
+        self.color = self.bm.loops.layers.color.new("Color") if colors else None
+        self.paint = (1.0, 1.0, 1.0, 1.0)
 
     def _group(self, bone):
         if bone not in self.groups:
@@ -143,6 +146,9 @@ class Builder:
             vert[self.deform][gi] = 1.0
         for f in faces:
             f.material_index = mat
+            if self.color is not None:
+                for loop in f.loops:
+                    loop[self.color] = self.paint
 
     def _claim_op(self, result, bone, mat):
         # Use the verts the op returns: bmesh reuses freed slots, so "the last N
@@ -209,6 +215,63 @@ class Builder:
             for loop in (loops[0], loops[-1]):
                 faces.append(self.bm.faces.new(loop))
         self._claim([vert for loop in loops for vert in loop], faces, bone, mat)
+
+    def lathe(self, bone, profile, matrix, segs=16, mat=0, closed=False, warp=None):
+        """Revolve a profile [(radius, height), ...] about local Z, placed by `matrix`.
+
+        A final radius of 0 closes the shape with a point; `closed` joins the last
+        profile point back to the first (a solid ring); `warp(local_vec)` can bend
+        the local shape before it is placed.
+        """
+        rings = []
+        tip = None
+        for k, (r, h) in enumerate(profile):
+            if r == 0 and k == len(profile) - 1:
+                p = Vector((0, 0, h))
+                tip = self.bm.verts.new(matrix @ (warp(p) if warp else p))
+                continue
+            ring = []
+            for i in range(segs):
+                t = 2 * math.pi * i / segs
+                p = Vector((r * math.cos(t), r * math.sin(t), h))
+                ring.append(self.bm.verts.new(matrix @ (warp(p) if warp else p)))
+            rings.append(ring)
+        faces = []
+        n = len(rings)
+        for k in range(n if closed else n - 1):
+            a, b = rings[k], rings[(k + 1) % n]
+            for i in range(segs):
+                j = (i + 1) % segs
+                faces.append(self.bm.faces.new((a[i], a[j], b[j], b[i])))
+        if tip is not None:
+            last = rings[-1]
+            for i in range(segs):
+                faces.append(self.bm.faces.new((last[i], last[(i + 1) % segs], tip)))
+        verts = [vert for ring in rings for vert in ring] + ([tip] if tip else [])
+        self._claim(verts, faces, bone, mat)
+        return verts
+
+    def polygon(self, bone, points, mat=0):
+        """One flat face through the given points (used for carved-face decals)."""
+        verts = [self.bm.verts.new(p) for p in points]
+        face = self.bm.faces.new(verts)
+        self._claim(verts, [face], bone, mat)
+
+    def to_bone_child(self, name, arm_obj, bone, materials):
+        """A rigid mesh parented to `bone` (no skin), so it can be re-attached at runtime."""
+        mesh = bpy.data.meshes.new(name)
+        self.bm.to_mesh(mesh)
+        self.bm.free()
+        for mat in materials:
+            mesh.materials.append(mat)
+        obj = bpy.data.objects.new(name, mesh)
+        bpy.context.collection.objects.link(obj)
+        obj.parent = arm_obj
+        obj.parent_type = "BONE"
+        obj.parent_bone = bone
+        bpy.context.view_layer.update()
+        obj.matrix_world = Matrix.Identity(4)  # vertices are authored in rest-pose world space
+        return obj
 
     def to_object(self, name, arm_obj, materials):
         bmesh.ops.recalc_face_normals(self.bm, faces=self.bm.faces[:])
@@ -293,6 +356,175 @@ def build_mesh(arm_obj, materials):
             B.rod(f"toe.{side}", ((0.147 + dx) * sx, -0.14, 0.018), ((0.149 + dx) * sx, -0.19, 0.014), 0.009, 0.007, segs=4)
 
     return B.to_object("CoachBones", arm_obj, materials)
+
+
+# ---------------------------------------------------------------------------
+# Accessories: rigid meshes on the head bone, delivered in their own GLB
+# ---------------------------------------------------------------------------
+
+GLOW_COLOR = (0.55, 1.0, 0.3, 1.0)  # ghost-light green
+HAT_BLACK = (0.06, 0.04, 0.09, 1.0)
+HAT_BAND = (0.36, 0.12, 0.58, 1.0)
+HAT_BUCKLE = (0.85, 0.62, 0.16, 1.0)
+PUMPKIN_ORANGE = (0.95, 0.42, 0.06, 1.0)
+PUMPKIN_STEM = (0.25, 0.36, 0.1, 1.0)
+
+ACCESSORIES = ("accessory_glowing_eyes", "accessory_witch_hat", "accessory_witch_hat_on_pumpkin",
+               "accessory_pumpkin_head")
+
+
+def make_glow_material():
+    mat = bpy.data.materials.new("CoachGlow")
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = (0.1, 0.18, 0.05, 1.0)
+    bsdf.inputs["Emission Color"].default_value = GLOW_COLOR
+    bsdf.inputs["Emission Strength"].default_value = 1.0
+    mat.diffuse_color = GLOW_COLOR
+    return mat
+
+
+def make_painted_material():
+    """Base color from the mesh's vertex colors, so hat and pumpkin share one material."""
+    mat = bpy.data.materials.new("CoachAccessory")
+    nodes = mat.node_tree.nodes
+    bsdf = nodes.get("Principled BSDF")
+    attr = nodes.new("ShaderNodeVertexColor")
+    attr.layer_name = "Color"
+    mat.node_tree.links.new(attr.outputs["Color"], bsdf.inputs["Base Color"])
+    bsdf.inputs["Roughness"].default_value = 0.7
+    return mat
+
+
+# Pumpkin shell: an ellipsoid with 8 outward ribs that encloses the whole skull.
+PUMPKIN_CENTER = Vector((0.0, 0.005, 1.64))
+PUMPKIN_RADII = Vector((0.168, 0.172, 0.165))
+PUMPKIN_RIBS = 8
+PUMPKIN_RIB_DEPTH = 0.06
+
+
+def _rib(theta):
+    return 1.0 + PUMPKIN_RIB_DEPTH * (0.5 + 0.5 * math.cos(PUMPKIN_RIBS * theta))
+
+
+def pumpkin_front_y(x, z):
+    """World y of the pumpkin surface's front (-Y) side at world (x, z)."""
+    px, pz = x - PUMPKIN_CENTER.x, z - PUMPKIN_CENTER.z
+    y = -PUMPKIN_RADII.y
+    for _ in range(8):
+        f = _rib(math.atan2(y, px))
+        a, b = PUMPKIN_RADII.x * f, PUMPKIN_RADII.y * f
+        y = -b * math.sqrt(max(1 - (px / a) ** 2 - (pz / PUMPKIN_RADII.z) ** 2, 0.0))
+    return PUMPKIN_CENTER.y + y
+
+
+def build_accessories(arm_obj, glow, painted):
+    GLOW = 0
+    objs = []
+
+    # Glowing eyes: two small lights set into the eye sockets.
+    B = Builder()
+    for x in (-0.042, 0.042):
+        B.ball("head", (x, -0.098, 1.672), 0.017, segs=10, rings=6, mat=GLOW)
+    objs.append(B.to_bone_child("accessory_glowing_eyes", arm_obj, "head", [glow]))
+
+    # Witch hat: on the bare skull, and a second copy that sits on the pumpkin
+    # (the app shows that one when both are equipped).
+    objs.append(_witch_hat(arm_obj, painted, "accessory_witch_hat", base_z=1.735))
+    objs.append(_witch_hat(arm_obj, painted, "accessory_witch_hat_on_pumpkin", base_z=1.795))
+
+    # Pumpkin head: ribbed shell over the skull, a stem, and a glowing carved face.
+    B = Builder(colors=True)
+    PAINT, FACE = 0, 1
+    B.paint = PUMPKIN_ORANGE
+    m = Matrix.Translation(PUMPKIN_CENTER) @ Matrix.Diagonal((*PUMPKIN_RADII, 1.0))
+    res = bmesh.ops.create_uvsphere(B.bm, u_segments=32, v_segments=12, radius=1.0, matrix=m)
+    for vert in res["verts"]:
+        p = vert.co - PUMPKIN_CENTER
+        f = _rib(math.atan2(p.y, p.x))
+        vert.co = PUMPKIN_CENTER + Vector((p.x * f, p.y * f, p.z))
+    B._claim_op(res, "head", PAINT)
+    B.paint = PUMPKIN_STEM
+    B.rod("head", (0, 0.01, 1.79), (0.012, 0.03, 1.855), 0.024, 0.016, segs=6, mat=PAINT)
+
+    B.paint = (1.0, 1.0, 1.0, 1.0)  # the face glows; keep its vertex color neutral
+
+    def decal(points_xz, lift=0.004):
+        B.polygon("head", [Vector((x, pumpkin_front_y(x, z) - lift, z)) for x, z in points_xz], mat=FACE)
+
+    for sx in (-1, 1):  # triangle eyes
+        decal([(0.035 * sx, 1.665), (0.095 * sx, 1.665), (0.065 * sx, 1.71)])
+    decal([(-0.018, 1.625), (0.018, 1.625), (0.0, 1.65)])  # nose
+    mouth = [(-0.1, 1.585), (-0.065, 1.575), (-0.05, 1.59), (-0.03, 1.57), (0.0, 1.565),
+             (0.03, 1.57), (0.05, 1.59), (0.065, 1.575), (0.1, 1.585),
+             (0.07, 1.545), (0.03, 1.535), (0.0, 1.532), (-0.03, 1.535), (-0.07, 1.545)]
+    decal(mouth)
+    objs.append(B.to_bone_child("accessory_pumpkin_head", arm_obj, "head", [painted, glow]))
+    return objs
+
+
+def _witch_hat(arm_obj, painted, name, base_z):
+    """A brim ring and a crooked cone, tipped back, with its base ring at `base_z`."""
+    B = Builder(colors=True)
+    place = Matrix.Translation((0, 0.012, base_z)) @ Matrix.Rotation(math.radians(-10), 4, "X")
+    B.paint = HAT_BLACK
+    B.lathe("head", [(0.108, 0.006), (0.17, 0.004), (0.172, -0.004), (0.108, -0.006)],
+            place, segs=20, closed=True)
+
+    def crook(p):
+        # Bend the top third of the cone backward (+Y) and let it droop.
+        over = max(p.z - 0.17, 0.0)
+        return Vector((p.x, p.y + 1.6 * over * over, p.z - 0.6 * over * over))
+
+    cone = [(0.108, 0.0), (0.104, 0.03), (0.09, 0.075), (0.072, 0.12), (0.052, 0.17),
+            (0.034, 0.22), (0.018, 0.27), (0.0, 0.31)]
+    B.lathe("head", cone, place, segs=16, warp=crook)
+    B.paint = HAT_BAND
+    B.lathe("head", [(0.111, 0.004), (0.109, 0.03), (0.105, 0.03), (0.107, 0.004)],
+            place, segs=16, closed=True)
+    B.paint = HAT_BUCKLE
+    B.box("head", place @ Vector((0, -0.112, 0.017)), (0.034, 0.008, 0.026),
+          rot=place.to_3x3())
+    return B.to_bone_child(name, arm_obj, "head", [painted])
+
+
+def build_accessory_asset():
+    """coach_accessories.blend/.glb: the rig in rest pose with every Accessory on `head`."""
+    reset_scene()
+    body_mats = [make_material("CoachBone", BONE_COLOR, 0.65),
+                 make_material("CoachSocket", SOCKET_COLOR, 0.9)]
+    arm_obj = build_armature()
+    body = build_mesh(arm_obj, body_mats)  # kept in the .blend for context, not exported
+    accessories = build_accessories(arm_obj, make_glow_material(), make_painted_material())
+
+    blend_path = os.path.join(HERE, "coach_accessories.blend")
+    glb_path = os.path.join(HERE, "coach_accessories.glb")
+    bpy.ops.wm.save_as_mainfile(filepath=blend_path, compress=True)
+
+    bpy.ops.object.select_all(action="DESELECT")
+    body.select_set(False)
+    arm_obj.select_set(True)
+    for obj in accessories:
+        obj.select_set(True)
+    bpy.ops.export_scene.gltf(
+        filepath=glb_path,
+        export_format="GLB",
+        use_selection=True,
+        export_yup=True,
+        export_materials="EXPORT",
+        export_vertex_color="MATERIAL",
+        export_skins=False,
+        export_animations=False,
+        export_def_bones=False,
+        export_leaf_bone=False,
+        export_rest_position_armature=True,
+        export_morph=False,
+        export_cameras=False,
+        export_lights=False,
+    )
+    os.makedirs(PUBLIC_DIR, exist_ok=True)
+    shutil.copyfile(glb_path, os.path.join(PUBLIC_DIR, "coach_accessories.glb"))
+    print("WROTE", blend_path)
+    print("WROTE", glb_path, "+ public/assets/coach copy")
 
 
 # ---------------------------------------------------------------------------
@@ -495,8 +727,8 @@ def pose_skeleton_jacks(arm_obj, i):
     P.set("pelvis", m)
     P.bend("spine", "X", math.radians(4) * dip / 0.04)
     for side, sx in SIDES:
-        # Arms sweep out to the side and meet overhead.
-        alpha = math.radians(8 + 177 * open_)
+        # Arms sweep out to the side up to a wide V overhead, clear of any hat or pumpkin.
+        alpha = math.radians(8 + 162 * open_)
         P.aim(f"upper_arm.{side}", Vector((sx * math.sin(alpha), -0.06, -math.cos(alpha))))
         rest_ankle = P.rest_tail(f"shin.{side}")
         ankle = Vector((sx * (0.14 + 0.18 * open_), rest_ankle.y, rest_ankle.z + air))
@@ -576,9 +808,10 @@ def pose_stretch_side_reach(arm_obj, i):
     P.bend("neck", "Y", math.radians(4) * lean)
     turn = P.body_turn("chest")
     for side, sx in SIDES:
-        # The outer arm sweeps over the head; the inner arm follows the torso.
+        # Arms in a wide V that leans with the torso; the outer arm reaches a little
+        # further over but stays outside the head, so Accessories never clip.
         outer = sx * lean < 0
-        overhead = Vector((0.1 * sx + lean * (0.42 if outer else 0.04), -0.04, 1.0))
+        overhead = Vector((0.24 * sx + lean * (0.1 if outer else 0.0), -0.04, 1.0))
         body_dir = P.rest_dir(f"upper_arm.{side}").slerp(overhead.normalized(), arms)
         P.aim(f"upper_arm.{side}", turn @ body_dir)
         P.leg(side, P.rest_tail(f"shin.{side}"), Vector((0.15 * sx, -1.0, 0.0)))
@@ -729,12 +962,15 @@ def build_clip(clip):
 
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    clips = argv or list(CLIPS)
-    unknown = [c for c in clips if c not in CLIPS]
+    targets = argv or [*CLIPS, "accessories"]
+    unknown = [t for t in targets if t not in CLIPS and t != "accessories"]
     if unknown:
-        raise SystemExit(f"unknown clip(s) {unknown}; choose from {list(CLIPS)}")
-    for clip in clips:
-        build_clip(clip)
+        raise SystemExit(f"unknown target(s) {unknown}; choose from {[*CLIPS, 'accessories']}")
+    for target in targets:
+        if target == "accessories":
+            build_accessory_asset()
+        else:
+            build_clip(target)
 
 
 if __name__ == "__main__":

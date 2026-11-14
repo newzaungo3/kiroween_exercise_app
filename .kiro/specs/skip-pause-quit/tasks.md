@@ -180,8 +180,8 @@ Ground rules for every task:
   - Run `npx tsc --noEmit`, `npx vitest --run`, `npm run build` and `npx playwright test` (the whole suite, long timeout, `--workers=1` if the machine struggles). All four must exit 0 with no test skipped. Fix every failure. Ensure all tests pass, ask the user if questions arise.
   - _Requirements: 15.7_
 
-- [ ] 10. Commit locally
-  - [-] 10.1 Ask the user, then commit
+- [x] 10. Commit locally
+  - [x] 10.1 Ask the user, then commit
     - Ask the user for permission before committing. Run `git status --short` and show the list. Stage each changed file of this ticket by its exact path, never with `git add -A` or `git add .`; flag any file that looks like a secret. Commit locally with a short message such as `Add skip, pause and quit to the Workout (ticket 07)`. Never push and never amend
     - Leave the User tasks to the user: the real-phone eye checks at the end of `design.md`
     - _Requirements: 15.7, 15.8_

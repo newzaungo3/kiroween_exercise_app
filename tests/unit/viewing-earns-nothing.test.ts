@@ -1,13 +1,17 @@
 /**
- * Viewing earns nothing: browsing Exercises and Stretches never touches the
- * Progress store or the Workout engine, and never reads or writes browser
- * storage (Requirements 10.1, 10.2).
+ * Viewing earns nothing: browsing Exercises and Stretches reads the Equipped
+ * look and the Coach name through the Read_Only_Bridge and stores nothing
+ * (Requirements 18.1, 18.5). This supersedes the older rule "never touches
+ * the Progress store" of tickets 03, 05 and 08.
  *
  * The files of the Catalog, the Viewer, the Exercise screens and the
  * Exercise and Stretch routes are scanned with the TypeScript compiler API
- * (comments and strings are not code, so they never count). Each folder must
+ * (comments and strings are not code, so they never count). They may not
+ * import the Progress store or the Workout engine, may not touch browser
+ * storage, and may import from `src/ui/progress/` only `WornCoachViewer` and
+ * `CoachSafetyMessage`, the Read_Only_Bridge components. Each folder must
  * yield at least one file, so a moved folder cannot pass vacuously, and the
- * scanner has one fixture it must flag and one it must pass.
+ * scanner has fixtures it must flag and fixtures it must pass.
  *
  * `module-boundaries.test.ts` does not export its helpers, so this file keeps
  * a minimal copy of its approach.
@@ -33,6 +37,9 @@ const codeExtensions = ['.ts', '.tsx'] as const;
 
 /** Module paths that browsing must never reach. */
 const forbiddenModules = ['progress-store', 'workout-engine'] as const;
+
+/** The only modules of `src/ui/progress/` that browsing may import. */
+const allowedBridgeModules = new Set(['WornCoachViewer', 'CoachSafetyMessage']);
 
 /** Browser storage globals that browsing must never touch. */
 const storageNames = new Set(['localStorage', 'sessionStorage', 'indexedDB']);
@@ -68,6 +75,18 @@ function literalText(node: ts.Node | undefined): string | null {
     : null;
 }
 
+/** True when a specifier resolves into `src/ui/progress/` and is not an allowed bridge module. */
+function isDisallowedProgressUiImport(file: string, specifier: string): boolean {
+  let resolved: string;
+  if (specifier.startsWith('@/')) resolved = `src/${specifier.slice(2)}`;
+  else if (specifier.startsWith('.')) resolved = path.posix.join(path.posix.dirname(file), specifier);
+  else if (specifier.startsWith('src/')) resolved = specifier;
+  else return false;
+  resolved = path.posix.normalize(resolved).replace(/\.(tsx?|js)$/, '');
+  if (resolved !== 'src/ui/progress' && !resolved.startsWith('src/ui/progress/')) return false;
+  return !allowedBridgeModules.has(resolved.slice('src/ui/progress/'.length));
+}
+
 /**
  * Imports of a forbidden module (static, `export … from`, `import x = require`,
  * dynamic `import()`, `require()` and `typeof import()` types) and uses of
@@ -84,6 +103,10 @@ function findViewingViolations(file: string, text: string): Finding[] {
     findings.push({ file, line, snippet });
   };
   const checkSpecifier = (node: ts.Node, specifier: string | null): void => {
+    if (specifier !== null && isDisallowedProgressUiImport(file, specifier)) {
+      report(node, `import ${specifier}`);
+      return;
+    }
     if (specifier !== null && forbiddenModules.some((name) => specifier.includes(name))) {
       report(node, `import ${specifier}`);
     }
@@ -170,5 +193,27 @@ describe('viewing-earns-nothing scanner', () => {
       'const value = entry.cookie;',
     ].join('\n');
     expect(findViewingViolations('src/catalog/fixture.ts', fixture)).toEqual([]);
+  });
+});
+
+describe('viewing-earns-nothing Progress UI rule', () => {
+  it('flags an import of useProgress and passes the Read_Only_Bridge components', () => {
+    const flagged = "import { useProgress } from '@/ui/progress/useProgress';";
+    const passed = [
+      "import { WornCoachViewer } from '@/ui/progress/WornCoachViewer';",
+      "import { CoachSafetyMessage } from '../progress/CoachSafetyMessage';",
+    ].join('\n');
+    expect(findViewingViolations('src/ui/exercises/Fixture.tsx', flagged).map(({ snippet }) => snippet)).toEqual([
+      'import @/ui/progress/useProgress',
+    ]);
+    expect(findViewingViolations('src/ui/exercises/Fixture.tsx', passed)).toEqual([]);
+  });
+
+  it('flags relative and barrel imports into src/ui/progress', () => {
+    const fixture = [
+      "import { x } from '../progress/page-store';",
+      "export * from '@/ui/progress';",
+    ].join('\n');
+    expect(findViewingViolations('src/ui/exercises/Fixture.tsx', fixture)).toHaveLength(2);
   });
 });

@@ -24,6 +24,12 @@ export const colors = {
   sceneAmbientSky: '#8f86b8', // hemisphere light, sky colour
   sceneAmbientGround: '#1a1224', // hemisphere light, ground colour
   sceneMoonlight: '#d9d4ff', // directional light
+  coachBone: '#f5f0e3', // Coach color Bone White; equals the asset's own bone colour
+  coachAsh: '#b9b2c4', // Coach color Grave Ash
+  coachMoonlight: '#bcd6ff', // Coach color Moonlight Blue
+  coachEmber: '#ff7a2e', // Coach color Ember Orange
+  coachSlime: '#93e36c', // Coach color Slime Green
+  coachWitch: '#b484ff', // Coach color Witch Purple
 } as const;
 
 export type ColorToken = keyof typeof colors;

@@ -54,7 +54,6 @@ const en = {
   'section.routines.title': 'Routines · Spooky Coach',
 
   'section.crypt.name': 'Crypt',
-  'section.crypt.message': 'Not built yet. The Crypt door is still sealed shut.',
   'section.crypt.title': 'Crypt · Spooky Coach',
 
   'section.history.name': 'History',
@@ -84,7 +83,52 @@ const en = {
 
   'safety.heading': 'A word from your Coach',
   'safety.coachMessage':
-    "I demonstrate every Exercise, but I can't see you and I can't check your form. Listen to your body and stop if anything hurts.",
+    "{coach} here. I demonstrate every Exercise, but I can't see you and I can't check your form. Listen to your body and stop if anything hurts.",
+
+  'coach.defaultName': 'Bones',
+  'coachColor.bone.name': 'Bone White',
+  'coachColor.ash.name': 'Grave Ash',
+  'coachColor.moonlight.name': 'Moonlight Blue',
+  'coachColor.ember.name': 'Ember Orange',
+  'coachColor.slime.name': 'Slime Green',
+  'coachColor.witch.name': 'Witch Purple',
+  'accessory.glowingEyes.name': 'Glowing eyes',
+  'accessory.witchHat.name': 'Witch hat',
+  'accessory.pumpkinHead.name': 'Pumpkin head',
+
+  'crypt.loading': 'Opening the Crypt…',
+  'crypt.intro':
+    '{coach} rests here between Workouts. Equip a Coach color and Accessories, and preview anything before you Unlock it.',
+  'crypt.balance': 'Candy balance: {candy}',
+  'crypt.preview.note': 'Previewing. Nothing is kept until you Unlock it.',
+  'crypt.preview.stop': 'Stop previewing',
+  'crypt.name.heading': 'Coach name',
+  'crypt.name.label': "Your Coach's name",
+  'crypt.name.hint':
+    'Free to change. Up to {count} letters, numbers, spaces, hyphens, apostrophes or full stops. Leave it empty to use {coach}.',
+  'crypt.name.save': 'Save the Coach name',
+  'crypt.name.invalid':
+    'Use 1 to {count} letters, numbers, spaces, hyphens, apostrophes or full stops.',
+  'crypt.colors.heading': 'Coach colors',
+  'crypt.accessories.heading': 'Accessories',
+  'crypt.option.free': 'Free',
+  'crypt.option.unlocked': 'Unlocked',
+  'crypt.option.price': '{price} Candy',
+  'crypt.option.equipped': 'Equipped',
+  'crypt.option.hiddenBy': 'Hidden under the {accessory} while both are on.',
+  'crypt.equip': 'Equip {option}',
+  'crypt.preview': 'Preview {option}',
+  'crypt.unlock': 'Unlock {option} for {price} Candy',
+  'crypt.needMore': '{count} more Candy needed',
+  'crypt.announce.unlocked': '{option} unlocked. Candy balance: {candy}.',
+  'crypt.announce.short': 'Not enough Candy for {option} yet: {count} more needed.',
+  'crypt.announce.equipped': '{option} equipped.',
+  'crypt.announce.unequipped': '{option} taken off.',
+  'crypt.announce.named': 'Your Coach is now called {coach}.',
+  'viewer.accessories.failed':
+    'The Accessories could not load, so the Coach is shown without them.',
+  'viewer.fallback.look':
+    'These pictures show the Coach without its Coach color and Accessories.',
 
   'difficulty.beginner.name': 'Beginner',
   'difficulty.intermediate.name': 'Intermediate',

@@ -1,0 +1,639 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Add the strings and template the Safety_Message": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651204265
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651215569
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651330519
+      }
+    ],
+    "1.2 Update the string tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651204443
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651340461
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651484014
+      }
+    ],
+    "1.3 Create the Crypt_Content and the Coach color tokens": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651204597
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651215765
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651331299
+      }
+    ],
+    "1.4 Write the Crypt_Content tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651204707
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651340612
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651484294
+      }
+    ],
+    "2.1 Update the types, the Coach_Name_Rule, the pure rules and the codec": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651204833
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651215996
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651332128
+      }
+    ],
+    "2.2 Add the Crypt operations to the store": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651204947
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651341343
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651485079
+      }
+    ],
+    "2.3 Extend the test support in `tests/unit/support/progress.ts`": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205047
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651493327
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651672351
+      }
+    ],
+    "2.4 Update and extend the codec tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205136
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651680995
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651939562
+      }
+    ],
+    "2.5 Write the Unlock and equip tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205218
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651681137
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651939688
+      }
+    ],
+    "2.6 Write the Coach_Name_Rule tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205292
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651681472
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651939798
+      }
+    ],
+    "2.7 Update the store, rules and memory-only tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205389
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651682284
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651940600
+      }
+    ],
+    "3. Checkpoint - Content and Progress_Store block": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205471
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652173815
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652360612
+      }
+    ],
+    "4.1 Create the look, node and appearance rules": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205556
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651341914
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651485866
+      }
+    ],
+    "4.2 Create the Preview and option-state rules": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205638
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651494101
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651671556
+      }
+    ],
+    "4.3 Write the look and node tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205696
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651948991
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652027862
+      }
+    ],
+    "4.4 Write the Preview and Unlock-button tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205782
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651949109
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652028920
+      }
+    ],
+    "5.1 Extend the Viewer controller": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205879
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651216175
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651332895
+      }
+    ],
+    "5.2 Write the Viewer logic tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651205961
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651494941
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651670763
+      }
+    ],
+    "5.3 Add the scene helpers and wire them into the Coach": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651206055
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651495494
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651670537
+      }
+    ],
+    "5.4 Add the appearance to the Viewer island": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651206139
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651682876
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651941388
+      }
+    ],
+    "5.5 Extend the asset tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651206252
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652036367
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652153267
+      }
+    ],
+    "6. Checkpoint - Crypt rules and Viewer block": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651206363
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652498370
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794653503349
+      }
+    ],
+    "7.1 Create the page store and the Read_Only_Bridge": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651206535
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652036723
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652153454
+      }
+    ],
+    "7.2 Show the Equipped_Look and the Coach name on the Exercise and Stretch pages": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651206623
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652172597
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652359127
+      }
+    ],
+    "7.3 Pass the Equipped_Look and the Coach name into the Workout": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651206699
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652172720
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652359255
+      }
+    ],
+    "7.4 Build the Crypt_Screen and retire the Placeholder": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651206779
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652173251
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652359804
+      }
+    ],
+    "7.5 Update the Section and Placeholder unit tests": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651206859
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652367770
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652489175
+      }
+    ],
+    "8.1 Change the viewing-earns-nothing scan to the read-only rule": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651206930
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652368586
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652488386
+      }
+    ],
+    "8.2 Add the Read_Only_Bridge scan": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651207003
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652369388
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652487592
+      }
+    ],
+    "9.1 Extend the E2E support": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651207092
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652369860
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652489989
+      }
+    ],
+    "9.2 Update the earlier E2E specs this ticket changes": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651207206
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652498483
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794653503484
+      }
+    ],
+    "9.3 Add `tests/e2e/the-crypt.spec.ts`": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651207310
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794653504510
+      }
+    ],
+    "10.1 Update `.kiro/steering/structure.md`": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651207397
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652498651
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794653503955
+      }
+    ],
+    "11. Checkpoint - Final verification": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651207476
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794653900822
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794654833923
+      }
+    ],
+    "12.1 Ask the user, then commit": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651207545
+      },
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794656530135
+      }
+    ],
+    "1. Strings and Crypt_Content": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651484382
+      }
+    ],
+    "2. Progress_Store: Schema_Version 3": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794651940671
+      }
+    ],
+    "4. Crypt rules (pure)": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652028979
+      }
+    ],
+    "5. Viewer: tint and Accessories": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652153351
+      }
+    ],
+    "8. Scans": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652488446
+      }
+    ],
+    "7. Screens and wiring": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794652489223
+      }
+    ],
+    "10. Structure steering": [
+      {
+        "executionId": "3a7fa540-e08b-4688-af88-bd6dfd465478",
+        "chatSessionId": "sess_6b5a1e68-6f20-4159-96c9-c795c951b842",
+        "timestamp": 1794653504012
+      }
+    ]
+  }
+}

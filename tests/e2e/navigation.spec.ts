@@ -10,9 +10,8 @@ const en = locales.en;
  * Sections in Home_Navigation order, with the route each Navigation_Entry
  * must lead to (Requirement 3.1) and the screen it serves there. Exercises
  * serves the Exercise_List_Screen, Stretches the Stretch list and Routines the
- * Routine_List_Screen; only Crypt and History still serve a Placeholder_Screen
- * with its Strings_Module message (Requirements 3.3, 3.7 of the
- * `spooky-site-skeleton` spec, Requirements 8.1-8.5 of `happy-path-workout`).
+ * Routine_List_Screen, Crypt the Crypt_Screen and History the History_Screen
+ * (Requirements 8.1-8.5 of `happy-path-workout`, 19.3 of `the-crypt`).
  */
 const sections = [
   {
@@ -36,10 +35,9 @@ const sections = [
     title: en['section.routines.title'],
   },
   {
-    screen: 'placeholder',
+    screen: 'crypt',
     route: '/crypt',
     name: en['section.crypt.name'],
-    message: en['section.crypt.message'],
     title: en['section.crypt.title'],
   },
   {
@@ -51,15 +49,15 @@ const sections = [
 ] as const;
 
 type Section = (typeof sections)[number];
-type PlaceholderSection = Extract<Section, { readonly screen: 'placeholder' }>;
+type CryptSection = Extract<Section, { readonly screen: 'crypt' }>;
 type ExerciseListSection = Extract<Section, { readonly screen: 'exercise-list' }>;
 
 type RoutineListSection = Extract<Section, { readonly screen: 'routine-list' }>;
 type HistorySection = Extract<Section, { readonly screen: 'history' }>;
 
-/** The Sections that still serve a Placeholder_Screen: Crypt. */
-const placeholderSections = sections.filter(
-  (section): section is PlaceholderSection => section.screen === 'placeholder',
+/** The Sections that serve the Crypt_Screen: Crypt. */
+const cryptSections = sections.filter(
+  (section): section is CryptSection => section.screen === 'crypt',
 );
 
 /** Every Exercise_Detail_Screen path, from the Catalog. */
@@ -103,14 +101,16 @@ async function expectSectionHeadingAndTitle(page: Page, section: Section): Promi
   expect(await page.title()).toContain(section.name);
 }
 
-/** Checks that the page shows the Placeholder_Screen of `section` (Requirements 3.3, 3.7). */
-async function expectPlaceholderScreen(page: Page, section: PlaceholderSection): Promise<void> {
+/**
+ * Checks that the page shows the Crypt_Screen of `section`: its h1, its title
+ * and the back-home link (the Candy balance and the Viewer have their own specs).
+ */
+async function expectCryptScreen(page: Page, section: CryptSection): Promise<void> {
   await expectSectionHeadingAndTitle(page, section);
 
-  const heading = page.getByRole('heading', { level: 1, name: section.name, exact: true });
-  const message = heading.locator('xpath=following-sibling::*[1]');
-  await expect(message).toHaveText(section.message);
-  await expect(message).toBeVisible();
+  const backHome = page.getByRole('link', { name: en['common.backHome'], exact: true });
+  await expect(backHome).toBeVisible();
+  await expect(backHome).toHaveAttribute('href', '/');
 }
 
 /**
@@ -175,7 +175,7 @@ async function expectSectionScreen(page: Page, section: Section): Promise<void> 
   } else if (section.screen === 'history') {
     await expectHistoryScreen(page, section);
   } else {
-    await expectPlaceholderScreen(page, section);
+    await expectCryptScreen(page, section);
   }
 }
 
@@ -246,8 +246,8 @@ test.describe('Navigation', () => {
     }
   });
 
-  test('every Placeholder_Screen links back to the Home_Screen', async ({ page }) => {
-    for (const section of placeholderSections) {
+  test('the Crypt_Screen links back to the Home_Screen', async ({ page }) => {
+    for (const section of cryptSections) {
       await page.goto(section.route);
 
       const backHome = page.getByRole('link', { name: en['common.backHome'], exact: true });

@@ -1,12 +1,14 @@
 /**
  * Helpers for the Progress_Store's one `localStorage` key and for the Candy
  * balance and History entries on screen. Names come from the English Locale.
+ * Seeds are written at the exported schema version (3) with `unlocks` and
+ * `coach`; `seedVersion1` and `seedVersion2` write the older texts.
  */
 import type { Locator, Page } from '@playwright/test';
 
 import { findRoutine } from '@/catalog';
-import { storageKey } from '@/progress-store';
-import type { WorkoutRecord } from '@/progress-store';
+import { schemaVersion, storageKey } from '@/progress-store';
+import type { CoachCustomisation, UnlockRecord, WorkoutRecord } from '@/progress-store';
 import { checkpointOf, confirmSet, skipRest, startWorkout } from '@/workout-engine';
 import type { WorkoutCheckpoint } from '@/workout-engine';
 import { locales } from '@/ui/strings';
@@ -67,9 +69,48 @@ export function historyEntries(page: Page): Locator {
   return page.getByRole('list', { name: en['history.list.label'] }).getByRole('listitem');
 }
 
+/** What a seeded Progress_Store text may hold besides the schema version. */
+export interface SeedData {
+  readonly candy?: number;
+  readonly welcomeGiftGranted?: boolean;
+  readonly history?: readonly WorkoutRecord[];
+  readonly checkpoint?: WorkoutCheckpoint | null;
+  readonly unlocks?: readonly UnlockRecord[];
+  readonly coach?: Partial<CoachCustomisation>;
+}
+
 /**
- * Stores a Progress_Store text of schema version 2 holding `checkpoint`
- * before the page loads. Set only when the key is not already set.
+ * The stored text of a current-version Progress_Store with `unlocks` and
+ * `coach` (the default Coach unless given). `version` defaults to the
+ * exported schema version; pass another to seed a newer or older text.
+ */
+export function progressText(data: SeedData = {}, version: number = schemaVersion): string {
+  return JSON.stringify({
+    schemaVersion: version,
+    candy: data.candy ?? 0,
+    welcomeGiftGranted: data.welcomeGiftGranted ?? true,
+    history: data.history ?? [],
+    checkpoint: data.checkpoint ?? null,
+    unlocks: data.unlocks ?? [],
+    coach: { name: null, color: null, accessories: [], ...data.coach },
+  });
+}
+
+/**
+ * Stores a current-version Progress_Store text before the page loads.
+ * Set only when the key is not already set.
+ */
+export async function seedCurrent(
+  page: Page,
+  data: SeedData = {},
+  version: number = schemaVersion,
+): Promise<void> {
+  await seedProgress(page, progressText(data, version));
+}
+
+/**
+ * Stores a current-version Progress_Store text holding `checkpoint` before
+ * the page loads. Set only when the key is not already set.
  */
 export async function seedCheckpoint(
   page: Page,
@@ -77,15 +118,23 @@ export async function seedCheckpoint(
   candy = 0,
   history: readonly WorkoutRecord[] = [],
 ): Promise<void> {
+  await seedCurrent(page, { candy, history, checkpoint });
+}
+
+/**
+ * Stores a version 2 Progress_Store text (a `checkpoint` member, no
+ * `unlocks` or `coach`) before the page loads. Set only when the key is not
+ * already set.
+ */
+export async function seedVersion2(
+  page: Page,
+  candy: number,
+  history: readonly WorkoutRecord[] = [],
+  checkpoint: WorkoutCheckpoint | null = null,
+): Promise<void> {
   await seedProgress(
     page,
-    JSON.stringify({
-      schemaVersion: 2,
-      candy,
-      welcomeGiftGranted: true,
-      history,
-      checkpoint,
-    }),
+    JSON.stringify({ schemaVersion: 2, candy, welcomeGiftGranted: true, history, checkpoint }),
   );
 }
 

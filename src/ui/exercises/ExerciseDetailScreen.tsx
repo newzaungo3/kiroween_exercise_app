@@ -1,10 +1,12 @@
 /**
  * Exercise_Detail_Screen: one Exercise's Viewer and Written_Content.
  *
- * A Server Component. Everything except the Viewer island's inner state is
- * static HTML, so the Written_Content and the Safety_Message are in the
- * prerendered page and stay visible in every Viewer state (Requirements 4.5,
- * 4.6). The Viewer is reached only through `@/viewer/ViewerIsland`.
+ * A Server Component. Everything except the Viewer's inner state and the two
+ * Read_Only_Bridge islands is static HTML, so the Written_Content and the
+ * Safety_Message are in the prerendered page and stay visible in every Viewer
+ * state (Requirements 4.5, 4.6). Browsing reads the Coach's look and name
+ * through the Read_Only_Bridge (`WornCoachViewer`, `CoachSafetyMessage`) and
+ * stores nothing. Stretch pages use this same screen.
  *
  * DOM order equals visual order, so Tab order follows reading order
  * (Requirement 12.4). Every text comes from the Strings_Module.
@@ -12,8 +14,9 @@
 import Link from 'next/link';
 
 import { entriesOfKind, neighbours, type ExerciseEntry } from '@/catalog';
-import { ViewerIsland } from '@/viewer/ViewerIsland';
 
+import { CoachSafetyMessage } from '../progress/CoachSafetyMessage';
+import { WornCoachViewer } from '../progress/WornCoachViewer';
 import { format, t } from '../strings';
 import styles from './ExerciseDetailScreen.module.css';
 import {
@@ -42,12 +45,12 @@ export function ExerciseDetailScreen({ exercise }: ExerciseDetailScreenProps) {
         {backToListLabel(exercise.kind)}
       </Link>
       <h1 className={styles.title}>{exerciseName(exercise)}</h1>
-      <ViewerIsland key={exercise.id} exercise={exercise} />
+      <WornCoachViewer key={exercise.id} exercise={exercise} />
       <section className={styles.safety} aria-labelledby="safety-heading">
         <h2 id="safety-heading" className={styles.safetyHeading}>
           {t('safety.heading')}
         </h2>
-        <p className={styles.safetyMessage}>{t('safety.coachMessage')}</p>
+        <CoachSafetyMessage className={styles.safetyMessage} />
       </section>
       <dl className={styles.facts}>
         <div className={styles.fact}>

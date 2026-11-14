@@ -27,6 +27,15 @@
  * 5. Retry aborts the old fetch and remounts Scene3D with a new key, a new
  *    canvas and a new controller (Requirement 9.4).
  *
+ * Look (the Crypt): the optional `appearance` prop carries the Coach color and
+ * the Accessory_Nodes to show. When the look needs the Accessory_Asset, a
+ * second fetch runs once per attempt next to the Coach_Asset fetch. It never
+ * dispatches into the load reducer, so the Coach never waits for it and its
+ * failure only sets the Accessory state (`failed`) and shows the
+ * Accessory_Note. The data attributes of the Viewer_Area report the look
+ * Scene3D actually applied. In the Still_Fallback a Still_Look_Note says the
+ * pictures show the default look.
+ *
  * Nothing is stored in browser storage, cookies or the URL (Requirement 8.8).
  */
 import dynamic from 'next/dynamic';
@@ -46,6 +55,8 @@ import {
 import type { ExerciseEntry } from '@/catalog';
 import { format, t } from '@/ui/strings';
 
+export type { CoachAppearance } from './logic/appearance';
+
 import { detectWebGL2 } from './browser/detect-webgl';
 import { fetchCoachAsset } from './browser/fetch-coach-asset';
 import { useViewerEnvironment } from './browser/useViewerEnvironment';
@@ -54,6 +65,14 @@ import controlStyles from './controls/controls.module.css';
 import { PlaybackControls } from './controls/PlaybackControls';
 import { LoadingArt } from './fallback/LoadingArt';
 import { StillFallback } from './fallback/StillFallback';
+import {
+  defaultAppearance,
+  isDefaultAppearance,
+  showsAccessoryNote,
+  wantsAccessoryAsset,
+  type AccessoryState,
+  type CoachAppearance,
+} from './logic/appearance';
 import { cameraFovDeg, cameraNearM } from './logic/camera-lens';
 import { createViewerController, type ViewerController, type ViewerSnapshot } from './logic/controller';
 import {
@@ -127,10 +146,31 @@ export interface ViewerIslandProps {
   readonly exercise: ExerciseEntry;
   /** Coach_Hold: freezes the Demo_Clip and disables Play/Pause while true. Defaults to false. */
   readonly hold?: boolean;
+  /** The look to show on the Coach. Defaults to the asset's own look. */
+  readonly appearance?: CoachAppearance;
 }
 
-export function ViewerIsland({ exercise, hold = false }: ViewerIslandProps) {
+/** What one attempt knows about the Accessory_Asset. */
+interface AccessoryReport {
+  readonly attempt: number;
+  readonly state: 'ready' | 'failed';
+}
+
+/** The look Scene3D reported for one attempt. */
+interface AppliedReport {
+  readonly attempt: number;
+  readonly color: string | null;
+  readonly nodes: readonly string[];
+}
+
+export function ViewerIsland({ exercise, hold = false, appearance = defaultAppearance }: ViewerIslandProps) {
   const [phase, dispatch] = useReducer(loadReducer, initialLoadState);
+  const [accessoryDownload, setAccessoryDownload] = useState<{
+    readonly attempt: number;
+    readonly buffer: ArrayBuffer;
+  } | null>(null);
+  const [accessoryReport, setAccessoryReport] = useState<AccessoryReport | null>(null);
+  const [applied, setApplied] = useState<AppliedReport | null>(null);
   const [download, setDownload] = useState<{ readonly attempt: number; readonly buffer: ArrayBuffer } | null>(null);
   const areaRef = useRef<HTMLDivElement>(null);
   const { pageHidden, inView, reducedMotion } = useViewerEnvironment(areaRef);
@@ -185,6 +225,26 @@ export function ViewerIsland({ exercise, hold = false }: ViewerIslandProps) {
     return () => abort.abort();
   }, [assetAttempt, assetPath]);
 
+  // The Accessory_Asset fetch: once per attempt, only when the look needs it.
+  // It never dispatches into the load reducer; a failure only sets the
+  // Accessory state, so the Coach never waits for it.
+  const accessoryPath = appearance.accessoryAsset;
+  const wantsAccessories = wantsAccessoryAsset(appearance);
+  const accessoryAttempt = wantsAccessories && attempt !== null && showsScene(phase) ? attempt : null;
+  useEffect(() => {
+    if (accessoryAttempt === null || accessoryPath === null) return undefined;
+    const abort = new AbortController();
+    fetchCoachAsset(accessoryPath, abort.signal).then(
+      (buffer) => {
+        if (!abort.signal.aborted) setAccessoryDownload({ attempt: accessoryAttempt, buffer });
+      },
+      () => {
+        if (!abort.signal.aborted) setAccessoryReport({ attempt: accessoryAttempt, state: 'failed' });
+      },
+    );
+    return () => abort.abort();
+  }, [accessoryAttempt, accessoryPath]);
+
   // The Slow_Load_Notice timer: 10 s of wall-clock time from the attempt start
   // (Requirement 9.3). A timer that fires early is set again for the rest.
   useEffect(() => {
@@ -223,6 +283,17 @@ export function ViewerIsland({ exercise, hold = false }: ViewerIslandProps) {
     [],
   );
   const onContextLost = useCallback((reported: number) => dispatch({ type: 'contextLost', attempt: reported }), []);
+  const reportAccessories = useCallback(
+    (reported: number, state: AccessoryState) => {
+      if (state === 'ready' || state === 'failed') setAccessoryReport({ attempt: reported, state });
+    },
+    [],
+  );
+  const reportApplied = useCallback(
+    (reported: number, look: { readonly color: string | null; readonly nodes: readonly string[] }) =>
+      setApplied({ attempt: reported, color: look.color, nodes: look.nodes }),
+    [],
+  );
   const onRetry = useCallback(() => dispatch({ type: 'retry', now: performance.now() }), []);
 
   const onTogglePlay = useCallback(() => controller?.togglePlay(), [controller]);
@@ -251,9 +322,20 @@ export function ViewerIsland({ exercise, hold = false }: ViewerIslandProps) {
   const announcement = announcementId(phase);
   const sceneAttempt = attempt !== null && showsScene(phase) ? attempt : null;
 
+  const report = accessoryReport !== null && accessoryReport.attempt === attempt ? accessoryReport.state : null;
+  const accessoryState: AccessoryState = !wantsAccessories ? 'none' : (report ?? 'loading');
+  const appliedNow = applied !== null && applied.attempt === sceneAttempt ? applied : null;
+
   return (
     <section className={styles.viewer} aria-label={t('viewer.region.label')}>
-      <div ref={areaRef} className={styles.area} data-viewer-phase={phase.kind}>
+      <div
+        ref={areaRef}
+        className={styles.area}
+        data-viewer-phase={phase.kind}
+        data-coach-color={appliedNow === null ? undefined : (appliedNow.color ?? 'asset')}
+        data-coach-accessories={appliedNow === null ? undefined : appliedNow.nodes.join(' ')}
+        data-accessories={accessoryState}
+      >
         {sceneAttempt !== null && controller !== null && (
           <div
             className={styles.stage}
@@ -268,6 +350,14 @@ export function ViewerIsland({ exercise, hold = false }: ViewerIslandProps) {
                 key={sceneAttempt}
                 attempt={sceneAttempt}
                 buffer={download !== null && download.attempt === sceneAttempt ? download.buffer : null}
+                accessoryBuffer={
+                  accessoryDownload !== null && accessoryDownload.attempt === sceneAttempt
+                    ? accessoryDownload.buffer
+                    : null
+                }
+                appearance={appearance}
+                onAccessories={(state) => reportAccessories(sceneAttempt, state)}
+                onApplied={(look) => reportApplied(sceneAttempt, look)}
                 assetPath={assetPath}
                 demoClip={demoClip}
                 controller={controller}
@@ -280,6 +370,9 @@ export function ViewerIsland({ exercise, hold = false }: ViewerIslandProps) {
         )}
         {(phase.kind === 'checking' || phase.kind === 'loading') && <LoadingArt className={styles.loadingArt} />}
         {fallback && <StillFallback exercise={exercise} />}
+        {fallback && !isDefaultAppearance(appearance) && (
+          <p className={styles.note}>{t('viewer.fallback.look')}</p>
+        )}
         <noscript>
           <StillFallback exercise={exercise} />
           <p className={styles.message}>{t('viewer.fallback.message')}</p>
@@ -293,6 +386,7 @@ export function ViewerIsland({ exercise, hold = false }: ViewerIslandProps) {
           </button>
         )}
       </div>
+      {showsAccessoryNote(appearance, accessoryState) && <p className={styles.note}>{t('viewer.accessories.failed')}</p>}
       {!fallback && (
         <>
           <div className={styles.controls}>

@@ -68,6 +68,23 @@ const workoutTemplates: ReadonlyArray<readonly [TemplateId, readonly string[]]> 
   ['resume.text', ['routine', 'exercise', 'number', 'count', 'candy']],
   ['resume.text.rest', ['routine', 'exercise', 'number', 'count', 'candy']],
   ['resume.discarded', ['candy']],
+  // Added by the the-crypt ticket.
+  ['safety.coachMessage', ['coach']],
+  ['crypt.intro', ['coach']],
+  ['crypt.balance', ['candy']],
+  ['crypt.name.hint', ['count', 'coach']],
+  ['crypt.name.invalid', ['count']],
+  ['crypt.option.price', ['price']],
+  ['crypt.option.hiddenBy', ['accessory']],
+  ['crypt.equip', ['option']],
+  ['crypt.preview', ['option']],
+  ['crypt.unlock', ['option', 'price']],
+  ['crypt.needMore', ['count']],
+  ['crypt.announce.unlocked', ['option', 'candy']],
+  ['crypt.announce.short', ['option', 'count']],
+  ['crypt.announce.equipped', ['option']],
+  ['crypt.announce.unequipped', ['option']],
+  ['crypt.announce.named', ['coach']],
 ];
 
 // Values contain no `{`, so a replacement can never form a new placeholder.

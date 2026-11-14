@@ -44,7 +44,7 @@ import {
   resumeButton,
   resumePrompt,
   seedCheckpoint,
-  seedProgress,
+  seedVersion2,
   seedVersion1,
 } from './support/progress';
 import { confirmCurrentSet, openPreparing, startWorkout, timerSeconds } from './support/workout';
@@ -421,7 +421,7 @@ test.describe('saving the checkpoint', () => {
 // --- migration and bad data ------------------------------------------------------
 
 test.describe('stored data', () => {
-  test('a version 1 text keeps its Candy and history and is stored as version 2 after the first change', async ({
+  test('a version 1 text keeps its Candy and history and is stored as version 3 after the first change', async ({
     page,
   }) => {
     const history = [record(Date.parse('2026-11-19T09:00:00Z'), 'completed', fullCandy)];
@@ -434,7 +434,7 @@ test.describe('stored data', () => {
     await page.goto(routinePath);
     await expect(startButton(page)).toBeVisible();
     await startWorkout(page);
-    await expect.poll(async () => ((await readProgress(page)) as { schemaVersion: number }).schemaVersion).toBe(2);
+    await expect.poll(async () => ((await readProgress(page)) as { schemaVersion: number }).schemaVersion).toBe(3);
     const stored = (await readProgress(page)) as { candy: number; history: unknown[] };
     expect(stored.candy).toBe(30);
     expect(stored.history).toEqual(history);
@@ -444,16 +444,8 @@ test.describe('stored data', () => {
   });
 
   test('a junk checkpoint is dropped and the Candy stays', async ({ page }) => {
-    await seedProgress(
-      page,
-      JSON.stringify({
-        schemaVersion: 2,
-        candy: 23,
-        welcomeGiftGranted: true,
-        history: [],
-        checkpoint: { version: 1, workout: 'junk' },
-      }),
-    );
+    // Junk on purpose: a version 2 text whose checkpoint is not a checkpoint.
+    await seedVersion2(page, 23, [], { version: 1, workout: 'junk' } as unknown as WorkoutCheckpoint);
     await page.goto('/');
     await expect(page.getByText(balanceText(23), { exact: true })).toBeVisible();
     await expect(resumePrompt(page)).toHaveCount(0);

@@ -1,22 +1,30 @@
 import { parseProgress, serialiseProgress } from './codec';
 import {
   emptyProgress,
+  equipColor,
   finishWorkout,
   grantWelcomeGift,
   recordWorkout,
+  setAccessoryEquipped,
+  setCoachName,
   snapshotOf,
+  unlock,
   withCheckpoint,
   withoutCheckpoint,
 } from './rules';
 import type { WorkoutCheckpoint } from '@/workout-engine';
 import {
   storageKey,
+  type CoachNameResult,
+  type EquipResult,
   type ProgressData,
   type ProgressSnapshot,
   type ProgressStore,
   type RecordResult,
   type SaveCheckpointResult,
   type StorageAdapter,
+  type UnlockRequest,
+  type UnlockResult,
   type WorkoutRecord,
 } from './types';
 
@@ -62,7 +70,9 @@ export function createProgressStore(storage: StorageAdapter): ProgressStore {
       snapshot.welcomeGiftGranted === data.welcomeGiftGranted &&
       snapshot.history.length === data.history.length &&
       snapshot.persistent === persistent &&
-      JSON.stringify(snapshot.checkpoint) === JSON.stringify(data.checkpoint)
+      JSON.stringify(snapshot.checkpoint) === JSON.stringify(data.checkpoint) &&
+      JSON.stringify(snapshot.unlocks) === JSON.stringify(data.unlocks) &&
+      JSON.stringify(snapshot.coach) === JSON.stringify(data.coach)
     );
   }
 
@@ -153,6 +163,53 @@ export function createProgressStore(storage: StorageAdapter): ProgressStore {
       }
       commit(outcome.data);
       return { recorded: true, candyBalance: outcome.data.candy };
+    },
+
+    unlock(request: UnlockRequest): UnlockResult {
+      const outcome = unlock(load(), request);
+      if (outcome.kind === 'unlocked') {
+        commit(outcome.data);
+        return { unlocked: true, candyBalance: outcome.data.candy };
+      }
+      if (refresh()) notify();
+      if (outcome.kind === 'insufficient') {
+        return { unlocked: false, reason: 'insufficient', shortBy: outcome.shortBy };
+      }
+      return { unlocked: false, reason: outcome.kind };
+    },
+
+    equipColor(id: string | null): EquipResult {
+      const next = equipColor(load(), id);
+      if (typeof next === 'string') {
+        if (refresh()) notify();
+        return { changed: false, reason: next };
+      }
+      commit(next);
+      return { changed: true };
+    },
+
+    setAccessoryEquipped(id: string, equipped: boolean): EquipResult {
+      const next = setAccessoryEquipped(load(), id, equipped);
+      if (typeof next === 'string') {
+        if (refresh()) notify();
+        return { changed: false, reason: next };
+      }
+      commit(next);
+      return { changed: true };
+    },
+
+    setCoachName(text: string): CoachNameResult {
+      const next = setCoachName(load(), text);
+      if (next === 'invalid') {
+        if (refresh()) notify();
+        return { saved: false, reason: 'invalid' };
+      }
+      if (next.data === null) {
+        if (refresh()) notify();
+      } else {
+        commit(next.data);
+      }
+      return { saved: true, name: next.name };
     },
 
     subscribe(listener: () => void): () => void {

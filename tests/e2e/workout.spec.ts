@@ -2,6 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { findEntryById, findRoutine, type ExerciseEntry, type RoutineEntry } from '@/catalog';
 import { storageKey } from '@/progress-store';
+import { safetyMessage } from '@/ui/crypt/labels';
 import { lengthLabel, routinePath, workoutPath } from '@/ui/routines/labels';
 import { format, locales } from '@/ui/strings';
 import { buildSetSlots, completionBonus } from '@/workout-engine';
@@ -94,7 +95,7 @@ test.describe('Workout screen', () => {
     await expect(preparingHeading(page)).toBeVisible();
     await expect(page.getByText(lengthLabel(routine), { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: en['safety.heading'], exact: true })).toBeVisible();
-    await expect(page.getByText(en['safety.coachMessage'], { exact: true })).toBeVisible();
+    await expect(page.getByText(safetyMessage(null), { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: en['workout.start'], exact: true })).toBeVisible();
 
     const back = page.getByRole('link', { name: en['workout.preparing.back'], exact: true });
@@ -301,7 +302,7 @@ test.describe('Workout screen', () => {
     page,
   }) => {
     await openClocked(page);
-    await expect(page.getByText(en['safety.coachMessage'], { exact: true })).toBeVisible();
+    await expect(page.getByText(safetyMessage(null), { exact: true })).toBeVisible();
     await startWorkout(page);
     await confirmCurrentSet(page);
     await expect(restHeading(page)).toBeVisible();
@@ -310,11 +311,11 @@ test.describe('Workout screen', () => {
     await page.reload();
     await page.getByRole('button', { name: en['resume.discard'], exact: true }).click();
     await expect(preparingHeading(page)).toBeVisible();
-    await expect(page.getByText(en['safety.coachMessage'], { exact: true })).toBeVisible();
+    await expect(page.getByText(safetyMessage(null), { exact: true })).toBeVisible();
 
     await page.goto(workoutPath(routine));
     await expect(preparingHeading(page)).toBeVisible();
-    await expect(page.getByText(en['safety.coachMessage'], { exact: true })).toBeVisible();
+    await expect(page.getByText(safetyMessage(null), { exact: true })).toBeVisible();
   });
 
   test.describe('with reduced motion', () => {

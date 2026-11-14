@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { placeholderSectionIds, sectionName, sectionTitle } from '@/ui/sections';
+import { sectionIds, sectionName, sectionTitle } from '@/ui/sections';
 import { locales } from '@/ui/strings';
 
 describe('sections', () => {
-  it('only Crypt is still a Placeholder section', () => {
-    expect(placeholderSectionIds).toEqual(['crypt']);
-  });
-
-  it('History has a name and a title but no Placeholder message', () => {
-    expect(sectionName('history').length).toBeGreaterThan(0);
-    expect(sectionTitle('history').length).toBeGreaterThan(0);
-    expect('section.history.message' in locales.en).toBe(false);
+  it('every Section has a name and a title, and no Section has a Placeholder message string', () => {
+    for (const id of sectionIds) {
+      expect({ id, name: sectionName(id).length > 0 }).toEqual({ id, name: true });
+      expect({ id, title: sectionTitle(id).length > 0 }).toEqual({ id, title: true });
+      expect({ id, hasMessage: `section.${id}.message` in locales.en }).toEqual({
+        id,
+        hasMessage: false,
+      });
+    }
   });
 });

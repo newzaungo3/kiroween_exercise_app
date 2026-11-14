@@ -85,6 +85,16 @@
   overflow-wrap: anywhere;
 }
 
+/* The Accessory_Note and the Still_Look_Note. Plain text, not live regions. */
+.note {
+  max-inline-size: 100%;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
 .retry {
   align-self: center;
 }

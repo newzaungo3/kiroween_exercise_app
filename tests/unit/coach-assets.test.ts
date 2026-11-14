@@ -14,14 +14,14 @@ import { fileURLToPath } from 'node:url';
 import type { BufferGeometry } from 'three';
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { entries, stillViews, type SameOriginAssetPath } from '@/catalog';
+import { cryptContent, entries, stillViews, type SameOriginAssetPath } from '@/catalog';
 import { colors } from '@/ui/theme/tokens';
 import { computeFraming, projectToNdc } from '@/viewer/logic/framing';
 import type { Box3Value } from '@/viewer/logic/geometry-types';
 import { presetAzimuthDeg, presetElevationDeg } from '@/viewer/logic/orbit';
 import { buildGraveyard } from '@/viewer/scene/graveyard-geometry';
 
-import { readGlbBudget } from './support/glb';
+import { decoderExtensions, readGlb, readGlbBudget, readMaterialKeys, readNodeTree } from './support/glb';
 
 const root = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -218,6 +218,84 @@ describe('Coach_Asset and Still_Image delivery', () => {
       .map(({ asset, bytes }) => `${repositoryPath(asset.path)}: ${bytes} bytes, more than ${maxStillImageBytes}`);
 
     expect(tooLarge).toEqual([]);
+  });
+});
+
+describe('Accessory_Asset', () => {
+  const accessoryPath = cryptContent.accessoryAsset;
+  const accessoryNodeNames = [
+    ...new Set(
+      cryptContent.accessories.flatMap((accessory) =>
+        accessory.swapWhen === undefined ? [accessory.node] : [accessory.node, accessory.swapWhen.node],
+      ),
+    ),
+  ];
+
+  function accessoryNodes() {
+    const tree = readNodeTree(readGlb(readDelivered(accessoryPath)));
+    return accessoryNodeNames.map((name) => ({
+      name,
+      node: tree.find((candidate) => candidate.name === name),
+      tree,
+    }));
+  }
+
+  it('the Crypt content names four Accessory_Nodes', () => {
+    expect(accessoryNodeNames).toHaveLength(4);
+  });
+
+  it('the Accessory_Asset exists, is glTF 2.0 and needs no decoder', () => {
+    const container = readGlb(readDelivered(accessoryPath));
+    const doc = container.json;
+    const asset = doc['asset'] as { version?: unknown } | undefined;
+    const required = Array.isArray(doc['extensionsRequired']) ? (doc['extensionsRequired'] as unknown[]) : [];
+
+    expect(asset?.version, `${repositoryPath(accessoryPath)} asset.version`).toBe('2.0');
+    for (const extension of decoderExtensions) {
+      expect(required, `${repositoryPath(accessoryPath)} requires ${extension}`).not.toContain(extension);
+    }
+  });
+
+  it('every Accessory_Node is a mesh node and a direct child of the head joint', () => {
+    const problems: string[] = [];
+    for (const { name, node, tree } of accessoryNodes()) {
+      if (node === undefined) {
+        problems.push(`${name}: no such node`);
+        continue;
+      }
+      if (!node.hasMesh) problems.push(`${name}: not a mesh node`);
+      const parent = node.parent === null ? undefined : tree[node.parent];
+      if (parent?.name !== 'head') problems.push(`${name}: parent is ${parent?.name ?? 'none'}, expected head`);
+    }
+
+    expect(problems).toEqual([]);
+  });
+
+  it('each Coach_Asset plus every Accessory_Node plus the Graveyard_Scene stays within 35,000 triangles', () => {
+    const accessoryTriangles = accessoryNodes().reduce((sum, { node }) => sum + (node?.triangles ?? 0), 0);
+    expect(accessoryTriangles).toBeGreaterThan(0);
+    for (const exercise of entries) {
+      const coachTriangles = readGlbBudget(readDelivered(exercise.coach.asset)).triangles;
+      const total = coachTriangles + accessoryTriangles + graveyardTriangles;
+
+      expect(
+        total,
+        `${exercise.id}: Coach ${coachTriangles} + Accessories ${accessoryTriangles} + Graveyard_Scene ${graveyardTriangles} triangles`,
+      ).toBeLessThanOrEqual(maxSceneTriangles);
+    }
+  });
+
+  it('each Coach_Asset plus the Accessory_Nodes uses at most 4 distinct materials', () => {
+    const accessoryKeys = accessoryNodes().flatMap(({ node }) => node?.materialKeys ?? []);
+    for (const exercise of entries) {
+      const coachKeys = readMaterialKeys(readGlb(readDelivered(exercise.coach.asset)));
+      const distinct = new Set([...coachKeys, ...accessoryKeys]);
+
+      expect(
+        distinct.size,
+        `${exercise.id}: ${[...distinct].join(', ')}`,
+      ).toBeLessThanOrEqual(maxMaterials);
+    }
   });
 });
 

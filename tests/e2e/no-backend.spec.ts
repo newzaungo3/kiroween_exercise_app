@@ -16,7 +16,12 @@ const afterLoadMs = 5_000;
  */
 const threeShaderChunkName = 'skinning_pars_vertex';
 
-const detailScreens: ReadonlySet<string> = new Set(exerciseDetailScreens);
+/**
+ * The screens that show a Viewer and so load the 3D code: every
+ * Exercise_Detail_Screen and, since the Crypt shows the Coach, the
+ * Crypt_Screen.
+ */
+const detailScreens: ReadonlySet<string> = new Set([...exerciseDetailScreens, sectionPath('crypt')]);
 
 const allowedMethods = new Set(['GET', 'HEAD']);
 

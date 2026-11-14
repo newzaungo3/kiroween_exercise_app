@@ -7,8 +7,6 @@
  * can ignore it. No decisions here: the load state machine decides what
  * each error means.
  */
-import type { SameOriginAssetPath } from '@/catalog';
-
 import { CoachAssetError } from '../logic/load-state';
 
 function isAbort(error: unknown, signal: AbortSignal): boolean {
@@ -16,10 +14,11 @@ function isAbort(error: unknown, signal: AbortSignal): boolean {
 }
 
 /**
- * Fetches the Coach_Asset at `path` (a same-origin path from the
- * Exercise_Entry) with GET and same-origin credentials, and returns its bytes.
+ * Fetches the Coach_Asset or Accessory_Asset at `path` (a same-origin path
+ * from the Catalog; a plain string here, as Viewer code may not import the
+ * Catalog's path type) with GET and same-origin credentials, and returns its bytes.
  */
-export async function fetchCoachAsset(path: SameOriginAssetPath, signal: AbortSignal): Promise<ArrayBuffer> {
+export async function fetchCoachAsset(path: string, signal: AbortSignal): Promise<ArrayBuffer> {
   let response: Response;
   try {
     response = await fetch(path, { method: 'GET', signal, credentials: 'same-origin' });

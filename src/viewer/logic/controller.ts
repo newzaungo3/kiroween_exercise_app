@@ -17,6 +17,12 @@
  * it to R3F's `invalidate`), but never while the Viewer is not visible. When
  * the Viewer becomes visible again the hook is called once.
  *
+ * `setAccessoryBounds` unions an Accessory_Envelope into the motion bounds
+ * (framing can only move the camera out), re-clamps and re-fits the orbit, and
+ * requests a frame. `redraw` is for a changed look: it calls the frame hook
+ * once while visible, otherwise once when visible again. Neither changes
+ * `keepDrawing`, so a paused Viewer still draws exactly one frame.
+ *
  * The camera moves only on a visitor gesture or a Camera_Control: there is no
  * inertia and no auto-rotate (Requirements 11.3, 11.4). Under the
  * Reduced_Motion_Preference every Camera_Control lands in a single frame
@@ -108,6 +114,13 @@ export interface ViewerController {
   setScene(info: SceneInfo, aspect: number, now: number): void;
   /** Viewer_Area width / height changed: recompute framing, re-clamp, re-fit if at a Camera_Preset. */
   setAspect(aspect: number): void;
+  /**
+   * Union the Accessory_Envelope into the motion bounds, recompute framing, re-clamp the orbit,
+   * re-fit at a Camera_Preset and request a frame. Ignored before `setScene`.
+   */
+  setAccessoryBounds(box: Box3Value): void;
+  /** The picture changed (look or Accessories): call the frame hook once if visible, otherwise once when visible again. */
+  redraw(): void;
   setVisibility(v: { readonly pageHidden: boolean; readonly inView: boolean }): void;
   /** Coach_Hold: on freezes the Demo_Clip without changing `playing`; off continues from where it stopped. */
   setHold(held: boolean): void;
@@ -144,7 +157,8 @@ export const zoomStepFactor = 0.8;
 const origin: Vec3 = { x: 0, y: 0, z: 0 };
 
 interface ReadyScene {
-  readonly info: SceneInfo;
+  /** Replaced when an Accessory_Envelope widens the motion bounds. */
+  info: SceneInfo;
   framing: Framing;
   /** The camera's resting orbit; while a tween runs, the orbit it started from or last landed on. */
   orbit: Orbit;
@@ -154,6 +168,13 @@ interface ReadyScene {
   gesture: GestureState;
   playback: PlaybackState;
   activePreset: CameraPreset | null;
+}
+
+function unionBox(a: Box3Value, b: Box3Value): Box3Value {
+  return {
+    min: { x: Math.min(a.min.x, b.min.x), y: Math.min(a.min.y, b.min.y), z: Math.min(a.min.z, b.min.z) },
+    max: { x: Math.max(a.max.x, b.max.x), y: Math.max(a.max.y, b.max.y), z: Math.max(a.max.z, b.max.z) },
+  };
 }
 
 function validAspect(aspect: number): boolean {
@@ -172,6 +193,8 @@ export function createViewerController(options: ViewerControllerOptions): Viewer
   let inView = true;
   let aspect = 1;
   let held = false;
+  /** A redraw was asked for while the Viewer was not visible. */
+  let redrawPending = false;
   let scene: ReadyScene | null = null;
   let snapshot: ViewerSnapshot = { ready: false, playing: false, speed: 1, activePreset: null, held: false };
 
@@ -325,15 +348,50 @@ export function createViewerController(options: ViewerControllerOptions): Viewer
       // No requestFrame: R3F draws one frame itself after a resize (Requirement 10.1).
     },
 
+    setAccessoryBounds(box) {
+      const s = scene;
+      if (s === null) return;
+      s.info = { ...s.info, motionBounds: unionBox(s.info.motionBounds, box) };
+      s.framing = framingFor(s.info, aspect);
+      const { limits } = s.framing;
+      s.orbit = clampOrbit(s.orbit, limits);
+      s.shown = clampOrbit(s.shown, limits);
+      const refit = s.activePreset === null ? null : presetOrbit(s, s.activePreset);
+      if (s.tween !== null) {
+        s.tween = { ...s.tween, from: clampOrbit(s.tween.from, limits), to: refit ?? clampOrbit(s.tween.to, limits) };
+      } else if (refit !== null) {
+        s.orbit = refit;
+        s.shown = refit;
+      }
+      requestFrame();
+    },
+
+    redraw() {
+      if (isVisible()) {
+        redrawPending = false;
+        if (requestFrameHook !== null) requestFrameHook();
+      } else {
+        redrawPending = true;
+      }
+    },
+
     setVisibility(v) {
       const wasVisible = isVisible();
       pageHidden = v.pageHidden;
       inView = v.inView;
       const visible = isVisible();
-      if (scene === null || wasVisible === visible) return;
+      if (wasVisible === visible) return;
+      if (scene === null) {
+        if (visible && redrawPending) {
+          redrawPending = false;
+          requestFrame();
+        }
+        return;
+      }
       if (!visible) {
         scene.playback = suspend(scene.playback);
       } else {
+        redrawPending = false;
         requestFrame();
       }
     },

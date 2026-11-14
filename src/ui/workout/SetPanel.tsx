@@ -6,6 +6,7 @@ import type { ExerciseEntry } from '@/catalog';
 import type { ExercisingView } from '@/workout-engine';
 import { maxActualReps, minActualReps } from '@/workout-engine/reps';
 
+import { safetyMessage } from '../crypt/labels';
 import { exerciseName } from '../exercises/labels';
 import { format, t } from '../strings';
 import { formatCountdown } from './clock-text';
@@ -25,6 +26,8 @@ export interface SetPanelProps {
   readonly onAskSkipSet: (opener: HTMLElement) => void;
   readonly onAskQuit: (opener: HTMLElement) => void;
   readonly headingRef?: Ref<HTMLHeadingElement>;
+  /** The stored Coach name; null or absent gives the default name. */
+  readonly coachName?: string | null;
 }
 
 /** The current Set. The caller keys it by `view.position`. */
@@ -38,6 +41,7 @@ export function SetPanel({
   onAskSkipSet,
   onAskQuit,
   headingRef,
+  coachName = null,
 }: SetPanelProps) {
   const { slot, timer } = view;
   const parsed = timer.kind === 'reps' ? parseActualReps(text) : null;
@@ -160,7 +164,7 @@ export function SetPanel({
 
       <div className={styles.safety}>
         <h3 className={styles.safetyHeading}>{t('safety.heading')}</h3>
-        <p className={styles.safetyMessage}>{t('safety.coachMessage')}</p>
+        <p className={styles.safetyMessage}>{safetyMessage(coachName)}</p>
       </div>
     </section>
   );

@@ -1,16 +1,32 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import {
-  createLocalStorageAdapter,
-  createProgressStore,
-  type ProgressSnapshot,
-  type ProgressStore,
-  type RecordResult,
-  type SaveCheckpointResult,
-  type WorkoutRecord,
+import type {
+  CoachNameResult,
+  EquipResult,
+  ProgressSnapshot,
+  RecordResult,
+  SaveCheckpointResult,
+  UnlockRequest,
+  UnlockResult,
+  WorkoutRecord,
 } from '@/progress-store';
 import type { WorkoutCheckpoint } from '@/workout-engine';
+
+import {
+  getPageStore,
+  readPageSnapshot,
+  readServerSnapshot,
+  subscribePageStore,
+} from './page-store';
+
+export { coachNameMaxLength, normaliseCoachName } from '@/progress-store';
+export type {
+  CoachNameResult,
+  EquipResult,
+  UnlockRequest,
+  UnlockResult,
+} from '@/progress-store';
 
 export interface ProgressApi {
   /** null until the browser has read storage. */
@@ -23,43 +39,51 @@ export interface ProgressApi {
   readonly clearCheckpoint: () => boolean;
   /** Records the Workout and clears the checkpoint in one write. */
   readonly finishWorkout: (record: WorkoutRecord) => RecordResult;
+  /** Spends Candy to Unlock a Coach color or Accessory and equips it. */
+  readonly unlock: (request: UnlockRequest) => UnlockResult;
+  /** null equips the Default_Coach_Color. */
+  readonly equipColor: (id: string | null) => EquipResult;
+  readonly setAccessoryEquipped: (id: string, equipped: boolean) => EquipResult;
+  readonly setCoachName: (text: string) => CoachNameResult;
 }
-
-// One store per page, created lazily so it never exists during server rendering.
-let store: ProgressStore | null = null;
-
-function getStore(): ProgressStore {
-  if (store === null) store = createProgressStore(createLocalStorageAdapter());
-  return store;
-}
-
-function subscribe(listener: () => void): () => void {
-  return getStore().subscribe(listener);
-}
-
-const getSnapshot = (): ProgressSnapshot => getStore().snapshot();
-const getServerSnapshot = (): null => null;
 
 export function useProgress(): ProgressApi {
-  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const snapshot = useSyncExternalStore(subscribePageStore, readPageSnapshot, readServerSnapshot);
   const [welcomeJustGranted, setWelcomeJustGranted] = useState(false);
 
   useEffect(() => {
     // Strict Mode's second run returns false; it must not reset the flag.
-    if (getStore().grantWelcomeGift()) setWelcomeJustGranted(true);
+    if (getPageStore().grantWelcomeGift()) setWelcomeJustGranted(true);
   }, []);
 
   const ensureWelcomeGift = useCallback((): void => {
-    getStore().grantWelcomeGift();
+    getPageStore().grantWelcomeGift();
   }, []);
   const saveCheckpoint = useCallback(
     (checkpoint: WorkoutCheckpoint): SaveCheckpointResult =>
-      getStore().saveCheckpoint(checkpoint),
+      getPageStore().saveCheckpoint(checkpoint),
     [],
   );
-  const clearCheckpoint = useCallback((): boolean => getStore().clearCheckpoint(), []);
+  const clearCheckpoint = useCallback((): boolean => getPageStore().clearCheckpoint(), []);
   const finishWorkout = useCallback(
-    (record: WorkoutRecord): RecordResult => getStore().finishWorkout(record),
+    (record: WorkoutRecord): RecordResult => getPageStore().finishWorkout(record),
+    [],
+  );
+  const unlock = useCallback(
+    (request: UnlockRequest): UnlockResult => getPageStore().unlock(request),
+    [],
+  );
+  const equipColor = useCallback(
+    (id: string | null): EquipResult => getPageStore().equipColor(id),
+    [],
+  );
+  const setAccessoryEquipped = useCallback(
+    (id: string, equipped: boolean): EquipResult =>
+      getPageStore().setAccessoryEquipped(id, equipped),
+    [],
+  );
+  const setCoachName = useCallback(
+    (text: string): CoachNameResult => getPageStore().setCoachName(text),
     [],
   );
 
@@ -71,7 +95,22 @@ export function useProgress(): ProgressApi {
       saveCheckpoint,
       clearCheckpoint,
       finishWorkout,
+      unlock,
+      equipColor,
+      setAccessoryEquipped,
+      setCoachName,
     }),
-    [snapshot, welcomeJustGranted, ensureWelcomeGift, saveCheckpoint, clearCheckpoint, finishWorkout],
+    [
+      snapshot,
+      welcomeJustGranted,
+      ensureWelcomeGift,
+      saveCheckpoint,
+      clearCheckpoint,
+      finishWorkout,
+      unlock,
+      equipColor,
+      setAccessoryEquipped,
+      setCoachName,
+    ],
   );
 }

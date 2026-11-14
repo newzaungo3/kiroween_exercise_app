@@ -3,7 +3,7 @@
 // which also shows that the Unit_Suite resolves tsconfig paths (Requirement 7.5).
 import { describe, expect, it } from 'vitest';
 
-import { activeLocale, locales, t } from '@/ui/strings';
+import { activeLocale, format, locales, t } from '@/ui/strings';
 
 import { findAvoidWords, findBlankEntries } from './support/strings-checks';
 
@@ -15,10 +15,6 @@ const englishIds = Object.keys(locales.en) as EnglishId[];
 // The Sections in Home_Navigation order. Kept local so this test does not
 // depend on src/ui/sections.ts.
 const sectionIds = ['exercises', 'stretches', 'routines', 'crypt', 'history'] as const;
-
-// The Sections that still show a Placeholder_Screen. Exercises and Stretches
-// and Routines have a list screen instead, so they have no Placeholder_Screen message.
-const placeholderSectionIds = ['crypt'] as const;
 
 describe('Strings_Module', () => {
   it('every English Locale entry has visible text', () => {
@@ -53,14 +49,6 @@ describe('Strings_Module', () => {
     expect(tagline).toMatch(/^[^.!?]+[.!?]$/u);
   });
 
-  it('every Placeholder_Screen message is at most 160 characters', () => {
-    const tooLong = placeholderSectionIds
-      .map((id) => ({ id, length: t(`section.${id}.message`).length }))
-      .filter(({ length }) => length > 160);
-
-    expect(tooLong).toEqual([]);
-  });
-
   it('every registered Locale has exactly the English identifiers', () => {
     const expected = [...englishIds].sort();
 
@@ -78,8 +66,10 @@ describe('Strings_Module', () => {
   });
 
   it('the Safety_Message says the Coach demonstrates but cannot see the user or check their form', () => {
-    const message = t('safety.coachMessage');
+    const message = format('safety.coachMessage', { coach: t('coach.defaultName') });
 
+    expect(message).toContain(t('coach.defaultName'));
+    expect(message).not.toMatch(/\{[a-zA-Z]+\}/);
     expect(message).toContain('I demonstrate');
     expect(message).toContain("can't see you");
     expect(message).toContain('check your form');
@@ -129,7 +119,15 @@ describe('Strings_Module', () => {
 
   it('no pause, skip, quit, dialog or summary string blames or shames the user', () => {
     const blame = /\b(lazy|fail(ed|ure)?|gave up|give up|weak|quitter|shame)\b/i;
-    const prefixes = ['workout.', 'home.', 'history.', 'progress.', 'summary.', 'resume.'];
+    const prefixes = [
+      'workout.',
+      'home.',
+      'history.',
+      'progress.',
+      'summary.',
+      'resume.',
+      'crypt.',
+    ];
     const offending = englishIds.filter(
       (id) => prefixes.some((prefix) => id.startsWith(prefix)) && blame.test(locales.en[id]),
     );
@@ -155,6 +153,77 @@ describe('Strings_Module', () => {
     for (const id of ids) {
       expect({ id, blank: t(id).trim() === '' }).toEqual({ id, blank: false });
     }
+  });
+
+  const newCryptIds = englishIds.filter(
+    (id) =>
+      id.startsWith('crypt.') ||
+      id.startsWith('coachColor.') ||
+      id.startsWith('accessory.') ||
+      id === 'coach.defaultName' ||
+      id === 'viewer.accessories.failed' ||
+      id === 'viewer.fallback.look',
+  );
+
+  it('every new Crypt identifier is non-blank', () => {
+    const required = [
+      'coach.defaultName',
+      'coachColor.bone.name',
+      'coachColor.ash.name',
+      'coachColor.moonlight.name',
+      'coachColor.ember.name',
+      'coachColor.slime.name',
+      'coachColor.witch.name',
+      'accessory.glowingEyes.name',
+      'accessory.witchHat.name',
+      'accessory.pumpkinHead.name',
+      'crypt.loading',
+      'crypt.intro',
+      'crypt.balance',
+      'crypt.preview.note',
+      'crypt.preview.stop',
+      'crypt.name.heading',
+      'crypt.name.label',
+      'crypt.name.hint',
+      'crypt.name.save',
+      'crypt.name.invalid',
+      'crypt.colors.heading',
+      'crypt.accessories.heading',
+      'crypt.option.free',
+      'crypt.option.unlocked',
+      'crypt.option.price',
+      'crypt.option.equipped',
+      'crypt.option.hiddenBy',
+      'crypt.equip',
+      'crypt.preview',
+      'crypt.unlock',
+      'crypt.needMore',
+      'crypt.announce.unlocked',
+      'crypt.announce.short',
+      'crypt.announce.equipped',
+      'crypt.announce.unequipped',
+      'crypt.announce.named',
+      'viewer.accessories.failed',
+      'viewer.fallback.look',
+    ] as const;
+
+    for (const id of required) {
+      expect({ id, blank: t(id).trim() === '' }).toEqual({ id, blank: false });
+    }
+    // Every shipped Crypt identifier is in the list above.
+    expect([...newCryptIds].sort()).toEqual([...required].sort());
+  });
+
+  it('no new Crypt identifier uses avatar, item, cosmetic, skin, buy, purchase or coins', () => {
+    const watched = ['avatar', 'item', 'cosmetic', 'skin', 'buy', 'purchase', 'coins'];
+    const offending = newCryptIds
+      .map((id) => ({
+        id,
+        words: findAvoidWords(locales.en[id]).filter((word) => watched.includes(word)),
+      }))
+      .filter(({ words }) => words.length > 0);
+
+    expect(offending).toEqual([]);
   });
 
   it('the empty History text and the loading texts contain no digit', () => {

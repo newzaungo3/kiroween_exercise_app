@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { findEntryById } from '@/catalog';
 import type { ExerciseEntry, RoutineEntry } from '@/catalog';
+import type { CoachAppearance } from '@/viewer/ViewerIsland';
 import { completionBonus } from '@/workout-engine';
 import type { SummaryView, WorkoutCheckpoint, WorkoutView } from '@/workout-engine';
 
@@ -41,6 +42,10 @@ export interface WorkoutScreenProps {
   readonly resume?: WorkoutCheckpoint;
   /** Called with the checkpoint on each Checkpoint_Moment. */
   readonly onCheckpoint?: (checkpoint: WorkoutCheckpoint) => void;
+  /** The Equipped_Look for the Viewer; the caller keeps the reference stable. */
+  readonly appearance?: CoachAppearance;
+  /** The stored Coach name for the Safety_Message; null or absent gives the default. */
+  readonly coachName?: string | null;
 }
 
 interface OpenDialog {
@@ -69,6 +74,8 @@ export function WorkoutScreen({
   recordedBalance,
   resume: resumeFrom,
   onCheckpoint,
+  appearance,
+  coachName = null,
 }: WorkoutScreenProps) {
   const {
     view,
@@ -149,7 +156,10 @@ export function WorkoutScreen({
   if (view === null && restoring) {
     panel = null;
   } else if (view === null) {
-    panel = <PreparingPanel routine={routine} onStart={start} headingRef={headingRef} />;
+    panel = <PreparingPanel routine={routine} onStart={start}
+        headingRef={headingRef}
+        coachName={coachName}
+      />;
   } else if (view.phase === 'exercising') {
     viewerEntry = entryOrThrow(view.slot.entryId);
     const setText = format('workout.announce.set', {
@@ -184,6 +194,7 @@ export function WorkoutScreen({
         onAskSkipSet={askSkipSet}
         onAskQuit={askQuit}
         headingRef={headingRef}
+        coachName={coachName}
       />
     );
   } else if (view.phase === 'resting') {
@@ -239,7 +250,7 @@ export function WorkoutScreen({
         {announcement}
       </div>
       {viewerEntry !== null ? (
-        <CoachViewer key={viewerEntry.id} exercise={viewerEntry} hold={hold} />
+        <CoachViewer key={viewerEntry.id} exercise={viewerEntry} hold={hold} appearance={appearance} />
       ) : null}
       {panel}
       {dialog !== null && dialogOpen ? (

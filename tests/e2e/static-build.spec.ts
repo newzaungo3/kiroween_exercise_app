@@ -70,8 +70,8 @@ const expectedPagesBySrcRoute: Record<string, string[]> = {
 };
 
 /**
- * The Home_Screen, the Section screens (the two list screens and the three
- * Placeholder_Screens), every Exercise_Detail_Screen, every Routine detail and
+ * The Home_Screen, the Section screens (the list screens, the Crypt_Screen and
+ * the History_Screen), every Exercise_Detail_Screen, every Routine detail and
  * Workout screen, and the not-found screen.
  */
 const screenRoutes = [

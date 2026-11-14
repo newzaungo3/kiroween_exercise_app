@@ -7,13 +7,20 @@ import fc from 'fast-check';
 import {
   createMemoryStorage,
   createProgressStore,
+  isOptionId,
+  maxUnlockPrice,
+  normaliseCoachName,
   schemaVersion,
   welcomeGiftCandy,
 } from '@/progress-store';
+import { cryptContent } from '@/catalog';
 import { checkpointOf } from '@/workout-engine';
 import type { WorkoutCheckpoint } from '@/workout-engine';
 import { unfinishedWorkoutArbitrary } from './workout';
 import type {
+  CoachCustomisation,
+  CoachNameResult,
+  EquipResult,
   MemoryStorage,
   ProgressData,
   SaveCheckpointResult,
@@ -21,6 +28,10 @@ import type {
   ProgressStore,
   RecordResult,
   StorageAdapter,
+  UnlockKind,
+  UnlockRecord,
+  UnlockRequest,
+  UnlockResult,
   WorkoutRecord,
 } from '@/progress-store';
 
@@ -54,7 +65,13 @@ export const checkpointArbitrary: fc.Arbitrary<WorkoutCheckpoint> = unfinishedWo
   .map(({ workout }) => checkpointOf(workout))
   .filter((checkpoint): checkpoint is WorkoutCheckpoint => checkpoint !== null);
 
-/** ProgressData at the current Schema_Version (2), with a checkpoint (null by default). */
+/** The default Coach_Customisation: default name and color, no Accessory. */
+export const defaultCoachData: CoachCustomisation = { name: null, color: null, accessories: [] };
+
+/**
+ * ProgressData at the current Schema_Version (3): no checkpoint, no Unlocks and
+ * the default Coach_Customisation unless the fields say otherwise.
+ */
 export function progressDataOf(
   fields: Partial<Omit<ProgressData, 'schemaVersion'>> = {},
 ): ProgressData {
@@ -64,6 +81,8 @@ export function progressDataOf(
     welcomeGiftGranted: false,
     history: [],
     checkpoint: null,
+    unlocks: [],
+    coach: defaultCoachData,
     ...fields,
   } as ProgressData;
 }
@@ -93,15 +112,213 @@ export const v1TextArbitrary: fc.Arbitrary<string> = v1DataArbitrary.map((data) 
   JSON.stringify(data),
 );
 
+/** Version 2 data: a checkpoint member, no Unlocks and no Coach_Customisation. */
+export interface V2Data {
+  readonly schemaVersion: 2;
+  readonly candy: number;
+  readonly welcomeGiftGranted: boolean;
+  readonly history: readonly WorkoutRecord[];
+  readonly checkpoint: WorkoutCheckpoint | null;
+}
+
+export const v2DataArbitrary: fc.Arbitrary<V2Data> = fc.record({
+  schemaVersion: fc.constant<2>(2),
+  candy: fc.integer({ min: 0, max: 1_000_000 }),
+  welcomeGiftGranted: fc.boolean(),
+  history: distinctRecordsArbitrary(),
+  checkpoint: fc.oneof(fc.constant<WorkoutCheckpoint | null>(null), checkpointArbitrary),
+});
+
+/** Stored text of version 2 data. */
+export const v2TextArbitrary: fc.Arbitrary<string> = v2DataArbitrary.map((data) =>
+  JSON.stringify(data),
+);
+
+/** Option_Ids of the shipped Crypt_Content. */
+export const shippedColorIds: readonly string[] = cryptContent.coachColors.map((entry) => entry.id);
+export const shippedAccessoryIds: readonly string[] = cryptContent.accessories.map(
+  (entry) => entry.id,
+);
+
+/** A shipped Unlock option with its Price (the Free_Coach_Colors have no Price and are left out). */
+export const shippedUnlockRequests: readonly UnlockRequest[] = [
+  ...cryptContent.coachColors
+    .filter((entry) => entry.price > 0)
+    .map((entry) => ({ id: entry.id, kind: 'color' as const, price: entry.price })),
+  ...cryptContent.accessories.map((entry) => ({
+    id: entry.id,
+    kind: 'accessory' as const,
+    price: entry.price,
+  })),
+];
+
+const optionIdArbitrary: fc.Arbitrary<string> = fc.stringMatching(/^[a-z][a-z0-9-]{0,39}$/);
+
+/** A shipped Option_Id or a random valid one. */
+const anyOptionIdArbitrary: fc.Arbitrary<string> = fc.oneof(
+  { weight: 3, arbitrary: fc.constantFrom(...shippedColorIds, ...shippedAccessoryIds) },
+  { weight: 1, arbitrary: optionIdArbitrary },
+);
+
+const unlockKindArbitrary: fc.Arbitrary<UnlockKind> = fc.constantFrom('color', 'accessory');
+
+/** A shipped option with its shipped Price. */
+export const shippedUnlockRequestArbitrary: fc.Arbitrary<UnlockRequest> = fc.constantFrom(
+  ...shippedUnlockRequests,
+);
+
+/** A random valid request: a valid Option_Id, a kind and a Price from 1 to the highest. */
+export const validUnlockRequestArbitrary: fc.Arbitrary<UnlockRequest> = fc.record({
+  id: anyOptionIdArbitrary,
+  kind: unlockKindArbitrary,
+  price: fc.integer({ min: 1, max: maxUnlockPrice }),
+});
+
+/**
+ * A request the store must call invalid. Typed as UnlockRequest because the
+ * store receives such values from untyped callers; each variant breaks one member.
+ */
+export const malformedUnlockRequestArbitrary: fc.Arbitrary<UnlockRequest> = fc.oneof(
+  fc.record({
+    id: fc.oneof(
+      fc.constant(''),
+      fc.constant('Witch Hat'),
+      fc.constant('1a'),
+      fc.string({ minLength: 41 }).map((text) => `a${text}`),
+    ),
+    kind: unlockKindArbitrary,
+    price: fc.integer({ min: 1, max: 50 }),
+  }),
+  fc.record({
+    id: anyOptionIdArbitrary,
+    // A kind outside the union, as an untyped caller could send it.
+    kind: fc.constantFrom('hat', '', 'COLOR') as unknown as fc.Arbitrary<UnlockKind>,
+    price: fc.integer({ min: 1, max: 50 }),
+  }),
+  fc.record({
+    id: anyOptionIdArbitrary,
+    kind: unlockKindArbitrary,
+    price: fc.constantFrom(0, -1, 1.5, maxUnlockPrice + 1, Number.NaN, Infinity),
+  }),
+);
+
+/** Shipped, valid or malformed Unlock requests. */
+export const unlockRequestArbitrary: fc.Arbitrary<UnlockRequest> = fc.oneof(
+  { weight: 4, arbitrary: shippedUnlockRequestArbitrary },
+  { weight: 2, arbitrary: validUnlockRequestArbitrary },
+  { weight: 1, arbitrary: malformedUnlockRequestArbitrary },
+);
+
+/** A list of Unlock records with distinct ids, valid Prices and either kind. */
+export const unlockRecordsArbitrary: fc.Arbitrary<UnlockRecord[]> = fc.uniqueArray(
+  fc.record({
+    id: anyOptionIdArbitrary,
+    kind: unlockKindArbitrary,
+    candySpent: fc.integer({ min: 1, max: 60 }),
+  }),
+  { selector: (entry) => entry.id, maxLength: 6 },
+);
+
+const coachNameArbitrary: fc.Arbitrary<string | null> = fc.oneof(
+  fc.constant(null),
+  fc.constantFrom('Count Rattle', 'Bonny', 'ผีน้อย', "O'Bone"),
+);
+
+/** A well-formed Coach_Customisation; its Accessories may repeat and need not be Unlocked. */
+export const coachCustomisationArbitrary: fc.Arbitrary<CoachCustomisation> = fc.record({
+  name: coachNameArbitrary,
+  color: fc.oneof(fc.constant(null), anyOptionIdArbitrary),
+  accessories: fc.array(anyOptionIdArbitrary, { maxLength: 5 }),
+});
+
+/** Any JSON-like value, for a damaged member. */
+const junkArbitrary: fc.Arbitrary<unknown> = fc.oneof(
+  fc.anything(),
+  fc.constantFrom<unknown>(null, [], {}, '', 0, true, ['witch-hat', 7], '<b>x</b>', 'A'.repeat(50)),
+);
+
+/**
+ * A Coach_Customisation object whose members are each valid or junk, and which
+ * may miss members. Typed unknown-valued because it models stored text.
+ */
+export const junkCoachArbitrary: fc.Arbitrary<Record<string, unknown>> = fc
+  .record({
+    name: fc.oneof(coachNameArbitrary, junkArbitrary),
+    color: fc.oneof(anyOptionIdArbitrary, junkArbitrary),
+    accessories: fc.oneof(fc.array(anyOptionIdArbitrary, { maxLength: 5 }), junkArbitrary),
+  })
+  .chain((coach) =>
+    fc.subarray(['name', 'color', 'accessories'] as const, { minLength: 0 }).map((keep) => {
+      const result: Record<string, unknown> = {};
+      for (const key of keep) result[key] = coach[key];
+      return result;
+    }),
+  );
+
+/** Valid Schema_Version 3 data: Unlocks, a Coach_Customisation that agrees with them, a checkpoint or null. */
+export const v3DataArbitrary: fc.Arbitrary<ProgressData> = fc
+  .record({
+    candy: fc.integer({ min: 0, max: 1_000_000 }),
+    welcomeGiftGranted: fc.boolean(),
+    history: distinctRecordsArbitrary(),
+    checkpoint: fc.oneof(fc.constant<WorkoutCheckpoint | null>(null), checkpointArbitrary),
+    unlocks: unlockRecordsArbitrary,
+    coach: coachCustomisationArbitrary,
+  })
+  .map(({ unlocks, coach, ...rest }) => {
+    const owned = unlocks.filter((entry) => entry.kind === 'accessory').map((entry) => entry.id);
+    const accessories = coach.accessories.filter(
+      (id, index, all) => owned.includes(id) && all.indexOf(id) === index,
+    );
+    return progressDataOf({ ...rest, unlocks, coach: { ...coach, accessories } });
+  });
+
+/** Stored text of valid version 3 data. */
+export const v3TextArbitrary: fc.Arbitrary<string> = v3DataArbitrary.map(storedTextOf);
+
+/** Text for the Coach name operation: names, damaged names and random strings. */
+const coachNameTextArbitrary: fc.Arbitrary<string> = fc.oneof(
+  fc.string({ maxLength: 30 }),
+  fc.constantFrom(
+    'Count Rattle',
+    '  Bone   Bob ',
+    '',
+    '   ',
+    '<b>x</b>',
+    'A'.repeat(21),
+    'ผีน้อย',
+    '\u2019Bone',
+    '{coach}',
+  ),
+);
+
 export type Operation =
   | { readonly kind: 'grant' }
   | { readonly kind: 'record'; readonly record: WorkoutRecord }
   | { readonly kind: 'saveCheckpoint'; readonly checkpoint: WorkoutCheckpoint }
   | { readonly kind: 'clearCheckpoint' }
   | { readonly kind: 'finish'; readonly record: WorkoutRecord }
+  | { readonly kind: 'unlock'; readonly request: UnlockRequest }
+  | { readonly kind: 'equipColor'; readonly id: string | null }
+  | { readonly kind: 'setAccessoryEquipped'; readonly id: string; readonly equipped: boolean }
+  | { readonly kind: 'setCoachName'; readonly text: string }
   | { readonly kind: 'reload' };
 
+/** An id to equip: shipped, random valid or malformed. */
+const equipIdArbitrary: fc.Arbitrary<string> = fc.oneof(
+  { weight: 6, arbitrary: anyOptionIdArbitrary },
+  { weight: 1, arbitrary: fc.constantFrom('', 'Witch Hat', '1a') },
+);
+
 export const operationArbitrary: fc.Arbitrary<Operation> = fc.oneof(
+  unlockRequestArbitrary.map<Operation>((request) => ({ kind: 'unlock', request })),
+  fc
+    .oneof(fc.constant(null), equipIdArbitrary)
+    .map<Operation>((id) => ({ kind: 'equipColor', id })),
+  fc
+    .record({ id: equipIdArbitrary, equipped: fc.boolean() })
+    .map<Operation>(({ id, equipped }) => ({ kind: 'setAccessoryEquipped', id, equipped })),
+  coachNameTextArbitrary.map<Operation>((text) => ({ kind: 'setCoachName', text })),
   fc.constant<Operation>({ kind: 'grant' }),
   fc.constant<Operation>({ kind: 'reload' }),
   fc.constant<Operation>({ kind: 'clearCheckpoint' }),
@@ -135,6 +352,9 @@ export interface Model {
   readonly recorded: readonly WorkoutRecord[];
   /** The Stored_Checkpoint, or null. */
   readonly checkpoint: WorkoutCheckpoint | null;
+  /** Oldest first. The balance is gift + earned - spent, with spent the sum of `candySpent`. */
+  readonly unlocks: readonly UnlockRecord[];
+  readonly coach: CoachCustomisation;
 }
 
 export const emptyModel: Model = {
@@ -142,11 +362,83 @@ export const emptyModel: Model = {
   candyBalance: 0,
   recorded: [],
   checkpoint: null,
+  unlocks: [],
+  coach: defaultCoachData,
 };
+
+/** The Candy spent on Unlocks in the model. */
+export function modelTotalCandySpent(model: Model): number {
+  return model.unlocks.reduce((sum, entry) => sum + entry.candySpent, 0);
+}
+
+function isValidPrice(value: unknown): value is number {
+  return (
+    typeof value === 'number' && Number.isSafeInteger(value) && value >= 1 && value <= maxUnlockPrice
+  );
+}
+
+function isAccessoryOwned(model: Model, id: string): boolean {
+  return model.unlocks.some((entry) => entry.id === id && entry.kind === 'accessory');
+}
 
 /** Applies one operation; a repeated record id changes nothing. */
 export function stepModel(model: Model, operation: Operation): Model {
   switch (operation.kind) {
+    case 'unlock': {
+      const { id, kind, price } = operation.request;
+      if (!isOptionId(id) || (kind !== 'color' && kind !== 'accessory') || !isValidPrice(price)) {
+        return model;
+      }
+      if (model.unlocks.some((entry) => entry.id === id)) return model;
+      if (price > model.candyBalance) return model;
+      const coach: CoachCustomisation =
+        kind === 'color'
+          ? { ...model.coach, color: id }
+          : {
+              ...model.coach,
+              color: model.coach.color === id ? null : model.coach.color,
+              accessories: model.coach.accessories.includes(id)
+                ? model.coach.accessories
+                : [...model.coach.accessories, id],
+            };
+      return {
+        ...model,
+        candyBalance: model.candyBalance - price,
+        unlocks: [...model.unlocks, { id, kind, candySpent: price }],
+        coach,
+      };
+    }
+    case 'equipColor': {
+      const { id } = operation;
+      if (id !== null && (!isOptionId(id) || isAccessoryOwned(model, id))) return model;
+      if (model.coach.color === id) return model;
+      return { ...model, coach: { ...model.coach, color: id } };
+    }
+    case 'setAccessoryEquipped': {
+      const { id, equipped } = operation;
+      if (!isOptionId(id)) return model;
+      const worn = model.coach.accessories.includes(id);
+      if (equipped) {
+        if (!isAccessoryOwned(model, id) || worn) return model;
+        return {
+          ...model,
+          coach: { ...model.coach, accessories: [...model.coach.accessories, id] },
+        };
+      }
+      if (!worn) return model;
+      return {
+        ...model,
+        coach: {
+          ...model.coach,
+          accessories: model.coach.accessories.filter((entry) => entry !== id),
+        },
+      };
+    }
+    case 'setCoachName': {
+      const name = normaliseCoachName(operation.text);
+      if (name === 'invalid') return model;
+      return { ...model, coach: { ...model.coach, name } };
+    }
     case 'reload':
       return model;
     case 'grant':
@@ -238,6 +530,10 @@ export type StepResult =
   | { readonly kind: 'saveCheckpoint'; readonly result: SaveCheckpointResult }
   | { readonly kind: 'clearCheckpoint'; readonly cleared: boolean }
   | { readonly kind: 'finish'; readonly result: RecordResult }
+  | { readonly kind: 'unlock'; readonly result: UnlockResult }
+  | { readonly kind: 'equipColor'; readonly result: EquipResult }
+  | { readonly kind: 'setAccessoryEquipped'; readonly result: EquipResult }
+  | { readonly kind: 'setCoachName'; readonly result: CoachNameResult }
   | { readonly kind: 'reload' };
 
 export interface StepOutcome {
@@ -281,6 +577,21 @@ export function runOperations(
         break;
       case 'finish':
         result = { kind: 'finish', result: store.finishWorkout(operation.record) };
+        break;
+      case 'unlock':
+        result = { kind: 'unlock', result: store.unlock(operation.request) };
+        break;
+      case 'equipColor':
+        result = { kind: 'equipColor', result: store.equipColor(operation.id) };
+        break;
+      case 'setAccessoryEquipped':
+        result = {
+          kind: 'setAccessoryEquipped',
+          result: store.setAccessoryEquipped(operation.id, operation.equipped),
+        };
+        break;
+      case 'setCoachName':
+        result = { kind: 'setCoachName', result: store.setCoachName(operation.text) };
         break;
       case 'reload':
         store = createProgressStore(adapter);

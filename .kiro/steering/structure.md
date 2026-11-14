@@ -2,7 +2,7 @@
 
 ## Current state
 
-Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js site with a Home screen, placeholder Section screens, a not-found screen, and Vitest and Playwright harnesses. Ticket `03-exercise-page-3d-coach` added the Catalog, the Viewer, the Exercise list screen and the Exercise detail screen, where the 3D Coach demonstrates each Exercise. Ticket `05-catalog-and-stretches` added the Stretches to the Catalog, the Stretch list screen and the Stretch detail screen. Ticket `06-happy-path-workout` added the Workout engine, the Routine list and Routine detail screens and the Workout screen. Ticket `07-skip-pause-quit` added the Workout engine's skip, pause, resume, Auto_Pause and quit commands and its `paused` phase, the Coach_Hold input of the Viewer, and the Confirm_Dialog and Paused_Panel of the Workout screen. Ticket `08-candy-and-history` added the Progress_Store with its Storage_Adapters, the recording of a Workout at the summary, the Candy_Balance on the Home_Screen, the balance on the Summary_Panel and the History_Screen. Ticket `09-resume-after-refresh` added the Workout engine's checkpoint and restore, Schema_Version 2 of the Progress_Store with its migration from version 1, the Stored_Checkpoint and its store operations, the checkpoint saving of the Workout screen, and the Resume_Prompt on the Home screen and the Workout route. Tracked files in the Repository:
+Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js site with a Home screen, placeholder Section screens, a not-found screen, and Vitest and Playwright harnesses. Ticket `03-exercise-page-3d-coach` added the Catalog, the Viewer, the Exercise list screen and the Exercise detail screen, where the 3D Coach demonstrates each Exercise. Ticket `05-catalog-and-stretches` added the Stretches to the Catalog, the Stretch list screen and the Stretch detail screen. Ticket `06-happy-path-workout` added the Workout engine, the Routine list and Routine detail screens and the Workout screen. Ticket `07-skip-pause-quit` added the Workout engine's skip, pause, resume, Auto_Pause and quit commands and its `paused` phase, the Coach_Hold input of the Viewer, and the Confirm_Dialog and Paused_Panel of the Workout screen. Ticket `08-candy-and-history` added the Progress_Store with its Storage_Adapters, the recording of a Workout at the summary, the Candy_Balance on the Home_Screen, the balance on the Summary_Panel and the History_Screen. Ticket `09-resume-after-refresh` added the Workout engine's checkpoint and restore, Schema_Version 2 of the Progress_Store with its migration from version 1, the Stored_Checkpoint and its store operations, the checkpoint saving of the Workout screen, and the Resume_Prompt on the Home screen and the Workout route. Ticket `11-the-crypt` added the Crypt_Content to the Catalog, Schema_Version 3 of the Progress_Store with Unlocks, the Coach_Customisation and the migration from version 2, the Crypt rules and the Crypt_Screen in `src/ui/crypt/`, the Read_Only_Bridge in `src/ui/progress/`, the Viewer's tint and Accessories, and the removal of the Placeholder_Screen. Tracked files in the Repository:
 
 ```
 /
@@ -14,6 +14,7 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 │   └── assets/             # Delivered 3D assets: the Grave Rise Coach GLB and its Still_Images
 ├── src/
 │   ├── app/                # Next.js App Router route files, globals.css, icon.svg
+│   │   ├── crypt/          # Crypt route
 │   │   ├── exercises/[slug]/  # Exercise detail route, one prerendered page per Catalog slug
 │   │   ├── history/        # History route
 │   │   ├── routines/       # Routine list route
@@ -21,11 +22,12 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 │   │   │       └── workout/  # Workout route, one prerendered page per Catalog slug
 │   │   └── stretches/[slug]/  # Stretch detail route, one prerendered page per Catalog slug
 │   ├── catalog/            # Static Exercise content and validateCatalog
-│   ├── progress-store/     # Candy balance, Welcome gift, Workout history, Stored_Checkpoint; Schema_Version 2; injected Storage_Adapters, no React
+│   ├── progress-store/     # Candy balance, Welcome gift, Workout history, Stored_Checkpoint, Unlocks, Coach_Customisation; Schema_Version 3; injected Storage_Adapters, no React
 │   ├── types/              # Tracked Next.js type references (next.d.ts)
 │   ├── ui/                 # Screens, Decorations, fonts, theme tokens, central strings module
+│   │   ├── crypt/          # Crypt screen and Crypt rules
 │   │   ├── history/        # History screen and date formatting
-│   │   ├── progress/       # Progress hook, Candy_Balance, Resume_Prompt, Workout recording bridge
+│   │   ├── progress/       # Progress hook, Candy_Balance, Resume_Prompt, Workout recording bridge, Read_Only_Bridge
 │   │   ├── routines/       # Routine list and Routine detail screens, labels
 │   │   └── workout/        # Workout screen, panels, run reducer, checkpoint saving, clock text, rep field
 │   ├── viewer/             # Viewer island, pure camera/playback logic, R3F scene, still fallback

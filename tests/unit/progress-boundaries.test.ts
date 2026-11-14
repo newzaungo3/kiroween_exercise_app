@@ -285,6 +285,51 @@ function findDisallowedImporters(sources: readonly SourceFile[]): string[] {
 }
 
 // ---------------------------------------------------------------------------
+// Rule 5: the Read_Only_Bridge files call no write operation (Requirements 18.2, 18.6)
+// ---------------------------------------------------------------------------
+
+const readOnlyBridgeFiles = [
+  'src/ui/progress/useCoachLook.ts',
+  'src/ui/progress/WornCoachViewer.tsx',
+  'src/ui/progress/CoachSafetyMessage.tsx',
+] as const;
+
+const writeOperationNames: readonly string[] = [
+  'grantWelcomeGift',
+  'ensureWelcomeGift',
+  'recordWorkout',
+  'finishWorkout',
+  'saveCheckpoint',
+  'clearCheckpoint',
+  'unlock',
+  'equipColor',
+  'setAccessoryEquipped',
+  'setCoachName',
+];
+
+const useProgressModule = 'src/ui/progress/useProgress';
+
+/** Any identifier or member name of a write operation, and any import of `useProgress`. */
+function findReadOnlyBridgeViolations(file: string, text: string): Finding[] {
+  const names = new Set(writeOperationNames);
+  const references = findNames(file, text, names);
+  const source = parse(file, text);
+  const members: Finding[] = [];
+  const visit = (node: ts.Node): void => {
+    // Member names that findNames skips: `store.unlock`, `{ unlock: 1 }`, `unlock(): void`.
+    if (ts.isIdentifier(node) && names.has(node.text) && !isReferencePosition(node)) {
+      members.push({ file, line: lineOf(source, node), snippet: node.text });
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  const imports = moduleReferences(file, text)
+    .filter((reference) => reference.resolved === useProgressModule)
+    .map(referenceFinding);
+  return [...references, ...members, ...imports].sort((a, b) => a.line - b.line);
+}
+
+// ---------------------------------------------------------------------------
 // The rules, checked on the real files
 // ---------------------------------------------------------------------------
 
@@ -322,6 +367,16 @@ describe('Progress_Store module boundaries', () => {
     const sources = readSources('src');
     expect(sources.length).toBeGreaterThan(storeSources.length);
     expect(findDisallowedImporters(sources)).toEqual([]);
+  });
+
+  it('the Read_Only_Bridge files exist and name no write operation or useProgress', () => {
+    for (const file of readOnlyBridgeFiles) {
+      expect(existsSync(path.join(repoRoot, file)), `${file} must exist`).toBe(true);
+    }
+    const sources = readOnlyBridgeFiles
+      .filter((file) => existsSync(path.join(repoRoot, file)))
+      .map((file) => ({ file, text: readFileSync(path.join(repoRoot, file), 'utf8') }));
+    expect(describeFindings(sources.flatMap(({ file, text }) => findReadOnlyBridgeViolations(file, text)))).toEqual([]);
   });
 });
 
@@ -485,6 +540,36 @@ describe('Progress_Store boundary scanner', () => {
       'src/ui/workout/WorkoutScreen.tsx:2 import ../../progress-store/types',
       'src/ui/workout/WorkoutScreen.tsx:3 import @/progress-store/memory-storage',
     ]);
+  });
+
+  it('flags write operation names and imports of useProgress in a Read_Only_Bridge file', () => {
+    const fixture = lines(
+      "import { useProgress } from './useProgress';",
+      "import { useProgress as again } from '@/ui/progress/useProgress';",
+      'export function f(store: { unlock(id: string): void }) {',
+      "  store.unlock('hat');",
+      '  const { recordWorkout } = store as never;',
+      '  return recordWorkout;',
+      '}',
+    );
+    expect(snippets(findReadOnlyBridgeViolations('src/ui/progress/useCoachLook.ts', fixture))).toEqual([
+      'import ./useProgress',
+      'import @/ui/progress/useProgress',
+      'unlock',
+      'unlock',
+      'recordWorkout',
+      'recordWorkout',
+    ]);
+  });
+
+  it('passes a Read_Only_Bridge file that reads through the page store and mentions writes only in text', () => {
+    const fixture = lines(
+      '// Never calls unlock or setCoachName.',
+      "import { getPageStore } from './page-store';",
+      "export const note = 'saveCheckpoint';",
+      'export const look = getPageStore().getLook();',
+    );
+    expect(findReadOnlyBridgeViolations('src/ui/progress/useCoachLook.ts', fixture)).toEqual([]);
   });
 
   it('passes imports of the Progress_Store from its own folder and from src/ui/progress', () => {

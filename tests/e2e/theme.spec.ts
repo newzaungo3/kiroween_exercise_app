@@ -80,8 +80,8 @@ test.describe('Halloween_Theme', () => {
       expect(body, `body font differs from display font on ${path}`).not.toBe(display);
       expect(firstFamily(fonts.headingFamily), `heading font on ${path}`).toBe(display);
 
-      // Tagline and Navigation_Entries on the Home_Screen; message and
-      // back-home link on the Placeholder_Screens and the not-found screen;
+      // Tagline and Navigation_Entries on the Home_Screen; back-home link
+      // on the Crypt_Screen and the not-found screen;
       // Exercise_List_Entries and the back-home link on the
       // Exercise_List_Screen; back link, live region and Safety_Message on
       // the Exercise_Detail_Screen.

@@ -10,6 +10,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { findEntryById, findRoutine, type RoutineEntry } from '@/catalog';
 import { schemaVersion, storageKey, welcomeGiftCandy } from '@/progress-store';
+import type { WorkoutRecord } from '@/progress-store';
 import { formatWorkoutDate } from '@/ui/history/date';
 import { routineName } from '@/ui/routines/labels';
 import { format, locales } from '@/ui/strings';
@@ -20,6 +21,7 @@ import {
   blockStorageWrites,
   historyEntries,
   homeBalance,
+  progressText as fullProgressText,
   readProgress,
   readProgressText,
   seedProgress,
@@ -106,8 +108,9 @@ function record(id: string, finishedAt: number, outcome: string, candyEarned: nu
   return { id, routineId, finishedAt, outcome, candyEarned };
 }
 
+/** Full version 3 text (with `unlocks` and `coach`); `version` seeds a newer text. */
 function progressText(candy: number, history: readonly unknown[], version: number = schemaVersion): string {
-  return JSON.stringify({ schemaVersion: version, candy, welcomeGiftGranted: true, history, checkpoint: null });
+  return fullProgressText({ candy, history: history as readonly WorkoutRecord[] }, version);
 }
 
 const seededAt = Date.parse('2026-11-20T09:00:00Z');
@@ -150,7 +153,7 @@ test.describe('the Welcome gift', () => {
     await expect(page.getByText(giftText, { exact: true })).toBeVisible();
 
     const stored = (await readProgress(page)) as { schemaVersion: number; welcomeGiftGranted: boolean };
-    expect(stored.schemaVersion).toBe(2);
+    expect(stored.schemaVersion).toBe(3);
     expect(stored.schemaVersion).toBe(schemaVersion);
     expect(stored.welcomeGiftGranted).toBe(true);
 
@@ -168,7 +171,7 @@ test.describe('the Welcome gift', () => {
     await expect(page.getByText(en['progress.unavailable'], { exact: true })).toHaveCount(0);
   });
 
-  test('seeded schemaVersion 3 is left untouched and the not-persistent text shows', async ({ page }) => {
+  test('seeded schemaVersion 4 is left untouched and the not-persistent text shows', async ({ page }) => {
     await installClock(page);
     const text = progressText(99, [], schemaVersion + 1);
     await seedProgress(page, text);

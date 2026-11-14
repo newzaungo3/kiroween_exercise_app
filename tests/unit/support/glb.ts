@@ -210,9 +210,97 @@ export function summarizeGlb(container: GlbContainer): GlbBudget {
   };
 }
 
+/** Material keys of the whole document: the material name, else `#<index>`. */
+export function readMaterialKeys(container: GlbContainer): readonly string[] {
+  return optionalArray(container.json, 'materials').map((material, i) => {
+    const name = requireRecord(material, `materials[${i}]`)['name'];
+    return typeof name === 'string' ? name : `#${i}`;
+  });
+}
+
 /** Reads a GLB container and summarises its budget in one call. */
 export function readGlbBudget(bytes: Uint8Array): GlbBudget {
   return summarizeGlb(readGlb(bytes));
+}
+
+// ---------------------------------------------------------------------------
+// Node tree
+// ---------------------------------------------------------------------------
+
+/** One glTF node with what the Accessory asset tests need. */
+export interface GlbNode {
+  /** Index into the document's `nodes` array. */
+  readonly index: number;
+  /** `name`, or '' when the node has none. */
+  readonly name: string;
+  /** Index of the parent node, or null for a root node. */
+  readonly parent: number | null;
+  /** Indices of the child nodes. */
+  readonly children: readonly number[];
+  /** True when the node itself carries a mesh. */
+  readonly hasMesh: boolean;
+  /** Triangles of the node's own mesh (0 without one). */
+  readonly triangles: number;
+  /** Distinct material keys of the node's own mesh: the material name, else `#<index>`. */
+  readonly materialKeys: readonly string[];
+}
+
+/**
+ * Reads the node tree of a GLB container. Throws a GlbError when a node, mesh,
+ * material or child reference is malformed or points at something missing.
+ */
+export function readNodeTree(container: GlbContainer): readonly GlbNode[] {
+  const doc = container.json;
+  const rawNodes = optionalArray(doc, 'nodes');
+  const accessors = optionalArray(doc, 'accessors');
+  const meshes = optionalArray(doc, 'meshes');
+  const materials = optionalArray(doc, 'materials');
+
+  const parents: (number | null)[] = rawNodes.map(() => null);
+  const childLists = rawNodes.map((node, i) => {
+    const children = optionalArray(requireRecord(node, `nodes[${i}]`), 'children', `nodes[${i}]`);
+    return children.map((child) => {
+      if (!isNonNegativeInteger(child) || child >= rawNodes.length) {
+        throw new GlbError(`nodes[${i}].children has an entry that is not a node index`);
+      }
+      parents[child] = i;
+      return child;
+    });
+  });
+
+  return rawNodes.map((node, i): GlbNode => {
+    const record = requireRecord(node, `nodes[${i}]`);
+    const name = record['name'];
+    if (name !== undefined && typeof name !== 'string') throw new GlbError(`nodes[${i}].name is not a string`);
+    const meshIndex = optionalInteger(record, 'mesh', `nodes[${i}]`);
+    let triangles = 0;
+    const keys = new Set<string>();
+    if (meshIndex !== undefined) {
+      const meshPath = `meshes[${meshIndex}]`;
+      const mesh = meshes[meshIndex];
+      if (mesh === undefined) throw new GlbError(`nodes[${i}].mesh points at ${meshPath}, which does not exist`);
+      optionalArray(requireRecord(mesh, meshPath), 'primitives', meshPath).forEach((primitive, p) => {
+        const path = `${meshPath}.primitives[${p}]`;
+        const primitiveRecord = requireRecord(primitive, path);
+        triangles += primitiveTriangles(primitiveRecord, accessors, path);
+        const materialIndex = optionalInteger(primitiveRecord, 'material', path);
+        if (materialIndex === undefined) return;
+        const material = materials[materialIndex];
+        if (material === undefined) throw new GlbError(`${path}.material points at a missing material`);
+        const materialName = requireRecord(material, `materials[${materialIndex}]`)['name'];
+        keys.add(typeof materialName === 'string' ? materialName : `#${materialIndex}`);
+      });
+    }
+    return {
+      index: i,
+      name: name ?? '',
+      parent: parents[i] ?? null,
+      children: childLists[i] ?? [],
+      hasMesh: meshIndex !== undefined,
+      triangles,
+      materialKeys: [...keys],
+    };
+  });
 }
 
 function assetVersion(doc: Readonly<Record<string, unknown>>): string | null {

@@ -19,6 +19,7 @@
 import { expect, test, type Locator, type Page, type Route } from '@playwright/test';
 
 import { findExercise, stillViews, type ExerciseEntry } from '@/catalog';
+import { safetyMessage } from '@/ui/crypt/labels';
 import { difficultyLabel, exerciseName, exercisePath, muscleGroupLabel } from '@/ui/exercises/labels';
 import { format, locales, t } from '@/ui/strings';
 
@@ -112,7 +113,7 @@ async function expectWrittenContentAndSafetyMessage(page: Page, entry: ExerciseE
     await expect(page.getByText(text, { exact: true })).toBeVisible();
   }
   await expect(page.getByRole('heading', { name: en['safety.heading'], exact: true })).toBeVisible();
-  await expect(page.getByText(en['safety.coachMessage'], { exact: true })).toBeVisible();
+  await expect(page.getByText(safetyMessage(null), { exact: true })).toBeVisible();
 }
 
 /**

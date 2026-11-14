@@ -35,9 +35,12 @@ import { colors } from '@/ui/theme/tokens';
 
 import { cameraFarM, cameraFovDeg, cameraNearM } from '../logic/camera-lens';
 import type { ViewerController } from '../logic/controller';
+import type { Box3Value } from '../logic/geometry-types';
 import { CoachAssetError } from '../logic/load-state';
 import { CameraRig } from './CameraRig';
-import { CoachActor } from './CoachActor';
+import { defaultAppearance, type AccessoryState, type CoachAppearance } from '../logic/appearance';
+import { parseAccessoryAsset, type ParsedAccessories } from './accessory-asset';
+import { CoachActor, type AppliedLook } from './CoachActor';
 import { parseCoachAsset, type ParsedCoach } from './coach-asset';
 import { disposeObject3D } from './dispose';
 import { Graveyard } from './Graveyard';
@@ -58,12 +61,22 @@ export interface Scene3DProps {
   readonly onReady: (attempt: number) => void;
   readonly onFailed: (attempt: number, reason: SceneFailure) => void;
   readonly onContextLost: (attempt: number) => void;
+  /** The Accessory_Asset bytes; null until fetched, or when none is wanted. */
+  readonly accessoryBuffer?: ArrayBuffer | null;
+  /** The look to show; the default look when omitted. */
+  readonly appearance?: CoachAppearance;
+  /** Reports the Accessory_Asset as `ready` once its nodes are attached, or `failed`. */
+  readonly onAccessories?: (state: AccessoryState) => void;
+  /** Reports the look now on the Coach after every change. */
+  readonly onApplied?: (look: AppliedLook) => void;
 }
 
 interface Reports {
   readonly onReady: Scene3DProps['onReady'];
   readonly onFailed: Scene3DProps['onFailed'];
   readonly onContextLost: Scene3DProps['onContextLost'];
+  readonly onAccessories: ((state: AccessoryState) => void) | undefined;
+  readonly onApplied: ((look: AppliedLook) => void) | undefined;
 }
 
 function failureOf(error: unknown): SceneFailure {
@@ -100,21 +113,78 @@ export default function Scene3D({
   onReady,
   onFailed,
   onContextLost,
+  accessoryBuffer = null,
+  appearance = defaultAppearance,
+  onAccessories,
+  onApplied,
 }: Scene3DProps) {
   const [coach, setCoach] = useState<ParsedCoach | null>(null);
+  const [accessories, setAccessories] = useState<ParsedAccessories | null>(null);
+  const [sceneShown, setSceneShown] = useState(false);
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
   const poser = useRef<((clipTime: number) => void) | null>(null);
 
   // The latest callbacks, so a parent re-render with new inline functions
   // neither restarts the parse nor re-adds the context-loss listener.
-  const reports = useRef<Reports>({ onReady, onFailed, onContextLost });
+  const reports = useRef<Reports>({ onReady, onFailed, onContextLost, onAccessories, onApplied });
   useLayoutEffect(() => {
-    reports.current = { onReady, onFailed, onContextLost };
+    reports.current = { onReady, onFailed, onContextLost, onAccessories, onApplied };
   });
 
   const onShown = useCallback(() => {
+    setSceneShown(true);
     reports.current.onReady(attempt);
   }, [attempt]);
+
+  // Parses the Accessory_Asset with every node the look may show. A failure
+  // never touches the Coach: it only reports `failed`.
+  const framingKey = appearance.framingNodes.join('\n');
+  const framingNodes = appearance.framingNodes;
+  const accessoryPath = appearance.accessoryAsset;
+  useEffect(() => {
+    if (accessoryBuffer === null || accessoryPath === null || framingNodes.length === 0) return;
+    let current = true;
+    parseAccessoryAsset(accessoryBuffer, LoaderUtils.extractUrlBase(accessoryPath), framingNodes).then(
+      (parsed) => {
+        if (current) setAccessories(parsed);
+        else disposeObject3D(parsed.scene);
+      },
+      () => {
+        if (current) reports.current.onAccessories?.('failed');
+      },
+    );
+    return () => {
+      current = false;
+    };
+    // framingKey stands for framingNodes, whose identity changes every render.
+  }, [accessoryBuffer, accessoryPath, framingKey]);
+
+  // Releases the parsed Accessory_Asset and the clones' shared buffers at the
+  // end of the attempt. CoachActor detaches its clones first (child cleanup).
+  useEffect(
+    () => () => {
+      if (accessories !== null) disposeObject3D(accessories.scene);
+    },
+    [accessories],
+  );
+
+  const onEnvelope = useCallback(
+    (box: Box3Value) => {
+      controller.setAccessoryBounds(box);
+      reports.current.onAccessories?.('ready');
+    },
+    [controller],
+  );
+  const onAccessoryProblem = useCallback(() => {
+    reports.current.onAccessories?.('failed');
+  }, []);
+  const onLookApplied = useCallback(
+    (look: AppliedLook) => {
+      reports.current.onApplied?.(look);
+      controller.redraw();
+    },
+    [controller],
+  );
 
   useEffect(() => {
     if (buffer === null) return;
@@ -173,7 +243,19 @@ export default function Scene3D({
       <hemisphereLight args={[colors.sceneAmbientSky, colors.sceneAmbientGround, 0.9]} />
       <directionalLight position={[-3, 6, -8]} color={colors.sceneMoonlight} intensity={1.2} />
       <Graveyard />
-      {coach !== null && <CoachActor coach={coach} poser={poser} />}
+      {coach !== null && (
+        <CoachActor
+          coach={coach}
+          poser={poser}
+          boneColor={appearance.boneColor}
+          // Attached only once the controller has the scene, so it accepts the envelope.
+          accessories={sceneShown ? accessories : null}
+          shownNodes={appearance.shownNodes}
+          onEnvelope={onEnvelope}
+          onApplied={onLookApplied}
+          onAccessoryProblem={onAccessoryProblem}
+        />
+      )}
       {coach !== null && <SceneReady coach={coach} controller={controller} onShown={onShown} />}
       <CameraRig controller={controller} poser={poser} />
     </Canvas>

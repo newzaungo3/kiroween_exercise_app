@@ -42,7 +42,7 @@ function isEmptyList(list: readonly string[] | undefined): boolean {
 }
 
 /** True for a non-empty path that is not a safe same-origin path under /assets/. */
-function isBadAssetPath(path: string | undefined): boolean {
+export function isBadAssetPath(path: string | undefined): boolean {
   if (isBlank(path)) return false;
   return !assetPathPattern.test(path) || path.includes('..') || path.includes('//');
 }

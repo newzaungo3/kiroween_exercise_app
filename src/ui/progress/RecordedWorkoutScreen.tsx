@@ -1,9 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { RoutineEntry } from '@/catalog';
+import { appearanceOf } from '@/ui/crypt/appearance';
+import { resolveLook } from '@/ui/crypt/look';
 import { routineName, workoutPath } from '@/ui/routines/labels';
 import { format, t } from '@/ui/strings';
 import workoutStyles from '@/ui/workout/WorkoutScreen.module.css';
@@ -32,6 +34,15 @@ export function RecordedWorkoutScreen({ routine }: { readonly routine: RoutineEn
   const [balance, setBalance] = useState<number | null>(null);
   const finished = useRef(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // The Equipped_Look and the Coach name; the default look until the snapshot
+  // is read. The Workout shows no Accessory_Asset fetch of its own beyond the
+  // worn Accessories, so fetchAccessories stays false.
+  const look = useMemo(() => resolveLook(snapshot), [snapshot]);
+  const lookKey = JSON.stringify(look);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- lookKey is the value of look
+  const appearance = useMemo(() => appearanceOf(look, { fetchAccessories: false }), [lookKey]);
+  const coachName = snapshot?.coach.name ?? null;
 
   const gate = decideGate({
     snapshot,
@@ -130,6 +141,8 @@ export function RecordedWorkoutScreen({ routine }: { readonly routine: RoutineEn
         onCheckpoint={onCheckpoint}
         onFinished={onFinished}
         recordedBalance={balance}
+        appearance={appearance}
+        coachName={coachName}
       />
     );
   }
@@ -144,6 +157,8 @@ export function RecordedWorkoutScreen({ routine }: { readonly routine: RoutineEn
         onCheckpoint={onCheckpoint}
         onFinished={onFinished}
         recordedBalance={balance}
+        appearance={appearance}
+        coachName={coachName}
       />
     </>
   );

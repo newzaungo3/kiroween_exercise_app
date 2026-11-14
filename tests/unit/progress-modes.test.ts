@@ -13,6 +13,7 @@ import {
   emptyModel,
   modelAfter,
   modelTotalCandyEarned,
+  modelTotalCandySpent,
   operationArbitrary,
   stepModel,
 } from './support/progress';
@@ -36,6 +37,12 @@ function apply(store: ProgressStore, operation: Operation): unknown {
   if (operation.kind === 'saveCheckpoint') return store.saveCheckpoint(operation.checkpoint);
   if (operation.kind === 'clearCheckpoint') return store.clearCheckpoint();
   if (operation.kind === 'finish') return store.finishWorkout(operation.record);
+  if (operation.kind === 'unlock') return store.unlock(operation.request);
+  if (operation.kind === 'equipColor') return store.equipColor(operation.id);
+  if (operation.kind === 'setAccessoryEquipped') {
+    return store.setAccessoryEquipped(operation.id, operation.equipped);
+  }
+  if (operation.kind === 'setCoachName') return store.setCoachName(operation.text);
   return undefined;
 }
 
@@ -46,6 +53,14 @@ function expectSnapshotMatches(snapshot: ProgressSnapshot, model: Model): void {
   expect(snapshot.history).toEqual([...model.recorded].reverse());
   expect(snapshot.totalCandyEarned).toBe(modelTotalCandyEarned(model));
   expect(snapshot.checkpoint).toEqual(model.checkpoint);
+  expect(snapshot.unlocks).toEqual(model.unlocks);
+  expect(snapshot.coach).toEqual(model.coach);
+  expect(snapshot.totalCandySpent).toBe(modelTotalCandySpent(model));
+  expect(snapshot.candyBalance).toBe(
+    (model.welcomeGiftGranted ? welcomeGiftCandy : 0) +
+      snapshot.totalCandyEarned -
+      snapshot.totalCandySpent,
+  );
   expect(new Set(snapshot.history.map((record) => record.id)).size).toBe(snapshot.history.length);
 }
 
@@ -54,7 +69,7 @@ describe('memory-only modes', () => {
   it('keeps the Candy rules and writes nothing it must not in memory-only modes', () => {
     const scenario = fc.record({
       mode: fc.constantFrom<'newer' | FailureMode>('newer', 'read', 'write', 'both'),
-      version: fc.integer({ min: 3, max: 1_000_000 }),
+      version: fc.integer({ min: 4, max: 1_000_000 }),
       extra: fc.string({ maxLength: 12 }),
       operations: changeSequenceArbitrary,
     });
@@ -91,10 +106,12 @@ describe('memory-only modes', () => {
   });
 
   // Feature: resume-after-refresh, Property 12: Memory-only modes keep working
-  it('keeps the model, checkpoint and Persistent_Flag in memory-only modes', () => {
+  // Feature: the-crypt, Property 7: Memory-only modes keep the Crypt working
+  // **Validates: Requirements 6.4, 6.5, 6.6**
+  it('keeps the model, checkpoint, Unlocks, Coach and Persistent_Flag in memory-only modes', () => {
     const scenario = fc.record({
       mode: fc.constantFrom<'newer' | 'write' | 'both'>('newer', 'write', 'both'),
-      version: fc.integer({ min: 3, max: 1_000_000 }),
+      version: fc.integer({ min: 4, max: 1_000_000 }),
       operations: changeSequenceArbitrary,
     });
     fc.assert(
@@ -134,7 +151,7 @@ describe('memory-only modes', () => {
   });
 
   it('a checkpoint is never written over newer data', () => {
-    const text = JSON.stringify({ schemaVersion: 3, candy: 99 });
+    const text = JSON.stringify({ schemaVersion: 4, candy: 99 });
     const adapter = createSpyAdapter({ [storageKey]: text });
     const store = createProgressStore(adapter);
     const checkpoint = fc.sample(checkpointArbitrary, 1)[0]!;
@@ -164,7 +181,7 @@ describe('memory-only modes', () => {
   });
 
   it('data from a newer schema version is never overwritten', () => {
-    const text = JSON.stringify({ schemaVersion: 3, candy: 99, unlocks: ['witch-hat'] });
+    const text = JSON.stringify({ schemaVersion: 4, candy: 99, unlocks: ['witch-hat'] });
     const adapter = createSpyAdapter({ [storageKey]: text });
     const store = createProgressStore(adapter);
     store.grantWelcomeGift();

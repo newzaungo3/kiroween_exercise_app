@@ -31,7 +31,7 @@ export interface ParsedCoach {
 /** Number of evenly spaced Demo_Clip times sampled for the motion bounds. */
 export const motionSampleCount = 30;
 
-function toBox3Value(box: Box3): Box3Value {
+export function toBox3Value(box: Box3): Box3Value {
   return {
     min: { x: box.min.x, y: box.min.y, z: box.min.z },
     max: { x: box.max.x, y: box.max.y, z: box.max.z },
@@ -76,7 +76,7 @@ function restoreTransforms(transforms: readonly LocalTransform[]): void {
  * Union of the precise bounds at `motionSampleCount` evenly spaced Demo_Clip
  * times, first and last frame included. Leaves `root` in its rest pose.
  */
-function measureMotionBounds(root: Object3D, clip: AnimationClip): Box3 {
+export function measureMotionBounds(root: Object3D, clip: AnimationClip): Box3 {
   const rest = snapshotTransforms(root);
   const mixer = new AnimationMixer(root);
   const action = mixer.clipAction(clip);

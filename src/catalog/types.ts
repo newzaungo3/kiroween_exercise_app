@@ -214,3 +214,103 @@ export interface CatalogViolation {
   readonly subjectId: string;
   readonly rule: CatalogRule;
 }
+
+/** The six Coach colors, in Crypt order. */
+export const coachColorIds = [
+  'bone',
+  'ash',
+  'moonlight',
+  'ember',
+  'slime',
+  'witch',
+] as const;
+export type CoachColorId = (typeof coachColorIds)[number];
+
+/** The three Accessories, in Crypt order. */
+export const accessoryIds = ['glowing-eyes', 'witch-hat', 'pumpkin-head'] as const;
+export type AccessoryId = (typeof accessoryIds)[number];
+
+export type CryptOptionKind = 'color' | 'accessory';
+
+/** One Coach color of the Crypt_Content. */
+export interface CoachColorEntry {
+  readonly kind: 'color';
+  readonly id: CoachColorId;
+  readonly nameId: StringId;
+  /** 0 for a Free_Coach_Color. */
+  readonly price: number;
+  /** Exactly one entry: the Default_Coach_Color. */
+  readonly isDefault: boolean;
+}
+
+/** One Accessory of the Crypt_Content. */
+export interface AccessoryEntry {
+  readonly kind: 'accessory';
+  readonly id: AccessoryId;
+  readonly nameId: StringId;
+  readonly price: number;
+  /** The Accessory_Node under `head`. */
+  readonly node: string;
+  /** While `accessoryId` is shown, use this node instead of `node`. */
+  readonly swapWhen?: { readonly accessoryId: AccessoryId; readonly node: string };
+  /** Not shown while this Accessory is shown. */
+  readonly hiddenBy?: AccessoryId;
+}
+
+export type CryptOption = CoachColorEntry | AccessoryEntry;
+
+/** All Crypt content: the one value the shipped-content test validates. */
+export interface CryptContent {
+  readonly coachColors: readonly CoachColorEntry[];
+  readonly accessories: readonly AccessoryEntry[];
+  readonly accessoryAsset: SameOriginAssetPath;
+  readonly previewExerciseId: string;
+}
+
+/** Loose shape of one Coach color, so tests can describe broken content. */
+export interface CoachColorDraft {
+  readonly id?: string;
+  readonly nameId?: string;
+  readonly price?: number;
+  readonly isDefault?: boolean;
+}
+
+/** Loose shape of one Accessory. */
+export interface AccessoryDraft {
+  readonly id?: string;
+  readonly nameId?: string;
+  readonly price?: number;
+  readonly node?: string;
+  readonly swapWhen?: { readonly accessoryId?: string; readonly node?: string };
+  readonly hiddenBy?: string;
+}
+
+/** Loose shape of Crypt_Content accepted by `validateCryptContent`. */
+export interface CryptDraft {
+  readonly coachColors?: readonly CoachColorDraft[];
+  readonly accessories?: readonly AccessoryDraft[];
+  readonly accessoryAsset?: string;
+  readonly previewExerciseId?: string;
+}
+
+/** A rule of the Crypt_Content validation function. */
+export type CryptRule =
+  | 'free-color-count'
+  | 'default-color-count'
+  | 'default-color-price'
+  | 'option-id-format'
+  | 'option-id-duplicate'
+  | 'color-price'
+  | 'accessory-price'
+  | 'node-format'
+  | 'node-duplicate'
+  | 'combination-unknown'
+  | 'combination-self'
+  | 'accessory-asset-path'
+  | 'preview-exercise-unknown';
+
+/** One broken Crypt rule and the subject that breaks it. */
+export interface CryptViolation {
+  readonly subjectId: string;
+  readonly rule: CryptRule;
+}

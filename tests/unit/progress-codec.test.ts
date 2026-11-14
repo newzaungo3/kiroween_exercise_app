@@ -9,14 +9,31 @@ import {
 import type { ProgressData } from '@/progress-store';
 import { parseProgress, serialiseProgress } from '@/progress-store/codec';
 import { isCheckpointEnvelope } from '@/progress-store/rules';
+import { normaliseCoachName } from '@/progress-store';
 import {
   checkpointArbitrary,
   createSpyAdapter,
+  defaultCoachData,
   distinctRecordsArbitrary,
+  junkCoachArbitrary,
   progressDataOf,
   storedTextOf,
   v1TextArbitrary,
+  v2TextArbitrary,
+  v3DataArbitrary as rawV3DataArbitrary,
 } from './support/progress';
+
+/**
+ * Version 3 data whose equipped Coach color is not an Accessory id. The support arbitrary can
+ * equip a color whose id is also an Unlocked Accessory; the codec rightly drops that color.
+ */
+const v3DataArbitrary: fc.Arbitrary<ProgressData> = rawV3DataArbitrary.map((data) => {
+  const accessoryIds = data.unlocks.filter((e) => e.kind === 'accessory').map((e) => e.id);
+  const color = data.coach.color;
+  return color !== null && accessoryIds.includes(color)
+    ? { ...data, coach: { ...data.coach, color: null } }
+    : data;
+});
 
 const progressDataArbitrary: fc.Arbitrary<ProgressData> = fc
   .record({
@@ -79,7 +96,7 @@ const unreadableTextArbitrary: fc.Arbitrary<string> = fc.oneof(
       { requiredKeys: ['candy', 'welcomeGiftGranted', 'history'] },
     )
     .map((value) => JSON.stringify(value)),
-  // Version 2 with a broken shape.
+  // Version 3 with a broken shape.
   fc
     .tuple(
       progressDataArbitrary,
@@ -133,11 +150,11 @@ describe('the Progress codec', () => {
     // Feature: candy-and-history, Property 1: Serialisation round trip
     // **Validates: Requirements 2.1, 2.8**
     fc.assert(
-      fc.property(progressDataArbitrary, (data) => {
+      fc.property(v3DataArbitrary, (data) => {
         const text = serialiseProgress(data);
         const parsed = parseProgress(text);
         expect(parsed).toEqual({ kind: 'data', data });
-        expect((JSON.parse(text) as { schemaVersion: number }).schemaVersion).toBe(2);
+        expect((JSON.parse(text) as { schemaVersion: number }).schemaVersion).toBe(3);
       }),
       { numRuns: 200 },
     );
@@ -158,26 +175,27 @@ describe('the Progress codec', () => {
     );
   });
 
-  it('the stored text carries the schema version 2', () => {
+  it('the stored text carries the schema version 3', () => {
     const text = storedTextOf(validData);
     expect((JSON.parse(text) as { schemaVersion: number }).schemaVersion).toBe(schemaVersion);
-    expect(schemaVersion).toBe(2);
+    expect(schemaVersion).toBe(3);
   });
 
-  it('version 3 parses as newer', () => {
-    const text = JSON.stringify({ schemaVersion: 3, anything: 'else' });
-    expect(parseProgress(text)).toEqual({ kind: 'newer', version: 3 });
+  it('version 4 parses as newer', () => {
+    const text = JSON.stringify({ schemaVersion: 4, anything: 'else' });
+    expect(parseProgress(text)).toEqual({ kind: 'newer', version: 4 });
   });
 
-  it('version 1 text parses as version 2 with no checkpoint', () => {
+  it('version 1 text chains to version 3', () => {
     const { schemaVersion: _version, checkpoint: _checkpoint, ...core } = validData;
     const text = JSON.stringify({ schemaVersion: 1, ...core });
     expect(parseProgress(text)).toEqual({ kind: 'data', data: progressDataOf(core) });
   });
 
-  it('a missing checkpoint member in version 2 parses as no data', () => {
+  it('a missing checkpoint member in version 3 parses as no data', () => {
     const { checkpoint: _checkpoint, ...without } = validData;
     expect(parseProgress(JSON.stringify(without))).toEqual({ kind: 'none' });
+    expect(parseProgress(JSON.stringify({ ...without, schemaVersion: 2 }))).toEqual({ kind: 'none' });
   });
 
   it('version 0 parses as no data', () => {
@@ -217,18 +235,18 @@ describe('the Progress codec', () => {
     );
   });
 
-  it('a version 2 value with a checkpoint round trips through its text', () => {
-    // Feature: resume-after-refresh, Property 7: Version 2 serialisation round trip
+  it('a version 3 value with a checkpoint round trips through its text', () => {
+    // Feature: resume-after-refresh, Property 7: Version 3 serialisation round trip
     // **Validates: Requirements 5.1, 5.10**
     fc.assert(
       fc.property(
-        progressDataArbitrary,
+        v3DataArbitrary,
         fc.option(checkpointArbitrary, { nil: null }),
         (data, checkpoint) => {
           const full = progressDataOf({ ...data, checkpoint });
           const text = storedTextOf(full);
           expect(parseProgress(text)).toEqual({ kind: 'data', data: full });
-          expect((JSON.parse(text) as { schemaVersion: number }).schemaVersion).toBe(2);
+          expect((JSON.parse(text) as { schemaVersion: number }).schemaVersion).toBe(3);
         },
       ),
       { numRuns: 200 },
@@ -261,9 +279,130 @@ describe('the Progress codec', () => {
     expect(parseProgress(JSON.stringify(bad))).toEqual({ kind: 'none' });
   });
 
-  it('a version 2 history with a repeated id parses as no data', () => {
+  it('a version 3 history with a repeated id parses as no data', () => {
     const entry = validData.history[0];
     const bad = { ...validData, history: [entry, { ...entry }] };
     expect(parseProgress(JSON.stringify(bad))).toEqual({ kind: 'none' });
+  });
+
+  it('migration from version 1 or 2 keeps Candy, history, gift and checkpoint', () => {
+    // Feature: the-crypt, Property 1: Migration keeps Candy, history, gift and checkpoint
+    // **Validates: Requirements 2.2, 2.3, 2.4, 2.9**
+    fc.assert(
+      fc.property(fc.oneof(v1TextArbitrary, v2TextArbitrary), (text) => {
+        const old = JSON.parse(text) as Omit<ProgressData, 'schemaVersion'> & { schemaVersion: number };
+        const checkpoint = old.schemaVersion === 1 ? null : old.checkpoint;
+        expect(parseProgress(text)).toEqual({
+          kind: 'data',
+          data: {
+            schemaVersion: 3,
+            candy: old.candy,
+            welcomeGiftGranted: old.welcomeGiftGranted,
+            history: old.history,
+            checkpoint,
+            unlocks: [],
+            coach: defaultCoachData,
+          },
+        });
+        const adapter = createSpyAdapter({ [storageKey]: text });
+        const snapshot = createProgressStore(adapter).snapshot();
+        expect(snapshot.candyBalance).toBe(old.candy);
+        expect(snapshot.welcomeGiftGranted).toBe(old.welcomeGiftGranted);
+        expect(snapshot.history).toEqual([...old.history].reverse());
+        expect(snapshot.checkpoint).toEqual(checkpoint);
+        expect(snapshot.unlocks).toEqual([]);
+        expect(snapshot.coach).toEqual(defaultCoachData);
+        expect(adapter.setItemCalls()).toBe(0);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('a version 3 value round trips through its text', () => {
+    // Feature: the-crypt, Property 2: Version 3 serialisation round trip
+    // **Validates: Requirements 2.1, 2.10**
+    fc.assert(
+      fc.property(v3DataArbitrary, (data) => {
+        const text = serialiseProgress(data);
+        expect(parseProgress(text)).toEqual({ kind: 'data', data });
+        expect((JSON.parse(text) as { schemaVersion: number }).schemaVersion).toBe(3);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('a damaged Coach_Customisation never costs Candy or Unlocks', () => {
+    // Feature: the-crypt, Property 3: A damaged Coach_Customisation never costs Candy or Unlocks
+    // **Validates: Requirements 2.5, 2.6, 2.7, 2.8**
+    const coachReplacement = fc.oneof(fc.jsonValue(), junkCoachArbitrary);
+    fc.assert(
+      fc.property(v3DataArbitrary, coachReplacement, (data, replacement) => {
+        const parsed = parseProgress(JSON.stringify({ ...data, coach: replacement }));
+        expect(parsed.kind).toBe('data');
+        if (parsed.kind !== 'data') return;
+        const { coach, ...kept } = parsed.data;
+        const { coach: _coach, ...original } = data;
+        expect(kept).toEqual(original);
+
+        const object =
+          typeof replacement === 'object' && replacement !== null && !Array.isArray(replacement)
+            ? (replacement as Record<string, unknown>)
+            : {};
+        const owned = data.unlocks.filter((entry) => entry.kind === 'accessory').map((e) => e.id);
+        const name = object.name;
+        if (typeof name === 'string' && normaliseCoachName(name) === name) {
+          expect(coach.name).toBe(name);
+        } else {
+          expect(coach.name).toBeNull();
+        }
+        if (typeof object.color === 'string' && coach.color !== null) {
+          expect(coach.color).toBe(object.color);
+          expect(owned).not.toContain(object.color);
+        }
+        if (coach.color !== null) expect(coach.color).toBe(object.color);
+        const stored = Array.isArray(object.accessories) ? (object.accessories as unknown[]) : [];
+        const expected = stored.filter(
+          (id, index): id is string =>
+            typeof id === 'string' && owned.includes(id) && stored.indexOf(id) === index,
+        );
+        expect(coach.accessories).toEqual(expected);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it('version 2 text parses as version 3 with no Unlocks and the default Coach', () => {
+    const { schemaVersion: _version, unlocks: _unlocks, coach: _coach, ...core } = validData;
+    const text = JSON.stringify({ schemaVersion: 2, ...core });
+    expect(parseProgress(text)).toEqual({ kind: 'data', data: validData });
+  });
+
+  it('a version 3 text without unlocks or coach is no data', () => {
+    const { unlocks: _unlocks, ...withoutUnlocks } = validData;
+    const { coach: _coach, ...withoutCoach } = validData;
+    expect(parseProgress(JSON.stringify(withoutUnlocks))).toEqual({ kind: 'none' });
+    expect(parseProgress(JSON.stringify(withoutCoach))).toEqual({ kind: 'none' });
+  });
+
+  it('a repeated Unlock id is no data', () => {
+    const entry = { id: 'witch-hat', kind: 'accessory', candySpent: 15 };
+    const bad = { ...validData, unlocks: [entry, { ...entry }] };
+    expect(parseProgress(JSON.stringify(bad))).toEqual({ kind: 'none' });
+  });
+
+  it('an equipped Accessory without an Unlock is dropped', () => {
+    const owned = { id: 'witch-hat', kind: 'accessory', candySpent: 15 };
+    const text = JSON.stringify({
+      ...validData,
+      unlocks: [owned],
+      coach: { name: null, color: null, accessories: ['pumpkin-head', 'witch-hat', 'witch-hat'] },
+    });
+    const parsed = parseProgress(text);
+    expect(parsed.kind).toBe('data');
+    if (parsed.kind === 'data') {
+      expect(parsed.data.coach.accessories).toEqual(['witch-hat']);
+      expect(parsed.data.candy).toBe(validData.candy);
+      expect(parsed.data.unlocks).toEqual([owned]);
+    }
   });
 });

@@ -2,15 +2,14 @@
  * Every screen of the Site, in one list shared by the E2E specs that check
  * all screens (theme, layout, Decorations, no backend).
  *
- * The paths are built from the source modules, so a new Section, a Section
- * that stops being a Placeholder_Screen or a new Exercise_Entry in the
+ * The paths are built from the source modules, so a new Section or a new Exercise_Entry in the
  * Catalog reaches every shared check without editing a spec. Only the
  * Home_Screen (`/`) and the not-found probe (`/no-such-page`) are literals.
  */
 import { entries, routines } from '@/catalog';
 import { exercisePath } from '@/ui/exercises/labels';
 import { routinePath, workoutPath } from '@/ui/routines/labels';
-import { placeholderSectionIds, sectionIds, sectionPath, type SectionId } from '@/ui/sections';
+import { sectionIds, sectionPath } from '@/ui/sections';
 
 /** A path a visitor can request on the Site. */
 export type ScreenPath = `/${string}`;
@@ -19,15 +18,10 @@ export type ScreenPath = `/${string}`;
 export const homeScreen: ScreenPath = '/';
 
 /**
- * Section screens that are not Placeholder_Screens: the Exercise_List_Screen
- * at `/exercises`, the Stretch_List_Screen at `/stretches` and the
- * Routine_List_Screen at `/routines`. Only Crypt and History are still
- * Placeholder_Screens.
+ * Every Section screen, in Home_Navigation order: Exercises, Stretches,
+ * Routines, Crypt and History. Each has an `h1` and a link back home.
  */
-const placeholderIds: ReadonlySet<SectionId> = new Set(placeholderSectionIds);
-export const sectionScreens: readonly ScreenPath[] = sectionIds
-  .filter((id) => !placeholderIds.has(id))
-  .map((id) => sectionPath(id));
+export const sectionScreens: readonly ScreenPath[] = sectionIds.map((id) => sectionPath(id));
 
 /** The Exercise_List_Screen. */
 export const exerciseListScreen: ScreenPath = sectionPath('exercises');
@@ -62,16 +56,14 @@ export const workoutScreens: readonly ScreenPath[] = routines.map(
   (routine): ScreenPath => workoutPath(routine),
 );
 
-/** The Placeholder_Screens: Crypt and History. */
-export const placeholderScreens: readonly ScreenPath[] = placeholderSectionIds.map((id) => sectionPath(id));
-
 /** A path that matches no route, so the Site answers with the not-found screen. */
 export const notFoundScreen: ScreenPath = '/no-such-page';
 
 /**
  * Every screen: the Home_Screen, the list screens (Exercises, Stretches,
  * Routines), every Exercise_Detail_Screen, every Routine_Detail_Screen,
- * every Workout_Screen, the Placeholder_Screens and the not-found screen.
+ * every Workout_Screen and the not-found screen. The Section screens include
+ * Crypt and History.
  */
 export const screens: readonly ScreenPath[] = [
   homeScreen,
@@ -79,6 +71,5 @@ export const screens: readonly ScreenPath[] = [
   ...exerciseDetailScreens,
   ...routineDetailScreens,
   ...workoutScreens,
-  ...placeholderScreens,
   notFoundScreen,
 ];

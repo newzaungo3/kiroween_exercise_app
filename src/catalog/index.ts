@@ -37,6 +37,28 @@ export type {
   StretchTarget,
 } from './types';
 export { difficulties, kinds, muscleGroups, stillViews } from './types';
+export type {
+  AccessoryDraft,
+  AccessoryEntry,
+  AccessoryId,
+  CoachColorDraft,
+  CoachColorEntry,
+  CoachColorId,
+  CryptContent,
+  CryptDraft,
+  CryptOption,
+  CryptOptionKind,
+  CryptRule,
+  CryptViolation,
+} from './types';
+export {
+  accessoryIds,
+  coachColorIds,
+  cryptContent,
+  findAccessory,
+  findCoachColor,
+  validateCryptContent,
+} from './crypt';
 export { validateCatalog } from './validate';
 export { neighbours, partitionByKind } from './lists';
 export { routineMinutes, routineSeconds, secondsPerRep } from './length';

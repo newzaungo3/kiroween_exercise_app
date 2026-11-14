@@ -2,6 +2,7 @@ import { expect, type Locator, type Page, type Route, test } from '@playwright/t
 
 import { entries, entriesOfKind, type ExerciseEntry, kinds, neighbours } from '@/catalog';
 import { backToListLabel, exercisePath, listPath } from '@/ui/exercises/labels';
+import { safetyMessage } from '@/ui/crypt/labels';
 import { format, locales } from '@/ui/strings';
 
 import { waitForCoach } from './support/webgl';
@@ -93,7 +94,7 @@ async function expectWrittenContentAndSafetyMessage(page: Page, exercise: Exerci
   // The Safety_Message in the Coach's voice, in its own labelled region (Requirement 4.4).
   const safety = page.getByRole('region', { name: en['safety.heading'], exact: true });
   await expect(safety).toBeVisible();
-  await expect(safety.getByText(en['safety.coachMessage'], { exact: true })).toBeVisible();
+  await expect(safety.getByText(safetyMessage(null), { exact: true })).toBeVisible();
 }
 
 /** The Grave Rise Exercise_Entry, the Exercise the Viewer-state tests open. */
@@ -155,7 +156,7 @@ function writtenContentTexts(exercise: ExerciseEntry): readonly string[] {
     ...content.cues,
     ...content.safetyNotes,
     en['safety.heading'],
-    en['safety.coachMessage'],
+    safetyMessage(null),
   ];
 }
 

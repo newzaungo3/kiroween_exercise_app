@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { exerciseSlugs, stretchSlugs } from '@/catalog';
+import { exerciseSlugs, routines, stretchSlugs } from '@/catalog';
 import { locales } from '@/ui/strings';
 import { colors } from '@/ui/theme/tokens';
 
@@ -10,7 +10,8 @@ const en = locales.en;
  * Paths the Site does not serve: one at the root, slugs under the detail
  * routes that are not in the Catalog (Requirement 4.11), and slugs of the
  * other Kind: a Stretch under /exercises and an Exercise under /stretches
- * (Requirements 8.2, 12.5).
+ * (Requirements 8.2, 12.5), plus unknown Routine slugs, an unknown Routine's
+ * workout path and an unknown sub-page of a Routine (Requirements 9.2, 15.4).
  */
 const unknownPaths = [
   '/no-such-page',
@@ -20,6 +21,9 @@ const unknownPaths = [
   `/stretches/${exerciseSlugs()[0]}`,
   '/stretches/unknown',
   '/stretches/no-such-stretch',
+  '/routines/unknown',
+  '/routines/no-such-routine/workout',
+  `/routines/${routines[0]?.slug ?? 'graveyard-shift'}/no-such-page`,
 ];
 
 /** Converts a `#rrggbb` token to the `rgb(r, g, b)` form browsers report. */

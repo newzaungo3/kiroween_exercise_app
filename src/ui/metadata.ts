@@ -7,11 +7,12 @@
  */
 import type { Metadata, Viewport } from 'next';
 
-import type { ExerciseEntry } from '@/catalog';
+import type { ExerciseEntry, RoutineEntry } from '@/catalog';
 
 import { exerciseTitle } from './exercises/labels';
+import { routineName } from './routines/labels';
 import { type SectionId, sectionTitle } from './sections';
-import { t } from './strings';
+import { format, t } from './strings';
 import { colors } from './theme/tokens';
 
 /** Responsive, zoomable viewport shared by every screen. */
@@ -37,6 +38,16 @@ export function sectionMetadata(id: SectionId): Metadata {
 /** Metadata for an Exercise's Exercise_Detail_Screen. */
 export function exerciseMetadata(exercise: ExerciseEntry): Metadata {
   return { title: exerciseTitle(exercise) };
+}
+
+/** Metadata for a Routine's detail screen. */
+export function routineMetadata(routine: RoutineEntry): Metadata {
+  return { title: format('routine.title', { routine: routineName(routine) }) };
+}
+
+/** Metadata for a Routine's Workout screen. */
+export function workoutMetadata(routine: RoutineEntry): Metadata {
+  return { title: format('workout.title', { routine: routineName(routine) }) };
 }
 
 /** Metadata for the not-found screen. */

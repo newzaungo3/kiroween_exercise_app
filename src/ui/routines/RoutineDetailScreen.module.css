@@ -1,0 +1,136 @@
+/*
+ * Routine_Detail_Screen styles.
+ * Colours come only from Halloween_Theme token variables; sizes are in rem so
+ * the browser's text-size setting scales the layout. Text wraps instead of
+ * clipping. Nothing is reordered with CSS.
+ */
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 3rem;
+  min-inline-size: 3rem;
+  margin-block-end: 0.5rem;
+  padding-block: 0.5rem;
+  padding-inline: 1rem;
+  box-sizing: border-box;
+  border: 0.125rem solid var(--color-orange);
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  color: var(--color-orange);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  overflow-wrap: anywhere;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--color-orange);
+  overflow-wrap: anywhere;
+}
+
+.length {
+  margin-block: 0.5rem 0;
+  margin-inline: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.heading {
+  margin-block: 1.25rem 0.5rem;
+  margin-inline: 0;
+  font-family: var(--font-body);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-orange);
+  overflow-wrap: anywhere;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style-position: inside;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.steps li::marker {
+  color: var(--color-orange);
+  font-weight: 700;
+}
+
+.stepLink {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  vertical-align: top;
+  min-block-size: 3rem;
+  min-inline-size: 3rem;
+  padding-block: 0.5rem;
+  padding-inline: 1rem;
+  box-sizing: border-box;
+  border: 0.125rem solid var(--color-purple);
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.stepName {
+  font-weight: 700;
+  color: var(--color-orange);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.stepLine {
+  color: var(--color-text-muted);
+}
+
+.start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 3.5rem;
+  margin-block-start: 1.5rem;
+  padding-block: 0.5rem;
+  padding-inline: 1rem;
+  box-sizing: border-box;
+  border: 0.125rem solid var(--color-orange);
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  color: var(--color-orange);
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.back:focus-visible,
+.stepLink:focus-visible,
+.start:focus-visible {
+  outline: 0.1875rem solid var(--color-focus);
+  outline-offset: 0.1875rem;
+}

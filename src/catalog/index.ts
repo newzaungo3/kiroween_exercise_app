@@ -101,6 +101,11 @@ export function stretchSlugs(): readonly string[] {
   return stretches.map((entry) => entry.slug);
 }
 
+/** The entry with this id, of either Kind, or undefined. */
+export function findEntryById(id: string): ExerciseEntry | undefined {
+  return entries.find((entry) => entry.id === id);
+}
+
 /** The Routine_Entry with this slug, or undefined if none has it. */
 export function findRoutine(slug: string): RoutineEntry | undefined {
   return routines.find((routine) => routine.slug === slug);

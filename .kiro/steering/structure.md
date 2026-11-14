@@ -2,7 +2,7 @@
 
 ## Current state
 
-Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js site with a Home screen, placeholder Section screens, a not-found screen, and Vitest and Playwright harnesses. Ticket `03-exercise-page-3d-coach` added the Catalog, the Viewer, the Exercise list screen and the Exercise detail screen, where the 3D Coach demonstrates each Exercise. Ticket `05-catalog-and-stretches` added the Stretches to the Catalog, the Stretch list screen and the Stretch detail screen. Tracked files in the Repository:
+Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js site with a Home screen, placeholder Section screens, a not-found screen, and Vitest and Playwright harnesses. Ticket `03-exercise-page-3d-coach` added the Catalog, the Viewer, the Exercise list screen and the Exercise detail screen, where the 3D Coach demonstrates each Exercise. Ticket `05-catalog-and-stretches` added the Stretches to the Catalog, the Stretch list screen and the Stretch detail screen. Ticket `06-happy-path-workout` added the Workout engine, the Routine list and Routine detail screens and the Workout screen. Tracked files in the Repository:
 
 ```
 /
@@ -15,11 +15,17 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 ├── src/
 │   ├── app/                # Next.js App Router route files, globals.css, icon.svg
 │   │   ├── exercises/[slug]/  # Exercise detail route, one prerendered page per Catalog slug
+│   │   ├── routines/       # Routine list route
+│   │   │   └── [slug]/     # Routine detail route, one prerendered page per Catalog slug
+│   │   │       └── workout/  # Workout route, one prerendered page per Catalog slug
 │   │   └── stretches/[slug]/  # Stretch detail route, one prerendered page per Catalog slug
 │   ├── catalog/            # Static Exercise content and validateCatalog
 │   ├── types/              # Tracked Next.js type references (next.d.ts)
 │   ├── ui/                 # Screens, Decorations, fonts, theme tokens, central strings module
-│   └── viewer/             # Viewer island, pure camera/playback logic, R3F scene, still fallback
+│   │   ├── routines/       # Routine list and Routine detail screens, labels
+│   │   └── workout/        # Workout screen, panels, run reducer, clock text, rep field
+│   ├── viewer/             # Viewer island, pure camera/playback logic, R3F scene, still fallback
+│   └── workout-engine/     # Pure Workout logic: Set slots, Rest, Candy rule, no React or storage
 ├── tests/
 │   ├── e2e/                # Playwright specs (phone and laptop projects), support/ helpers
 │   └── unit/               # Vitest tests, support/ helpers, type-check fixtures
@@ -39,7 +45,7 @@ Scaffolded by ticket `01-spooky-site-skeleton`: a statically prerendered Next.js
 
 ## Proposed app layout
 
-Target for later tickets, derived from the spec's modules. `src/app/`, `src/catalog/`, `src/ui/`, `src/viewer/`, `public/assets/`, `tests/unit/`, `tests/e2e/` and `LICENSE` exist now; `workout-engine/` and `progress-store/` arrive with the tickets that need them. Update "Current state" whenever one is added.
+Target for later tickets, derived from the spec's modules. `src/app/`, `src/catalog/`, `src/ui/`, `src/viewer/`, `public/assets/`, `tests/unit/`, `tests/e2e/` and `LICENSE` exist now, and so does `src/workout-engine/`; `progress-store/` arrives with the ticket that needs it. Update "Current state" whenever one is added.
 
 ```
 src/

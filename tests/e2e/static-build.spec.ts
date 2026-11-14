@@ -3,8 +3,9 @@ import path from 'node:path';
 
 import { expect, test } from '@playwright/test';
 
-import { entries } from '@/catalog';
+import { entries, routines } from '@/catalog';
 import { exercisePath } from '@/ui/exercises/labels';
+import { routinePath } from '@/ui/routines/labels';
 import { sectionIds, sectionPath } from '@/ui/sections';
 
 /**
@@ -54,11 +55,33 @@ const exerciseDetails = entries.map((entry) => ({
 /** The path of every Exercise_Detail_Screen, one per Catalog entry. */
 const exerciseDetailRoutes: string[] = exerciseDetails.map((detail) => detail.path);
 
+/** The Routine detail screen of every Catalog Routine. */
+const routineDetailRoutes: string[] = routines.map((routine) => routinePath(routine));
+
+/** The Workout screen of every Catalog Routine. */
+const routineWorkoutRoutes: string[] = routines.map((routine) => `${routinePath(routine)}/workout`);
+
+/** The pages each dynamic App Router route may prerender: exactly the Catalog's pages for that route. */
+const expectedPagesBySrcRoute: Record<string, string[]> = {
+  '/exercises/[slug]': exerciseDetails.filter((d) => d.srcRoute === '/exercises/[slug]').map((d) => d.path),
+  '/stretches/[slug]': exerciseDetails.filter((d) => d.srcRoute === '/stretches/[slug]').map((d) => d.path),
+  '/routines/[slug]': routineDetailRoutes,
+  '/routines/[slug]/workout': routineWorkoutRoutes,
+};
+
 /**
  * The Home_Screen, the Section screens (the two list screens and the three
- * Placeholder_Screens), every Exercise_Detail_Screen and the not-found screen.
+ * Placeholder_Screens), every Exercise_Detail_Screen, every Routine detail and
+ * Workout screen, and the not-found screen.
  */
-const screenRoutes = ['/', ...sectionIds.map(sectionPath), ...exerciseDetailRoutes, '/_not-found'];
+const screenRoutes = [
+  '/',
+  ...sectionIds.map(sectionPath),
+  ...exerciseDetailRoutes,
+  ...routineDetailRoutes,
+  ...routineWorkoutRoutes,
+  '/_not-found',
+];
 
 test.describe('static Build', () => {
   test.beforeEach(({}, testInfo) => {
@@ -105,15 +128,18 @@ test.describe('static Build', () => {
     );
     expect(onDemand).toEqual([]);
 
-    // Every page a dynamic route prerendered is an Exercise_Detail_Screen of a
-    // Catalog entry, and every Catalog entry was prerendered from the route
-    // of its Kind (`/exercises/[slug]` or `/stretches/[slug]`).
+    // Every page a dynamic route prerendered is a Catalog page of that route
+    // (an Exercise_Detail_Screen, a Routine detail or a Routine Workout
+    // screen), and every Catalog entry was prerendered from the route of its
+    // Kind (`/exercises/[slug]` or `/stretches/[slug]`).
     for (const route of Object.keys(prerender.dynamicRoutes)) {
+      const expected = expectedPagesBySrcRoute[route];
+      expect(expected, `dynamic route ${route} is a known Catalog route`).toBeDefined();
       const pages = Object.entries(prerender.routes)
         .filter(([, entry]) => entry.srcRoute === route)
         .map(([page]) => page);
       for (const page of pages) {
-        expect(exerciseDetailRoutes, `page ${page} prerendered from ${route}`).toContain(page);
+        expect(expected, `page ${page} prerendered from ${route}`).toContain(page);
       }
     }
     for (const detail of exerciseDetails) {

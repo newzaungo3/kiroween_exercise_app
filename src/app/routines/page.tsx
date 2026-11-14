@@ -1,8 +1,8 @@
 import { sectionMetadata } from '@/ui/metadata';
-import { PlaceholderScreen } from '@/ui/placeholder/PlaceholderScreen';
+import { RoutineListScreen } from '@/ui/routines/RoutineListScreen';
 
 export const metadata = sectionMetadata('routines');
 
 export default function RoutinesPage() {
-  return <PlaceholderScreen sectionId="routines" />;
+  return <RoutineListScreen />;
 }

@@ -17,8 +17,8 @@ const englishIds = Object.keys(locales.en) as EnglishId[];
 const sectionIds = ['exercises', 'stretches', 'routines', 'crypt', 'history'] as const;
 
 // The Sections that still show a Placeholder_Screen. Exercises and Stretches
-// have a list screen instead, so they have no Placeholder_Screen message.
-const placeholderSectionIds = ['routines', 'crypt', 'history'] as const;
+// and Routines have a list screen instead, so they have no Placeholder_Screen message.
+const placeholderSectionIds = ['crypt', 'history'] as const;
 
 describe('Strings_Module', () => {
   it('every English Locale entry has visible text', () => {
@@ -94,6 +94,21 @@ describe('Strings_Module', () => {
 
     // On failure, Vitest prints the offending string identifiers.
     expect(offending).toEqual([]);
+  });
+
+  it('no Workout, Summary, Routine or Safety_Message string says the Candy was saved or added to a balance', () => {
+    const prefixes = ['workout.', 'summary.', 'routine.', 'safety.'];
+    const savedClaim = /\b(saved?|saving|kept|stored?|balance|banked?|wallet|added to)\b/i;
+    const offending = englishIds.filter(
+      (id) => prefixes.some((prefix) => id.startsWith(prefix)) && savedClaim.test(locales.en[id]),
+    );
+
+    // On failure, Vitest prints the offending string identifiers.
+    expect(offending).toEqual([]);
+  });
+
+  it('the Workout outcome word exists for every outcome', () => {
+    expect(t('summary.outcome.completed').trim()).not.toBe('');
   });
 
   it('every registered Locale keeps the English placeholders', () => {

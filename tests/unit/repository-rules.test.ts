@@ -451,7 +451,7 @@ describe('repository rules', () => {
     expect(scriptFiles).toEqual([]);
   });
 
-  it('source files live under src/app, src/ui, src/catalog and src/viewer', () => {
+  it('source files live under src/app, src/ui, src/catalog, src/viewer and src/workout-engine', () => {
     const srcFiles = walk('src');
 
     // src/app holds only route files, globals.css and icon.svg.
@@ -462,9 +462,10 @@ describe('repository rules', () => {
       .filter((file) => file !== 'src/app/globals.css' && file !== 'src/app/icon.svg');
     expect(strayAppFiles).toEqual([]);
 
-    // Everything else under src/ sits in src/ui (components), src/catalog (the Catalog)
-    // or src/viewer (the Viewer), apart from the tracked Next.js type references.
-    const allowedPrefixes = ['src/app/', 'src/ui/', 'src/catalog/', 'src/viewer/'];
+    // Everything else under src/ sits in src/ui (components), src/catalog (the Catalog),
+    // src/viewer (the Viewer) or src/workout-engine (the Workout engine), apart from
+    // the tracked Next.js type references.
+    const allowedPrefixes = ['src/app/', 'src/ui/', 'src/catalog/', 'src/viewer/', 'src/workout-engine/'];
     const knownExceptions = ['src/types/next.d.ts'];
     const strayFiles = srcFiles
       .filter((file) => !allowedPrefixes.some((prefix) => file.startsWith(prefix)))

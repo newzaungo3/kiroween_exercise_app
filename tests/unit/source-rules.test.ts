@@ -521,6 +521,8 @@ describe('source rules', () => {
         ['src/viewer/', '.ts'],
         ['src/viewer/', '.tsx'],
         ['src/ui/exercises/', '.tsx'],
+        ['src/workout-engine/', '.ts'],
+        ['src/ui/workout/', '.tsx'],
       ]),
     ).toEqual([]);
     expect(describeFindings(findings)).toEqual([]);
@@ -539,6 +541,8 @@ describe('source rules', () => {
         ['src/viewer/', '.tsx'],
         ['src/viewer/', '.css'],
         ['src/ui/exercises/', '.css'],
+        ['src/workout-engine/', '.ts'],
+        ['src/ui/workout/', '.tsx'],
       ]),
     ).toEqual([]);
     expect(describeFindings(findings)).toEqual([]);

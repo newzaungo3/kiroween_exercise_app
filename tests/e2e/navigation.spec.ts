@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
-import { entriesOfKind, exerciseSlugs } from '@/catalog';
+import { entriesOfKind, exerciseSlugs, routines } from '@/catalog';
 import { locales } from '@/ui/strings';
 import { colors } from '@/ui/theme/tokens';
 
@@ -9,9 +9,10 @@ const en = locales.en;
 /**
  * Sections in Home_Navigation order, with the route each Navigation_Entry
  * must lead to (Requirement 3.1) and the screen it serves there. Exercises
- * serves the Exercise_List_Screen (ticket 03); the other four still serve a
- * Placeholder_Screen with its Strings_Module message (Requirements 3.3, 3.7
- * of the `spooky-site-skeleton` spec, Requirement 14.2).
+ * serves the Exercise_List_Screen, Stretches the Stretch list and Routines the
+ * Routine_List_Screen; only Crypt and History still serve a Placeholder_Screen
+ * with its Strings_Module message (Requirements 3.3, 3.7 of the
+ * `spooky-site-skeleton` spec, Requirements 8.1-8.5 of `happy-path-workout`).
  */
 const sections = [
   {
@@ -29,10 +30,9 @@ const sections = [
     title: en['section.stretches.title'],
   },
   {
-    screen: 'placeholder',
+    screen: 'routine-list',
     route: '/routines',
     name: en['section.routines.name'],
-    message: en['section.routines.message'],
     title: en['section.routines.title'],
   },
   {
@@ -55,13 +55,21 @@ type Section = (typeof sections)[number];
 type PlaceholderSection = Extract<Section, { readonly screen: 'placeholder' }>;
 type ExerciseListSection = Extract<Section, { readonly screen: 'exercise-list' }>;
 
-/** The Sections that still serve a Placeholder_Screen: Routines, Crypt and History. */
+type RoutineListSection = Extract<Section, { readonly screen: 'routine-list' }>;
+
+/** The Sections that still serve a Placeholder_Screen: Crypt and History. */
 const placeholderSections = sections.filter(
   (section): section is PlaceholderSection => section.screen === 'placeholder',
 );
 
 /** Every Exercise_Detail_Screen path, from the Catalog. */
 const exerciseDetailRoutes = exerciseSlugs().map((slug) => `/exercises/${slug}`);
+
+/** Every Routine detail and Workout screen path, from the Catalog. */
+const routineRoutes = routines.flatMap((routine) => [
+  `/routines/${routine.slug}`,
+  `/routines/${routine.slug}/workout`,
+]);
 
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -126,10 +134,33 @@ async function expectExerciseListScreen(page: Page, section: ExerciseListSection
   await expect(backHome).toHaveAttribute('href', '/');
 }
 
+/**
+ * Checks that the page shows the Routine_List_Screen: its heading, its title
+ * and one link per Routine whose accessible name begins with the Routine name
+ * and whose href is `/routines/<slug>` (Requirements 8.1-8.5).
+ */
+async function expectRoutineListScreen(page: Page, section: RoutineListSection): Promise<void> {
+  await expectSectionHeadingAndTitle(page, section);
+
+  for (const routine of routines) {
+    const routineName = en[routine.nameId];
+    const entry = page.getByRole('link', { name: new RegExp(`^${escapeRegExp(routineName)}`) });
+    await expect(entry, `Routine link for ${routineName}`).toHaveCount(1);
+    await expect(entry).toBeVisible();
+    await expect(entry).toHaveAttribute('href', `${section.route}/${routine.slug}`);
+  }
+
+  const backHome = page.getByRole('link', { name: en['common.backHome'], exact: true });
+  await expect(backHome).toBeVisible();
+  await expect(backHome).toHaveAttribute('href', '/');
+}
+
 /** Checks that the page shows the screen `section`'s Navigation_Entry leads to. */
 async function expectSectionScreen(page: Page, section: Section): Promise<void> {
   if (section.screen === 'exercise-list') {
     await expectExerciseListScreen(page, section);
+  } else if (section.screen === 'routine-list') {
+    await expectRoutineListScreen(page, section);
   } else {
     await expectPlaceholderScreen(page, section);
   }
@@ -220,12 +251,13 @@ test.describe('Navigation', () => {
   });
 
   test('every link leads to a served screen', async ({ page, baseURL }) => {
-    // The Home_Screen, the Exercise_List_Screen, every Exercise_Detail_Screen,
-    // every Placeholder_Screen and the not-found screen.
+    // The Home_Screen, every Section screen, every Exercise_Detail_Screen,
+    // every Routine detail and Workout screen and the not-found screen.
     const screens = [
       '/',
       ...sections.map((section) => section.route),
       ...exerciseDetailRoutes,
+      ...routineRoutes,
       '/no-such-page',
     ];
     const destinations = new Map<string, string>();

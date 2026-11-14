@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   entries,
   exercises,
+  findEntryById,
   findExercise,
   findStretch,
   partitionByKind,
@@ -67,6 +68,14 @@ describe('the Kind partition', () => {
     expect([...exercises, ...stretches].map((e) => e.id).sort()).toEqual(
       entries.map((e) => e.id).sort(),
     );
+  });
+
+  it('an entry id finds its Exercise or Stretch, and an unknown id finds nothing', () => {
+    expect(findEntryById('grave-rise')).toBe(findExercise('grave-rise'));
+    expect(findEntryById('grave-rise')).toBeDefined();
+    expect(findEntryById('bat-hang')).toBe(findStretch('bat-hang'));
+    expect(findEntryById('bat-hang')).toBeDefined();
+    expect(findEntryById('no-such-entry')).toBeUndefined();
   });
 
   it('a Stretch slug finds nothing as an Exercise and the reverse', () => {

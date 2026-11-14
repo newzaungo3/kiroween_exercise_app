@@ -18,6 +18,40 @@ const templateIds: readonly TemplateId[] = [
   'pager.next',
 ];
 
+/**
+ * The Workout templates, listed by hand with the placeholders the design gives
+ * each one. A template holds exactly these placeholders, no more, no fewer.
+ */
+const workoutTemplates: ReadonlyArray<readonly [TemplateId, readonly string[]]> = [
+  ['routine.title', ['routine']],
+  ['routine.length.one', ['minutes']],
+  ['routine.length.other', ['minutes']],
+  ['routine.count.exercises.one', ['count']],
+  ['routine.count.exercises.other', ['count']],
+  ['routine.count.stretches.one', ['count']],
+  ['routine.count.stretches.other', ['count']],
+  ['routine.sets.one', ['count']],
+  ['routine.sets.other', ['count']],
+  ['routine.target.reps', ['reps']],
+  ['routine.target.seconds', ['seconds']],
+  ['routine.rest', ['seconds']],
+  ['workout.title', ['routine']],
+  ['workout.set.of', ['number', 'count']],
+  ['workout.set.position', ['position', 'total']],
+  ['workout.set.targetReps', ['reps']],
+  ['workout.set.targetSeconds', ['seconds']],
+  ['workout.timer.format', ['minutes', 'seconds']],
+  ['workout.rest.next', ['exercise', 'number', 'count', 'target']],
+  ['workout.announce.set', ['number', 'count', 'exercise']],
+  ['workout.announce.rest', ['exercise']],
+  ['summary.outcome', ['outcome']],
+  ['summary.setsConfirmed', ['count']],
+  ['summary.setsSkipped', ['count']],
+  ['summary.activeTime', ['time']],
+  ['summary.candy', ['candy']],
+  ['summary.bonus', ['bonus']],
+];
+
 // Values contain no `{`, so a replacement can never form a new placeholder.
 const valueArb = fc.string().filter((s) => !s.includes('{'));
 
@@ -27,6 +61,16 @@ describe('format()', () => {
     // needed to reach the runtime path.
     const id = 'viewer.play' as StringId as TemplateId;
     expect(format(id, {} as never)).toBe(t('viewer.play'));
+  });
+
+  it.each(workoutTemplates)('%s holds exactly its designed placeholders', (id, expected) => {
+    const found = [...t(id).matchAll(/\{([a-zA-Z]+)\}/g)].map((m) => m[1]);
+    expect([...found].sort()).toEqual([...expected].sort());
+
+    const values = Object.fromEntries(expected.map((name) => [name, `<${name}>`]));
+    const result = format(id, values as never);
+    expect(result).not.toMatch(/\{[a-zA-Z]+\}/);
+    for (const name of expected) expect(result).toContain(`<${name}>`);
   });
 
   // Feature: exercise-page-3d-coach, Property 12: format() fills every placeholder
